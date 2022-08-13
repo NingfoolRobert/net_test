@@ -18,7 +18,7 @@ class tcp_conn :
 	public net_client_base
 {
 public:
-	tcp_conn(CBizUser* pUser,  eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen);
+	tcp_conn(eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen, PCALLBACKFUNC  dis_conn_fnc, PMSGFUNC pfnc);
 	virtual ~tcp_conn();
 public:
 	virtual void   OnRead();

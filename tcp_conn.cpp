@@ -1,7 +1,16 @@
 #include "tcp_conn.h"
 #include "eventloop.h"
 
-tcp_conn::tcp_conn(CBizUser* pUser, eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen):_user(pUser),_loop(eloop), _pfnc(pfnc), _head_len(nHeadLen), _expected_len(nHeadLen), _recv_len(0),_recv_buf(0)
+tcp_conn::tcp_conn(eventloop* eloop, MSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PCALLBACKFUNC dis_conn_fnc, PMSGFUNC pfnc) :
+	_loop(eloop),
+	_msg_head_fnc(msg_head_fnc),
+	_msg_fnc(pfnc),
+	_dis_conn_fnc(dis_conn_fnc),
+	_head_len(nHeadLen), 
+	_expected_len(nHeadLen), 
+	_recv_len(0), 
+	_recv_buf(nullptr)
+
 {
 	_pool = ngx_create_pool(1);
 }
@@ -41,7 +50,7 @@ void tcp_conn::OnRead()
 	_recv_len += recv_len;
 	if (_expected_len == _recv_len)
 	{
-		_expected_len = _pfnc((char*)_recv_buf, _recv_len);
+		_expected_len = _msg_head_fnc((char*)_recv_buf, _recv_len);
 		if (_expected_len > _head_len)
 		{
 			void* buf = ngx_allocate(_pool, _expected_len);
