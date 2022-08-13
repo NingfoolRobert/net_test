@@ -19,7 +19,9 @@ public:
 	//net connection disconnect callback
 	virtual void  OnDisConnect(){}
 	//log on result, 0:success, 1:faild
-	virtual void  OnLogon(int ret) {};
+	virtual void  OnLogon(int ret) {}
+	//
+	virtual void  OnHeartBeat() {}
 	//
 	virtual void  OnLogData(int err_level, const char*  log_data){}
 public:

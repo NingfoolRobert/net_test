@@ -24,6 +24,8 @@ public:
 public:
 	std::mutex							_lck;
 	std::set<net_client_base*>			_conns;
+private:
+	bool		_stop_flag;
 };
 
 

@@ -6,8 +6,10 @@
 typedef struct tagCommonCfg {
 	char				ip[16];
 	unsigned short		port;
-	unsigned char		auto_reconnect;  //默认不自动重连:0, 1:自动重连
-	unsigned char		reserver;
+	unsigned char		auto_reconnect;		//default: 0,dont connect, 1:auto connect
+	unsigned char		log_level;			// 1:trace,2:debug, 3:info,4:notice, 5:warn, 6:error, 7:fatal
+	unsigned int		hearbeat_int;		//default:30s
+	unsigned int		resever;			//
 	unsigned int		userid;
 	char				pwd[32];
 	char				lisence[128];

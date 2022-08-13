@@ -1,4 +1,4 @@
-#include "pch.h"
+
 #include "eventloop.h"
 
 #include <Sockets.h>
@@ -34,7 +34,7 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 
 	struct timeval tv;
 	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = timeout % 1000;
+	tv.tv_usec = (timeout % 1000) * 1000;
 	int nret = select(_max_fd, &rd_fds, &wt_fds, nullptr, &tv);
 	if (nret <= 0)
 		return 0;

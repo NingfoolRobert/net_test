@@ -6,9 +6,7 @@
 
 #include "memory_pool.h"
 
-typedef  void(*PCALLBACKFUNC)();
 
-typedef  bool(*PMSGFUNC)(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen);
 
 class eventloop;
 
@@ -18,13 +16,14 @@ class tcp_conn :
 	public net_client_base
 {
 public:
-	tcp_conn(CBizUser* pUser,  eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen);
+	tcp_conn(eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen, PCALLBACKFUNC  dis_conn_fnc, PMSGFUNC pfnc);
 	virtual ~tcp_conn();
 public:
 	virtual void   OnRead();
 
 	virtual void   OnSend();
-	
+public:
+
 public:
 	bool   OnMessage(char* pData, unsigned int nDataLen);
 
@@ -35,7 +34,7 @@ public:
 	bool   SendMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nDataLen);
 private:
 	eventloop*			_loop;
-	MSGLENPARSEFUNC		_pfnc;
+	MSGLENPARSEFUNC		_msg_head_fnc;
 	unsigned int		_head_len;
 
 	PCALLBACKFUNC		_dis_conn_fnc;
