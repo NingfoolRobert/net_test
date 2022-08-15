@@ -28,17 +28,17 @@ public:
 
 	void	add(net_client_base*  conn);
 
-	void	process_timer();
-
 	void	remove(net_client_base* conn);
 
 	void	add_timer(tagtimercb  cb);
 
-	void	notify_all();
+	void	wakeup();
 private:
 	void	create_wakeup_fd();
 
 	void	handle_read();
+
+	void	process_timer();
 private:
 	std::mutex							_lck;
 	std::set<net_client_base*>			_conns;

@@ -14,7 +14,6 @@ eventloop::eventloop()
 {
 }
 
-
 eventloop::~eventloop()
 {
 	_conns.clear();
