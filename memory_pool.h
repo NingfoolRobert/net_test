@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define	NGX_ALIGNMENT						8
+#define ngx_align(n, alignment)				(((n) + (alignment - 1)) & ~(alignment -1))
+#define ngx_align_ptr(p, alignment)			(void*)((((size_t)p) + (alignment - 1)) & ~(alignment - 1))	
 
 struct ngx_pool_s;
 typedef struct ngx_pool_s  ngx_pool_t;
@@ -35,16 +38,13 @@ void  ngx_destroy_pool(struct ngx_pool_s *pool);
 
 void  ngx_reset_pool(struct ngx_pool_s *pool);
 
-
-
 void*  ngx_allocate(struct ngx_pool_s* pool, size_t  size);
 
 void  ngx_free(struct ngx_pool_s* pool, void* p);
 
-// void   ngx_free_node(struct ngx_pool_s *pool, struct ngx_node_s* node);
-// 
-// void  add_ref(struct ngx_node_s*  node);
-// 
-// void  release(struct ngx_node_s* node);
+void *ngx_allocate_block(struct ngx_pool_s* pool, size_t size);
+
+void *ngx_allocate_large(struct ngx_pool_s* pool, size_t size);
+
 
 #endif

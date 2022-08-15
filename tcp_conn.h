@@ -16,7 +16,7 @@ class tcp_conn :
 	public net_client_base
 {
 public:
-	tcp_conn(eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen, PCALLBACKFUNC  dis_conn_fnc, PMSGFUNC pfnc);
+	tcp_conn(eventloop* eloop, MSGLENPARSEFUNC pfnc, unsigned int nHeadLen, PCALLBACKFUNC  dis_conn_fnc, PMSGFUNC msg_fnc);
 	virtual ~tcp_conn();
 public:
 	virtual void   OnRead();
@@ -42,10 +42,14 @@ private:
 
 
 private:
+	ngx_pool_t			*_pool;
 	unsigned int		_expected_len;
 	unsigned int		_recv_len;
 	void*				_recv_buf;
-	ngx_pool_t			*_pool;
+	
+	unsigned int		_send_len;
+	unsigned int		_snded_len;
+	void*				_send_buf;
 };
 
 

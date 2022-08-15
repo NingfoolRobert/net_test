@@ -9,7 +9,10 @@ tcp_conn::tcp_conn(eventloop* eloop, MSGLENPARSEFUNC msg_head_fnc, unsigned int 
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
 	_recv_len(0), 
-	_recv_buf(nullptr)
+	_recv_buf(nullptr),
+	_send_len(0),
+	_snded_len(0),
+	_send_buf(nullptr)
 
 {
 	_pool = ngx_create_pool(1);

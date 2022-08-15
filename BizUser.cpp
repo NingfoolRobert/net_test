@@ -4,17 +4,17 @@
 #include "tcp_conn.h"
 
 
-class CBizUser* pUser = nullptr;
+static class CBizUser* pUser = nullptr;
 
 
 struct CBizUser::Impl {
-	COMMONCFG		cfg;
-	eventloop		*loop;
-	tcp_conn*		conn;
-	short			logoned;
-	short			started;
-	unsigned int	timeout;		//event loop ms;
-	CBizUser*		user;
+	COMMONCFG				cfg;
+	eventloop				*loop;
+	net_client_base*		conn;
+	short					logoned;
+	short					started;
+	unsigned int			timeout;		//event loop ms;
+	CBizUser*				user;
 	///////////////////////////////
 	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10) {
 
@@ -87,7 +87,7 @@ bool CBizUser::start(COMMONCFG* cfg)
 	memcpy(&_impl->cfg, cfg, sizeof(COMMONCFG));
 	//
 	_impl->loop = new eventloop;
-	_impl->conn = new tcp_conn(this, _impl->loop, nullptr, 16, OnNetDisConn, OnNetMsg);
+	_impl->conn = new tcp_conn(_impl->loop, nullptr, 16, OnNetDisConn, OnNetMsg);
 	if (nullptr == _impl->conn)
 	{
 		char szTmp[1024] = { 0 };
