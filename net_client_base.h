@@ -36,10 +36,18 @@ public:
 #endif
 	//
 	bool	connect(unsigned int host_ip, unsigned short port);
+	//
+	bool	bind(unsigned int host_ip, unsigned short port);
+	//
+	bool	listen(int backlog = 10);
 
 	bool	set_tcp_nodelay();
 
 	bool	set_nio(int mode = 1);
+
+	bool	set_reuse_addr(bool flag = 1);
+
+	bool	set_reuse_port(bool flag = 1);
 
 	void	close();
 public:

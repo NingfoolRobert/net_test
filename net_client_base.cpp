@@ -43,6 +43,31 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	return true;
 }
 
+bool net_client_base::bind(unsigned int host_ip, unsigned short port)
+{
+	struct sockaddr_in  bind_addr;
+	bind_addr.sin_family = AF_INET;
+#if _WIN32 
+	bind_addr.sin_addr.S_un.S_addr = htonl(host_ip);
+#else 
+	bind_addr.sin_addr.s_addr = htonl(host_ip);
+#endif
+	bind_addr.sin_port = htons(port);
+	
+	if (::bind(_fd, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) < 0)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool net_client_base::listen(int backlog /*= 10*/)
+{
+	if (::listen(_fd, backlog) < 0)
+		return false;
+	return true;
+}
+
 bool net_client_base::set_tcp_nodelay()
 {
 	int enable = 1;
@@ -57,6 +82,27 @@ bool net_client_base::set_nio(int mode /*= 1*/)
 #else
 	int flags = fcntl(_fd, F_GETFL, 0);
 	fcntl(_fd, F_SETFL, mode == 1? O_NONBLOCK | flags : ~O_NONBLOCK & flags)
+#endif 
+	return true;
+}
+
+
+bool net_client_base::set_reuse_addr(bool flag /*= 1*/)
+{
+	int opt = flag ? 1 : 0;
+#ifdef _WIN32 
+	::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+#else 
+	::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, static_cast<socklen_t>(sizeof(opt)));
+#endif 
+	return true;
+}
+
+bool net_client_base::set_reuse_port(bool flag /*= 1*/)
+{
+#ifndef _WIN32 
+	int opt = flag ? 1 : 0;
+	::setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &opt, static_cast<socklen_t>(sizeof(opt)));
 #endif 
 	return true;
 }

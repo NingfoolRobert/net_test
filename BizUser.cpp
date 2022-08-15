@@ -4,8 +4,8 @@
 #include "tcp_conn.h"
 
 
-static class CBizUser* pUser = nullptr;
-
+class CBizUser* pUser = nullptr;
+CBizUser::Impl* g_impl = nullptr;
 
 struct CBizUser::Impl {
 	COMMONCFG				cfg;
@@ -18,7 +18,6 @@ struct CBizUser::Impl {
 	unsigned char			ip_idx;
 	unsigned int			host_ip[4];		//DNS => host_ip
 	unsigned short			port;
-	CBizUser*				user;
 	///////////////////////////////
 	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10),ip_cnt(0), ip_idx(0){
 
@@ -40,12 +39,28 @@ struct CBizUser::Impl {
 	}
 };
 ///////////////////////////////////////
-
 void  OnNetDisConn() {
 	//print disconnet 
 	pUser->OnDisConnect();
+	//
+	if(g_impl->cfg.auto_reconnect)
+		pUser->reconnect();
 }
-
+//
+bool OnMessage(const char* data, unsigned int len)
+{
+	if (nullptr == pUser)
+		return true;
+	//log on msg 
+	if(*data == 1)
+		pUser->OnLogon(0);
+	//heartbeat
+	if(len == 20)
+		pUser->OnHeartBeat();
+	//
+	return pUser->OnMessage(0, 0, (void*)data, len);
+}
+//
 bool OnNetMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen)
 {
 	if (nMsgID == 1)
@@ -56,9 +71,18 @@ bool OnNetMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned in
 	//
 	return pUser->OnMessage(nMsgID, nMsgNo, pData, nMsgLen);
 }
+//
+void OnHeartBeatTimer()
+{
+	//heartbeat message to send
+	//g_impl->conn->send_msg()
+	if (g_impl->conn->_break_timestamp)
+		return;
+	g_impl->conn->send_msg(nullptr, 0);
+}
+
 
 //////////////////////////////////////
-
 void  ActiveWorkThread(CBizUser::Impl* impl) {
 	
 	std::vector<net_client_base*> vecTmp;
@@ -75,6 +99,7 @@ void  ActiveWorkThread(CBizUser::Impl* impl) {
 CBizUser::CBizUser()
 {
 	_impl = new Impl;
+	g_impl = _impl;
 	_impl->logoned = 0;
 	_impl->started = 0;
 	pUser = this;
@@ -83,6 +108,23 @@ CBizUser::CBizUser()
 
 CBizUser::~CBizUser()
 {
+	if (_impl->conn)
+	{
+		delete _impl->conn;
+		_impl->conn = NULL;
+	}
+	//
+	if (_impl->loop)
+	{
+		delete _impl->loop;
+		_impl->loop = NULL;
+	}
+	
+	if (_impl)
+	{
+		delete _impl;
+		_impl = NULL;
+	}
 }
 
 bool CBizUser::start(COMMONCFG* cfg)
@@ -142,8 +184,7 @@ bool CBizUser::start(COMMONCFG* cfg)
 void CBizUser::stop()
 {
 	//TODO 
-	_impl->started = false;	//TODO 
-	
+	_impl->started = false;	//TODO
 }
 
 void CBizUser::reconnect()
@@ -166,7 +207,6 @@ void CBizUser::reconnect()
 	//
 	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx], _impl->port))
 	{
-		pUser->OnLogData();
 		return;
 	}
 	//

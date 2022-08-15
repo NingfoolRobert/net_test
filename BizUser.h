@@ -34,6 +34,7 @@ public:
 	bool	send_message(unsigned int nMsgID, unsigned int nMsgNo, char*  pData, unsigned int nMsgLen);
 public:
 	struct Impl;
+private:
 	Impl*	_impl;
 };
 
