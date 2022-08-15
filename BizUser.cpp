@@ -18,6 +18,7 @@ struct CBizUser::Impl {
 	unsigned char			ip_idx;
 	unsigned int			host_ip[4];		//DNS => host_ip
 	unsigned short			port;
+	char					api_name[26];
 	///////////////////////////////
 	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10),ip_cnt(0), ip_idx(0){
 
@@ -78,6 +79,7 @@ void OnHeartBeatTimer()
 	//g_impl->conn->send_msg()
 	if (g_impl->conn->_break_timestamp)
 		return;
+	//gene heartbeat message 
 	g_impl->conn->send_msg(nullptr, 0);
 }
 
@@ -90,7 +92,10 @@ void  ActiveWorkThread(CBizUser::Impl* impl) {
 	{
 		impl->loop->loop(vecTmp, 10);
 	}
-	//TODO print exit
+	//
+	char szTmp[1024] = { 0 };
+	sprintf(szTmp, "%s api stoped ...", g_impl->api_name);
+	pUser->OnLogData(4, szTmp);
 }
 
 
@@ -183,8 +188,8 @@ bool CBizUser::start(COMMONCFG* cfg)
 
 void CBizUser::stop()
 {
-	//TODO 
-	_impl->started = false;	//TODO
+	_impl->started = false;	
+	_impl->loop->wakeup();
 }
 
 void CBizUser::reconnect()

@@ -12,6 +12,13 @@
 
 eventloop::eventloop()
 {
+#ifdef _WIN32
+	_wake_recv_fd = NULL;
+	_wake_listen_fd = NULL;
+	_wake_send_fd = NULL;
+#else 
+	_wake_fd = -1;
+#endif 
 }
 
 eventloop::~eventloop()
@@ -129,7 +136,7 @@ void eventloop::add_timer(tagtimercb cb)
 	_list_timers.push_back(cb);
 }
 
-void eventloop::notify_all()
+void eventloop::wakeup()
 {
 	uint64_t one = 1;
 #ifdef _WIN32
