@@ -10,12 +10,10 @@ tcp_conn::tcp_conn(eventloop* eloop, MSGLENPARSEFUNC msg_head_fnc, unsigned int 
 	_expected_len(nHeadLen), 
 	_recv_len(0), 
 	_recv_buf(nullptr),
-	_send_len(0),
-	_snded_len(0),
-	_send_buf(nullptr)
-
+	_snd_wait_buf(nullptr)
 {
 	_pool = ngx_create_pool(1);
+	_snd_wait_buf = new cycle_memory_block(2 * 1024 * 1024);
 }
 
 tcp_conn::~tcp_conn()
@@ -31,16 +29,15 @@ void tcp_conn::OnRead()
 			return;
 	}
 	//
-	int recv_len = ::recv(m_fd, (char*)_recv_buf + _recv_len, _expected_len - _recv_len, 0);
+	int recv_len = ::recv(_fd, (char*)_recv_buf + _recv_len, _expected_len - _recv_len, 0);
 	if (recv_len < 0)
 	{
 #if _WIN32
 		if (GetLastError() != EWOULDBLOCK)
-			OnDisConnect();
 #else 
-		if (errno != EAGAIN || errno != EINTR)
-			OnDisConnect();
+		if (errno != EAGAIN || errno != EINTR)	
 #endif 
+			OnDisConnect();
 		return;
 	}
 	else if (recv_len == 0)//peer close 
@@ -76,9 +73,84 @@ void tcp_conn::OnRead()
 
 void tcp_conn::OnSend()
 {
-
+	std::unique_lock<std::mutex> _(_lck);
+	int send_len = net_client_base::send_msg(_snd_wait_buf->data(), _snd_wait_buf->c_length());
+	if (send_len < 0)
+	{
+#if _WIN32
+		if (GetLastError() != EWOULDBLOCK)
+#else 
+		if (errno != EAGAIN && errno != EINTR)
+#endif 
+		{
+			OnDisConnect();
+			return;
+		}
+	}
+	else if (send_len == 0)
+	{
+		OnDisConnect();
+		return;
+	}
+	//
+	_snd_wait_buf->pop(send_len);
 }
 
+
+int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
+{
+	std::unique_lock<std::mutex> _(_lck);
+	if (_snd_wait_buf == nullptr || _snd_wait_buf->size())
+	{
+		int send_len = net_client_base::send_msg(pData, nMsgLen);
+		if (send_len < 0)
+		{
+#if _WIN32
+			if (GetLastError() != EWOULDBLOCK)
+#else 
+			if (errno != EAGAIN && errno != EINTR)
+#endif 
+			{
+				OnDisConnect();
+				return -1;
+			}
+			//
+			if (!_snd_wait_buf->append((void*)pData, nMsgLen))
+			{
+				return 1;
+			}
+			return 0;
+		}
+		else if (send_len == 0)
+		{
+			OnDisConnect();
+			return -1;
+		}
+		//
+		if (send_len < nMsgLen)
+		{
+			if (!_snd_wait_buf->append((void*)(pData + send_len), nMsgLen - send_len))
+			{
+				return 1;
+			}
+		}
+		else if (send_len == nMsgLen)
+		{
+			return 0;
+		}
+		return 1;
+	}
+	//
+	if (!_snd_wait_buf->append((void*)pData, nMsgLen))
+		return 1;
+	return 0;
+}
+
+unsigned int tcp_conn::get_wait_send_cnt()
+{
+	std::unique_lock<std::mutex> _(_lck);
+	return _snd_wait_buf->size();
+}
 
 bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
 {
@@ -91,6 +163,8 @@ bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
 
 void tcp_conn::OnDisConnect()
 {
+	_break_timestamp = time(NULL);
+	//
 	if (_loop)
 		_loop->remove(this);
 	//
@@ -98,14 +172,3 @@ void tcp_conn::OnDisConnect()
 		_dis_conn_fnc();
 }
 
-void tcp_conn::OnConnect()
-{
-
-}
-
-
-bool tcp_conn::SendMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nDataLen)
-{
-	//TODO 
-	return true;
-}

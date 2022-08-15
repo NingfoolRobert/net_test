@@ -12,6 +12,7 @@ typedef  void(*PCALLBACKFUNC)();
 
 typedef  bool(*PMSGFUNC)(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen);
 
+class eventloop;
 
 class net_client_base
 {
@@ -24,19 +25,30 @@ public:
 
 	virtual  void	OnSend() {}
 
-	virtual  unsigned int  GetWaitSendCnt() { return 0; }
+	virtual  unsigned int  get_wait_send_cnt() { return 0; }
+
+	virtual int 	send_msg(const char* pData, unsigned int nMsgLen);
 public:
 #if _WIN32 
-	SOCKET  Create(int protocol_type, int socket_type, int protocol_detail_type);
+	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
 #else 
-	int		Create()
+	int		create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
 #endif
+	//
+	bool	connect(unsigned int host_ip, unsigned short port);
+
+	bool	set_tcp_nodelay();
+
+	bool	set_nio(int mode = 1);
+
+	void	close();
 public:
 #if _WIN32 
-	SOCKET		m_fd;
+	SOCKET		_fd;
 #else 
-	int			m_fd;
+	int			_fd;
 #endif 
+	time_t		_break_timestamp;
 };
 
 

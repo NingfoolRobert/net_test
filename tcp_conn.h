@@ -2,11 +2,13 @@
 #define _TCP_CONN_H_
 
 #include "net_client_base.h"
-#include <vector>
+
 
 #include "memory_pool.h"
+#include "cycle_memory_block.h"
 
-
+#include <vector>
+#include <mutex>
 
 class eventloop;
 
@@ -22,16 +24,16 @@ public:
 	virtual void   OnRead();
 
 	virtual void   OnSend();
+
+	virtual int	   send_msg(const char* pData, unsigned int nMsgLen);
+
+	virtual  unsigned int  get_wait_send_cnt();
 public:
 
 public:
 	bool   OnMessage(char* pData, unsigned int nDataLen);
 
 	void   OnDisConnect();
-
-	void   OnConnect();
-public:
-	bool   SendMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nDataLen);
 private:
 	eventloop*			_loop;
 	MSGLENPARSEFUNC		_msg_head_fnc;
@@ -47,9 +49,8 @@ private:
 	unsigned int		_recv_len;
 	void*				_recv_buf;
 	
-	unsigned int		_send_len;
-	unsigned int		_snded_len;
-	void*				_send_buf;
+	std::mutex			_lck;
+	cycle_memory_block*	_snd_wait_buf;
 };
 
 

@@ -11,16 +11,21 @@ struct CBizUser::Impl {
 	COMMONCFG				cfg;
 	eventloop				*loop;
 	net_client_base*		conn;
-	short					logoned;
-	short					started;
 	unsigned int			timeout;		//event loop ms;
+	unsigned char			logoned;
+	unsigned char			started;
+	unsigned char			ip_cnt;			
+	unsigned char			ip_idx;
+	unsigned int			host_ip[4];		//DNS => host_ip
+	unsigned short			port;
 	CBizUser*				user;
 	///////////////////////////////
-	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10) {
+	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10),ip_cnt(0), ip_idx(0){
 
 		if (cfg.hearbeat_int == 0) cfg.hearbeat_int = 30;
 		if (cfg.log_level == 0) cfg.log_level = 4;
 	}
+	//
 	~Impl() {
 		if (loop)
 		{
@@ -37,6 +42,7 @@ struct CBizUser::Impl {
 ///////////////////////////////////////
 
 void  OnNetDisConn() {
+	//print disconnet 
 	pUser->OnDisConnect();
 }
 
@@ -86,19 +92,49 @@ bool CBizUser::start(COMMONCFG* cfg)
 	//
 	memcpy(&_impl->cfg, cfg, sizeof(COMMONCFG));
 	//
-	_impl->loop = new eventloop;
-	_impl->conn = new tcp_conn(_impl->loop, nullptr, 16, OnNetDisConn, OnNetMsg);
+	if(nullptr == _impl->loop)
+		_impl->loop = new eventloop;
+	//
 	if (nullptr == _impl->conn)
 	{
-		char szTmp[1024] = { 0 };
-		sprintf(szTmp, "memory error!");
-		OnLogData(5, szTmp);
+		_impl->conn = new tcp_conn(_impl->loop, nullptr, 16, OnNetDisConn, OnNetMsg);
+		if (nullptr == _impl->conn)
+		{
+			char szTmp[1024] = { 0 };
+			sprintf(szTmp, "memory error!");
+			OnLogData(5, szTmp);
+			return false;
+		}
+	}
+	//
+#if _WIN32 
+	SOCKET sock = _impl->conn->create();
+	if(INVALID_SOCKET == sock)
+#else 
+	int sock = _impl->conn->Create();
+	if (sock == -1)
+#endif 
+	{
+		return false;
+	}
+	_impl->conn->set_tcp_nodelay();
+	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx],  _impl->port))
+	{
+		//LogError("connect server fail. ip:port=%s:%d", _impl->cfg.ip, _impl->cfg.port);
+		delete _impl->conn;
+		delete _impl->loop;
 		return false;
 	}
 	//
+	OnConnect();
+	//
+	_impl->conn->set_nio();
+	_impl->loop->add(_impl->conn);
 	_impl->started = 1;
 	std::thread* thr = new std::thread(ActiveWorkThread, _impl);
 	thr->detach();
+	//start log on 
+	
 	//
 	return true;
 }
@@ -107,15 +143,38 @@ void CBizUser::stop()
 {
 	//TODO 
 	_impl->started = false;	//TODO 
+	
 }
 
 void CBizUser::reconnect()
 {
+	if (_impl->cfg.auto_reconnect) 
+		return;
+	//
 	_impl->loop->remove(_impl->conn);
-	tcp_conn* pConn = new tcp_conn(this, _impl->loop, nullptr, 16);
-	//TODO conenct 
-	
+	_impl->conn->close();
+#if _WIN32
+	SOCKET sock = _impl->conn->create();
+	if(INVALID_SOCKET == sock)
+#else 
+	int sock = _impl->conn->create();
+	if (sock < 0)
+#endif 
+	{
+		return;
+	}
+	//
+	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx], _impl->port))
+	{
+		pUser->OnLogData();
+		return;
+	}
+	//
+	_impl->loop->add(_impl->conn);
+	OnConnect();
 	//TODO logon
+	
+	//
 }
 
 bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen)
@@ -123,9 +182,9 @@ bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, char* pDat
 	if (!_impl->started || !_impl->logoned || nMsgLen == 0 || nullptr == pData)
 		return false;
 
-	if (_impl->conn)
-		return _impl->conn->SendMsg(nMsgID, nMsgNo, pData, nMsgLen);
-
-	return false;
+	if (nullptr == _impl->conn || _impl->conn->_break_timestamp)
+		return false;
+	//
+	return _impl->conn->send_msg(pData, nMsgLen);
 }
 
