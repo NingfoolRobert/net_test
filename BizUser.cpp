@@ -201,11 +201,6 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	return true;
 }
 
-
-{
-
-}
-
 void CBizUser::stop()
 {
 	_impl->started = false;	
