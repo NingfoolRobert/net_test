@@ -4,7 +4,6 @@
 #if _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
-
 #else
 #include <unistd.h>
 #include <sys/select.h>

@@ -1,6 +1,14 @@
 #include "tcp_conn.h"
 #include "eventloop.h"
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#include <winerror.h>
+#include <errno.h>
+#else 
+#include <errno.h>
+#endif 
+
 tcp_conn::tcp_conn(eventloop* eloop, MSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PCALLBACKFUNC dis_conn_fnc, PMSGFUNC pfnc) :
 	_loop(eloop),
 	_msg_head_fnc(msg_head_fnc),
@@ -154,10 +162,7 @@ unsigned int tcp_conn::get_wait_send_cnt()
 
 bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
 {
-	unsigned int nMsgID;
-	unsigned int nMsgNo;
-	unsigned int nMsgLen = 0;
-	return _msg_fnc(nMsgID, nMsgNo, pData, nMsgLen);
+	return _msg_fnc(pData, nDataLen);
 }
 
 void tcp_conn::OnDisConnect()

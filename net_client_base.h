@@ -1,7 +1,7 @@
 #ifndef _NET_CLINET_BASE_H_
 #define _NET_CLINET_BASE_H_
 
-#if _WIN32 
+#ifdef _WIN32 
 #include <WinSock2.h>
 #include <windows.h>
 #else 
@@ -12,7 +12,7 @@
 
 typedef  void(*PCALLBACKFUNC)();
 
-typedef  bool(*PMSGFUNC)(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen);
+typedef  bool(*PMSGFUNC)(char* pData, unsigned int nMsgLen);
 
 class eventloop;
 

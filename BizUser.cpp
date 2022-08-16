@@ -2,7 +2,7 @@
 #include "eventloop.h"
 
 #include "tcp_conn.h"
-
+#include <thread>
 
 class CBizUser* pUser = nullptr;
 CBizUser::Impl* g_impl = nullptr;
@@ -18,7 +18,7 @@ struct CBizUser::Impl {
 	unsigned char			ip_idx;
 	unsigned int			host_ip[4];		//DNS => host_ip
 	unsigned short			port;
-	char					api_name[26];
+	char					api_name[30];
 	///////////////////////////////
 	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10),ip_cnt(0), ip_idx(0){
 
@@ -62,18 +62,24 @@ bool OnMessage(const char* data, unsigned int len)
 	return pUser->OnMessage(0, 0, (void*)data, len);
 }
 //
-bool OnNetMsg(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen)
+bool OnNetMsg(char* pData, unsigned int nMsgLen)
 {
+	unsigned int nMsgID, nMsgNo;
 	if (nMsgID == 1)
 	{
 		pUser->OnLogon(nMsgNo);
+		if (nMsgNo == 0)	//log on success
+		{
+			//TODO ¶¨Ê±ÐÄÌø
+			//g_impl->loop->add_timer();
+		}
 		return true;
 	}
 	//
 	return pUser->OnMessage(nMsgID, nMsgNo, pData, nMsgLen);
 }
 //
-void OnHeartBeatTimer()
+void OnHeartBeatTimer(void* param)
 {
 	//heartbeat message to send
 	//g_impl->conn->send_msg()
@@ -135,19 +141,20 @@ CBizUser::~CBizUser()
 	}
 }
 
-bool CBizUser::start(COMMONCFG* cfg)
+bool CBizUser::start(const COMMONCFG& cfg)
 {
 #ifdef _WIN32 
 	WSADATA  wsa_data;
 	WSAStartup(MAKEWORD(2, 2), &wsa_data);
 #endif 
-	if (nullptr == cfg || _impl->started)
+	if (0 == cfg.ip[0] || _impl->started)
 		return false;
 	//
-	memcpy(&_impl->cfg, cfg, sizeof(COMMONCFG));
+	memcpy(&_impl->cfg, &cfg, sizeof(COMMONCFG));
 	//
 	if(nullptr == _impl->loop)
 		_impl->loop = new eventloop;
+	//
 	//
 	if (nullptr == _impl->conn)
 	{
@@ -192,6 +199,11 @@ bool CBizUser::start(COMMONCFG* cfg)
 	
 	//
 	return true;
+}
+
+
+{
+
 }
 
 void CBizUser::stop()
