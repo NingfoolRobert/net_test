@@ -49,6 +49,7 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	if(::connect(_fd, (struct sockaddr*)&svr_addr, sizeof(svr_addr)) < 0)
 		return false;
 	//
+	_break_timestamp = 0;
 	return true;
 }
 

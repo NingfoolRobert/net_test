@@ -2,10 +2,11 @@
 #include "eventloop.h"
 
 #include "tcp_conn.h"
+#include <string.h>
 #include <thread>
 
-class CBizUser* pUser = nullptr;
-CBizUser::Impl* g_impl = nullptr;
+
+#define HOST_IP_MAX			4
 
 struct CBizUser::Impl {
 	COMMONCFG				cfg;
@@ -14,13 +15,14 @@ struct CBizUser::Impl {
 	unsigned int			timeout;		//event loop ms;
 	unsigned char			logoned;
 	unsigned char			started;
-	unsigned char			ip_cnt;			
+	unsigned char			ip_cnt;
 	unsigned char			ip_idx;
-	unsigned int			host_ip[4];		//DNS => host_ip
+	unsigned int			host_ip[HOST_IP_MAX];		//DNS => host_ip
 	unsigned short			port;
 	char					api_name[30];
+	char					mac[5][16];		//mac addr
 	///////////////////////////////
-	Impl():loop(nullptr),conn(nullptr),logoned(0),started(0),timeout(10),ip_cnt(0), ip_idx(0){
+	Impl() :loop(nullptr), conn(nullptr), logoned(0), started(0), timeout(10), ip_cnt(0), ip_idx(0) {
 
 		if (cfg.hearbeat_int == 0) cfg.hearbeat_int = 30;
 		if (cfg.log_level == 0) cfg.log_level = 4;
@@ -38,7 +40,56 @@ struct CBizUser::Impl {
 			conn = nullptr;
 		}
 	}
+
+	bool	init();
+
+	bool	connect();
 };
+
+bool CBizUser::Impl::init()
+{
+	if (started)
+		return false;
+	//port parse 
+	char* ptr = strrchr(cfg.url, ':');
+	if (ptr == nullptr)
+		port = 0;
+	else
+	{
+		*ptr = 0;
+		port = atoi(ptr + 1);
+	}
+
+	//
+	//todo dns parse ip
+	//
+	//
+	memcpy(&cfg, &cfg, sizeof(COMMONCFG));
+	//
+	if (nullptr == loop)
+		loop = new eventloop;
+	//
+	if (nullptr == conn)
+	{
+		conn = new tcp_conn(loop, nullptr, 16, OnNetDisConn, OnNetMsg);
+		if (nullptr == conn)
+		{
+			char szTmp[1024] = { 0 };
+			sprintf(szTmp, "memory error!");
+			return false;
+		}
+	}
+	//
+	return true;
+}
+
+bool CBizUser::Impl::connect()
+{
+	return true;
+}
+//
+class CBizUser* pUser = nullptr;
+CBizUser::Impl* g_impl = nullptr;
 ///////////////////////////////////////
 void  OnNetDisConn() {
 	//print disconnet 
@@ -143,32 +194,16 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
+	if (0 == _impl->cfg.url[0] || _impl->started)
+		return false;
 #ifdef _WIN32 
 	WSADATA  wsa_data;
 	WSAStartup(MAKEWORD(2, 2), &wsa_data);
 #endif 
-	if (0 == cfg.ip[0] || _impl->started)
-		return false;
-	//
-	memcpy(&_impl->cfg, &cfg, sizeof(COMMONCFG));
-	//
-	if(nullptr == _impl->loop)
-		_impl->loop = new eventloop;
-	//
-	//
-	if (nullptr == _impl->conn)
-	{
-		_impl->conn = new tcp_conn(_impl->loop, nullptr, 16, OnNetDisConn, OnNetMsg);
-		if (nullptr == _impl->conn)
-		{
-			char szTmp[1024] = { 0 };
-			sprintf(szTmp, "memory error!");
-			OnLogData(5, szTmp);
-			return false;
-		}
-	}
+	_impl->init();
 	//
 #if _WIN32 
+
 	SOCKET sock = _impl->conn->create();
 	if(INVALID_SOCKET == sock)
 #else 

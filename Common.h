@@ -4,12 +4,10 @@
 #include <stdio.h>
 
 typedef struct tagCommonCfg {
-	char				ip[16];
-	unsigned short		port;
+	char				url[32]; //bjimstchq.cicc.com.cn:7070
 	unsigned char		auto_reconnect;		//default: 0,dont connect, 1:auto connect
 	unsigned char		log_level;			// 1:trace,2:debug, 3:info,4:notice, 5:warn, 6:error, 7:fatal
-	unsigned int		hearbeat_int;		//default:30s
-	unsigned int		resever;			//
+	unsigned short		hearbeat_int;		//default:30
 	unsigned int		userid;
 	char				pwd[32];
 	char				lisence[128];
