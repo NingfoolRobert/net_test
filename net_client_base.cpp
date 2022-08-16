@@ -1,6 +1,15 @@
 #include "net_client_base.h"
 
 
+#if _WIN32
+#include <sys/timeb.h>
+#include <ws2tcpip.h>
+#pragma  comment(lib, "ws2_32.lib")
+#else
+#include <unstd.h>
+#include <sys/socket.h>
+#endif 
+
 net_client_base::net_client_base():_break_timestamp(0)
 {
 #if _WIN32 
@@ -15,7 +24,7 @@ net_client_base::~net_client_base()
 {
 	close();
 }
-#if _WIN32 
+#ifdef _WIN32 
 SOCKET net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
 #else 
 int	 net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
@@ -31,7 +40,7 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	memset(&svr_addr, 0, sizeof(struct sockaddr_in));
 	
 	svr_addr.sin_family = AF_INET;
-#if _WIN32 
+#ifdef _WIN32 
 	svr_addr.sin_addr.S_un.S_addr = htonl(host_ip);
 #else 
 	svr_addr.sin_addr.s_addr = htonl(host_ip);
@@ -47,7 +56,7 @@ bool net_client_base::bind(unsigned int host_ip, unsigned short port)
 {
 	struct sockaddr_in  bind_addr;
 	bind_addr.sin_family = AF_INET;
-#if _WIN32 
+#ifdef _WIN32 
 	bind_addr.sin_addr.S_un.S_addr = htonl(host_ip);
 #else 
 	bind_addr.sin_addr.s_addr = htonl(host_ip);
@@ -77,7 +86,7 @@ bool net_client_base::set_tcp_nodelay()
 
 bool net_client_base::set_nio(int mode /*= 1*/)
 {
-#if _WIN32
+#ifdef _WIN32
 	ioctlsocket(_fd, FIONBIO, (u_long*)&mode);
 #else
 	int flags = fcntl(_fd, F_GETFL, 0);
@@ -109,7 +118,7 @@ bool net_client_base::set_reuse_port(bool flag /*= 1*/)
 
 void net_client_base::close()
 {
-#if _WIN32
+#ifdef _WIN32
 	closesocket(_fd);
 	_fd = INVALID_SOCKET;
 #else 

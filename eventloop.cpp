@@ -1,12 +1,13 @@
 
 #include "eventloop.h"
 
-#include <Sockets.h>
-
 #if _WIN32
 #include <sys/timeb.h>
+#include <ws2tcpip.h>
+
 #else
-#include <unstd.h>
+#include <unistd.h>
+#include <sys/select.h>
 #endif 
 
 
@@ -25,6 +26,23 @@ eventloop::~eventloop()
 {
 	_conns.clear();
 	_list_timers.clear();
+#ifdef _WIN32
+	if (_wake_listen_fd) {
+		delete _wake_listen_fd;
+		_wake_listen_fd = NULL;
+	}
+	if (_wake_recv_fd) {
+		delete _wake_recv_fd;
+		_wake_recv_fd = NULL;
+	}
+	if (_wake_send_fd) {
+		delete _wake_send_fd;
+		_wake_send_fd = NULL;
+	}
+#else 
+	close(_wake_fd);
+	_wake_fd = -1;
+#endif 
 }
 
 int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
@@ -77,6 +95,7 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 	if(FD_ISSET(_wake_fd, &rd_fds))
 #endif 
 		handle_read();
+	return 0;
 }
 
 void eventloop::add(net_client_base* conn)

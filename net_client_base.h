@@ -2,10 +2,12 @@
 #define _NET_CLINET_BASE_H_
 
 #if _WIN32 
-#include <Windows.h>
 #include <WinSock2.h>
+#include <windows.h>
 #else 
 #include <inet/apra.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #endif 
 
 typedef  void(*PCALLBACKFUNC)();

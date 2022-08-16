@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="BizUser.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -36,11 +33,14 @@
     <ClInclude Include="memory_pool.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="fmt_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cycle_memory_block.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="client.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

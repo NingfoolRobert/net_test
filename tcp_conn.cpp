@@ -156,9 +156,8 @@ bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
 {
 	unsigned int nMsgID;
 	unsigned int nMsgNo;
-	void*		 pData;
 	unsigned int nMsgLen = 0;
-	_msg_fnc(nMsgID, nMsgNo, pData, nMsgLen);
+	return _msg_fnc(nMsgID, nMsgNo, pData, nMsgLen);
 }
 
 void tcp_conn::OnDisConnect()

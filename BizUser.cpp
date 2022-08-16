@@ -92,6 +92,9 @@ void  ActiveWorkThread(CBizUser::Impl* impl) {
 	{
 		impl->loop->loop(vecTmp, 10);
 	}
+#ifdef _WIN32 
+	WSACleanup();
+#endif 
 	//
 	char szTmp[1024] = { 0 };
 	sprintf(szTmp, "%s api stoped ...", g_impl->api_name);
@@ -134,6 +137,10 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(COMMONCFG* cfg)
 {
+#ifdef _WIN32 
+	WSADATA  wsa_data;
+	WSAStartup(MAKEWORD(2, 2), &wsa_data);
+#endif 
 	if (nullptr == cfg || _impl->started)
 		return false;
 	//
@@ -178,6 +185,7 @@ bool CBizUser::start(COMMONCFG* cfg)
 	_impl->conn->set_nio();
 	_impl->loop->add(_impl->conn);
 	_impl->started = 1;
+
 	std::thread* thr = new std::thread(ActiveWorkThread, _impl);
 	thr->detach();
 	//start log on 
@@ -197,8 +205,12 @@ void CBizUser::reconnect()
 	if (_impl->cfg.auto_reconnect) 
 		return;
 	//
+	if (NULL == _impl->conn || NULL == _impl->loop)
+		return;
+	
 	_impl->loop->remove(_impl->conn);
 	_impl->conn->close();
+	
 #if _WIN32
 	SOCKET sock = _impl->conn->create();
 	if(INVALID_SOCKET == sock)

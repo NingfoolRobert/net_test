@@ -7,8 +7,16 @@
 
 class cycle_memory_block {
 public:
-	explicit cycle_memory_block(size_t  cap_);
-	~cycle_memory_block() { if (_begin) free(_begin); }
+	explicit cycle_memory_block(size_t  cap_) :
+		_cap(cap_),
+		_begin(nullptr),
+		_data_start(nullptr),
+		_data_end(nullptr)
+	{
+		_cap = cap_;
+		_begin = (char*)malloc(cap_);
+	}
+	~cycle_memory_block() { if (_begin) free(_begin); _begin = NULL; }
 public:
 	const char*					begin() { return _begin; }
 	const char*					end() { return _begin + _cap; }
@@ -26,17 +34,6 @@ private:
 	char*				_data_start;		//Êý¾ÝÍ·;
 	char*				_data_end;
 };
-
-cycle_memory_block::cycle_memory_block(size_t cap_):
-	_cap(cap_),
-	_begin(nullptr),
-	_data_start(nullptr),
-	_data_end(nullptr)
-
-{
-	_cap = cap_;
-	_begin = (char*)malloc(cap_);
-}
 
 bool cycle_memory_block::append(void* data_, size_t len)
 {
