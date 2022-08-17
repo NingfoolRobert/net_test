@@ -9,7 +9,15 @@
 #pragma comment(lib, "IPHLPAPI.lib")
 #endif 
 	///////////////////////////////
-CBizUser::Impl::Impl():loop(nullptr), conn(nullptr), logoned(0), started(0), timeout(10), ip_cnt(0), ip_idx(0) {
+CBizUser::Impl::Impl():
+	loop(nullptr), 
+	conn(nullptr), 
+	logoned(0), 
+	started(0), 
+	timeout(10), 
+	ip_cnt(0), 
+	ip_idx(0)
+{
 
 	if (cfg.hearbeat_int == 0) cfg.hearbeat_int = 30;
 	if (cfg.log_level == 0) cfg.log_level = 4;
@@ -27,6 +35,7 @@ CBizUser::Impl::~Impl() {
 		conn = nullptr;
 	}
 }
+
 bool CBizUser::Impl::init()
 {
 	if (started)
