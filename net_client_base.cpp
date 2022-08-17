@@ -1,18 +1,15 @@
 #include "net_client_base.h"
 
 
-#if _WIN32
+#ifdef _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
 #pragma  comment(lib, "ws2_32.lib")
-#else
-#include <unstd.h>
-#include <sys/socket.h>
 #endif 
 
 net_client_base::net_client_base():_break_timestamp(0)
 {
-#if _WIN32 
+#ifdef _WIN32 
 	_fd = INVALID_SOCKET;
 #else 
 	_fd = -1;

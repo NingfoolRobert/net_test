@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #endif 
 
 class net_client_base;

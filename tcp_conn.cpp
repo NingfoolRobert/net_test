@@ -40,7 +40,7 @@ void tcp_conn::OnRead()
 	int recv_len = ::recv(_fd, (char*)_recv_buf + _recv_len, _expected_len - _recv_len, 0);
 	if (recv_len < 0)
 	{
-#if _WIN32
+#ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK)
 #else 
 		if (errno != EAGAIN || errno != EINTR)	
@@ -85,7 +85,7 @@ void tcp_conn::OnSend()
 	int send_len = net_client_base::send_msg(_snd_wait_buf->data(), _snd_wait_buf->c_length());
 	if (send_len < 0)
 	{
-#if _WIN32
+#ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK)
 #else 
 		if (errno != EAGAIN && errno != EINTR)
@@ -113,7 +113,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		int send_len = net_client_base::send_msg(pData, nMsgLen);
 		if (send_len < 0)
 		{
-#if _WIN32
+#ifdef _WIN32
 			if (GetLastError() != EWOULDBLOCK)
 #else 
 			if (errno != EAGAIN && errno != EINTR)
