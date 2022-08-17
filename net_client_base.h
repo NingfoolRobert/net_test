@@ -10,9 +10,13 @@
 #include <sys/types.h>
 #endif 
 
-typedef  void(*PCALLBACKFUNC)();
+class net_client_base;
 
-typedef  bool(*PMSGFUNC)(char* pData, unsigned int nMsgLen);
+typedef  unsigned int(*PMSGLENPARSEFUNC)(const char* pData, int nDataLen);
+
+typedef  void(*PDISCONNCALLBACK)(net_client_base*);
+
+typedef  bool(*PNETMSGCALLBACK)(char* pData, unsigned int nMsgLen);
 
 class eventloop;
 
