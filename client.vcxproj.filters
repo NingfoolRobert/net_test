@@ -39,6 +39,9 @@
     <ClInclude Include="cycle_memory_block.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Impl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client.cpp">
@@ -57,6 +60,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="memory_pool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Impl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

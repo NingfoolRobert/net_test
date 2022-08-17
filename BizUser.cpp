@@ -114,7 +114,7 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
-	if (0 == _impl->cfg.url[0] || _impl->started)
+	if (0 != _impl->cfg.url[0] || _impl->started)
 		return false;
 #ifdef _WIN32 
 	WSADATA  wsa_data;
@@ -164,27 +164,15 @@ void CBizUser::stop()
 
 void CBizUser::reconnect()
 {
-	if (_impl->cfg.auto_reconnect) 
+	if (_impl->conn->_break_timestamp == 0 || _impl->cfg.auto_reconnect) 
 		return;
 	//
 	if (NULL == _impl->conn || NULL == _impl->loop)
 		return;
 	
 	_impl->loop->remove(_impl->conn);
-	_impl->conn->close();
-	
-#if _WIN32
-	SOCKET sock = _impl->conn->create();
-	if(INVALID_SOCKET == sock)
-#else 
-	int sock = _impl->conn->create();
-	if (sock < 0)
-#endif 
-	{
-		return;
-	}
-	//
-	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx], _impl->port))
+
+	if (!_impl->connect())
 	{
 		return;
 	}

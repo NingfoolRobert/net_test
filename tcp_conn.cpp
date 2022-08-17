@@ -9,7 +9,7 @@
 #include <errno.h>
 #endif 
 
-tcp_conn::tcp_conn(eventloop* eloop, MSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PCALLBACKFUNC dis_conn_fnc, PMSGFUNC pfnc) :
+tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PDISCONNCALLBACK dis_conn_fnc, PNETMSGCALLBACK pfnc) :
 	_loop(eloop),
 	_msg_head_fnc(msg_head_fnc),
 	_msg_fnc(pfnc),
@@ -173,6 +173,6 @@ void tcp_conn::OnDisConnect()
 		_loop->remove(this);
 	//
 	if(_dis_conn_fnc)
-		_dis_conn_fnc();
+		_dis_conn_fnc(this);
 }
 

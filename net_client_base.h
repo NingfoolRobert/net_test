@@ -5,9 +5,10 @@
 #include <WinSock2.h>
 #include <windows.h>
 #else 
-#include <inet/apra.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #endif 
 
 class net_client_base;

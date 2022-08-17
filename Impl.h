@@ -6,10 +6,10 @@
 #include "eventloop.h"
 
 #define HOST_IP_MAX			4
+#define HOST_MAC_MAX		5
+#define MAC_LENGTH_MAX		24
 
-/*typedef  void(*PDISCONNCALLBACK)(net_client_base*);*/
 typedef  void(*PTIMERCALLBACK)(void* param);
-/*typedef  bool(*PNETMSGCALLBACK)(void*, unsigned int);*/
 
 struct CBizUser::Impl {
 	COMMONCFG				cfg;
@@ -23,10 +23,10 @@ struct CBizUser::Impl {
 	unsigned int			host_ip[HOST_IP_MAX];		//DNS => host_ip
 	unsigned short			port;
 	char					api_name[30];
-	char					mac[5][16];		//mac addr
+	char					mac[HOST_MAC_MAX][MAC_LENGTH_MAX];		//mac addr
 
-	PDISCONNCALLBACK		dis_conn_cb;
 	PTIMERCALLBACK			timer_cb;
+	PDISCONNCALLBACK		dis_conn_cb;
 	PNETMSGCALLBACK			msg_cb;
 	PMSGLENPARSEFUNC		msg_head_fnc;
 	///////////////////////////////
@@ -52,6 +52,12 @@ struct CBizUser::Impl {
 	bool	init();
 
 	bool	connect();
+
+	void	parse_url();
+
+	void	get_local_mac();
+
+	void	get_local_ip();
 };
 
 
