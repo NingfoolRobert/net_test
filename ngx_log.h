@@ -30,7 +30,7 @@ enum enum_log_level
 
 typedef struct ngx_log_data_s
 {
-	void				*data;
+	char				*data;
 	size_t				 len;
 	ngx_log_data_s		*next;
 }ngx_log_data_t;
@@ -52,7 +52,6 @@ public:
 private:
 	std::mutex				_lck;
 	ngx_pool_t*				_pool;
-	ngx_log_data_t*			_last;
 	ngx_log_data_t*			_head;			//
 };
 

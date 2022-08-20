@@ -2,6 +2,9 @@
 #include "eventloop.h"
 #include "Impl.h"
 #include "tcp_conn.h"
+#include "ngx_log.h"
+
+
 #include <string.h>
 #include <thread>
 
@@ -74,8 +77,8 @@ void  ActiveWorkThread(CBizUser::Impl* impl) {
 #endif 
 	//
 	char szTmp[1024] = { 0 };
-	sprintf(szTmp, "%s api stoped ...", g_impl->api_name);
-	pUser->OnLogData(4, szTmp);
+	ngx_log_info("%s api stoped ...", g_impl->api_name);
+
 }
 
 
@@ -114,8 +117,17 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
-	if (0 != _impl->cfg.url[0] || _impl->started)
+	if (0 != _impl->cfg.url[0])// || _impl->started)
+	{
+		ngx_log_fatal("init %s fail, not define url", _impl->api_name);
 		return false;
+	}
+	//
+	if (_impl->started)
+	{
+		ngx_log_warn("init %s fail, api started", _impl->api_name);
+		return false;
+	}
 #ifdef _WIN32 
 	WSADATA  wsa_data;
 	WSAStartup(MAKEWORD(2, 2), &wsa_data);

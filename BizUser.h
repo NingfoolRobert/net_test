@@ -46,8 +46,6 @@ public:
 	virtual void  OnLogon(const int ret) {}
 	//
 	virtual void  OnHeartBeat() {}
-	//
-	virtual void  OnLogData(int err_level, const char*  log_data){}
 public:
 	bool	start(const COMMONCFG&  cfg);
 

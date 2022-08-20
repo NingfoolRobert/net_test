@@ -1,5 +1,6 @@
 #include "Impl.h"
 #include "tcp_conn.h"
+#include "ngx_log.h"
 
 #ifdef _WIN32
 #include <iphlpapi.h>
@@ -8,7 +9,15 @@
 //#pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "IPHLPAPI.lib")
 #endif 
-	///////////////////////////////
+
+//
+void write_log_timer_cb(void* param) {
+	g_log_ptr->print_log_file(g_log_ptr);
+}
+//
+
+
+///////////////////////////////
 CBizUser::Impl::Impl():
 	loop(nullptr), 
 	conn(nullptr), 
@@ -21,6 +30,10 @@ CBizUser::Impl::Impl():
 
 	if (cfg.hearbeat_int == 0) cfg.hearbeat_int = 30;
 	if (cfg.log_level == 0) cfg.log_level = 4;
+	//
+	char szLogFileName[256] = { 0 };
+	sprintf(szLogFileName, "./%s.log", api_name);
+	g_log_ptr = new ngx_log(szLogFileName);
 }
 //
 CBizUser::Impl::~Impl() {
@@ -34,6 +47,11 @@ CBizUser::Impl::~Impl() {
 		delete conn;
 		conn = nullptr;
 	}
+	//
+	ngx_log_info("%s stoped...", api_name);
+	g_log_ptr->print_log_file(g_log_ptr);
+	delete g_log_ptr;
+	g_log_ptr = NULL;
 }
 
 bool CBizUser::Impl::init()
@@ -53,9 +71,18 @@ bool CBizUser::Impl::init()
 		this->loop = new eventloop;
 		if (nullptr == this->loop)
 		{
+			ngx_log_error("memory error.");
 			return false;
 		}
+		//
+		tagtimercb time_cb;
+		time_cb.cb = write_log_timer_cb;
+		time_cb.count = -1;
+		time_cb.time_gap = 10;
+		time_cb.param = this;
+		this->loop->add_timer(time_cb);
 	}
+	
 	//
 	return true;
 }
@@ -118,11 +145,12 @@ bool CBizUser::Impl::connect()
 
 	if (!conn->connect(host_ip[ip_idx], port))
 	{
-		//TODO print log 
+		ngx_log_error("connect server fail., ip:port=%s:%d", _impl->cfg.url, _impl->port);
 		return false;
 	}
 	//
 	conn->_break_timestamp = 0;
+	ngx_log_info("connect server success, ip:port=%s:%d", _impl->cfg.url, _impl->port);
 	return true;
 }
 
@@ -203,3 +231,11 @@ void CBizUser::Impl::get_local_ip()
 {
 
 }
+
+void CBizUser::Impl::uninit()
+{
+
+	loop->wakeup();
+
+}
+

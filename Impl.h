@@ -36,6 +36,8 @@ struct CBizUser::Impl {
 
 	bool	init();
 
+	void	uninit();
+
 	bool	connect();
 
 	void	parse_url();

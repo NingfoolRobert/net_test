@@ -3,17 +3,15 @@
 #include <stdarg.h>
 #ifdef _WIN32 
 #include <sys/timeb.h>
-
 #endif 
 
 
 ngx_log*			g_log_ptr = nullptr;
 
-
 static const char*   log_level_prefix[] = { "", "[TRACE] ", "[DEBUG] ", "[INFO] ", "[NOTIC] ", "[WARN] ", "[ERROR] ", "[FATAL] " };
 
 
-ngx_log::ngx_log(const char* file_name) :_level(log_level_info), _last(NULL), _head(NULL)
+ngx_log::ngx_log(const char* file_name) :_level(log_level_info),  _head(NULL)
 {
 	g_log_ptr = this;
 	if(file_name)	strcpy(_name, file_name);
@@ -23,6 +21,8 @@ ngx_log::ngx_log(const char* file_name) :_level(log_level_info), _last(NULL), _h
 ngx_log::~ngx_log()
 {
 	g_log_ptr = nullptr;
+	ngx_destroy_pool(_pool);
+	_head = NULL;
 }
 
 void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
@@ -48,27 +48,43 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	unsigned int prefix_len = strlen(szTmp);
 	va_list args;
 	va_start(fmt, args);
-	unsigned int nLen = vsprintf(NULL, fmt, args);
+	unsigned int nLen = vsnprintf(NULL, 0, fmt, args);
 	nLen += prefix_len;
 	ngx_log_data_t* log = (ngx_log_data_t*)ngx_palloc(_pool, sizeof(ngx_log_data_t));
 	if (NULL == log)
-		return;
-	log->data = ngx_palloc(_pool, nLen + 1);
-	log->len = nLen;
-	log->next = NULL;
-	//
-	vsprintf((char*)(log->data) + prefix_len, fmt, args);
-	va_end(args);
-
 	{
-		std::unique_lock<std::mutex> _(_lck);
-		if (_last == NULL) {
-			_last = log;
-			_head = _last;
+		va_end(args);
+		return;
+	}
+#ifdef _WIN32
+	log->data = (char*)ngx_palloc(_pool, nLen + 3);
+	log->len = nLen + 2;
+#else 
+	log->data = ngx_palloc(_pool, nLen + 2);
+	log->len = nLen + 1;
+#endif
+	
+	log->next = NULL;
+	memcpy(log->data, szTmp, prefix_len);
+	//
+	vsnprintf((char*)(log->data) + prefix_len, nLen - prefix_len, fmt, args);
+	va_end(args);
+	
+#ifdef _WIN32
+	strcpy((char*)(log->data) + nLen, "\r\n");
+#else 
+	strcpy((char*)(log->data) + nLen, "\n");
+#endif 
+	{
+		if (_head == NULL)
+		{
+			_head = log;
 		}
-		else {
-			_last->next = log;
-			_last = log;
+		else
+		{
+			ngx_log_data_t *pre = _head;
+			while (pre->next)  pre = pre->next;
+			pre->next = log;
 		}
 	}
 }
@@ -77,15 +93,22 @@ void ngx_log::print_log_file(ngx_log* log_file)
 {
 	if (NULL == _head || NULL == _head->data)
 		return;
-	ngx_log_data_t* pre = _head;
-	FILE* pFile = fopen(_name, "a+");
+	// = _head;
+	FILE* pFile = fopen(_name, "ab+");
 	if (NULL == pFile)
 		return;
 	//
-	fwrite(pre->data, 1, pre->len, pFile);
+	ngx_log_data_t *pre, *next;
+	pre = _head;
+	while(pre)
+	{ 
+		next = pre->next;
+		fwrite(pre->data, 1, pre->len, pFile);
+		//
+		ngx_free(_pool, pre->data);
+		_head = next;
+		ngx_free(_pool, pre);
+		pre = next;
+	}
 	fclose(pFile);
-	//
-	_head = _head->next;
-	ngx_free(_pool, pre->data);
-	ngx_free(_pool, pre);
 }

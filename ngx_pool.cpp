@@ -106,7 +106,7 @@ void ngx_free(struct ngx_pool_s* pool, void* p)
 			pnode->ref--;
 			//
 			if (pnode->ref == 0)
-				pnode->last = pnode->last;
+				pnode->last = pnode->start;
 			return;
 		}
 	}
