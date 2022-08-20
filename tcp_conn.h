@@ -4,7 +4,7 @@
 #include "net_client_base.h"
 
 
-#include "memory_pool.h"
+#include "ngx_pool.h"
 #include "cycle_memory_block.h"
 
 #include <vector>

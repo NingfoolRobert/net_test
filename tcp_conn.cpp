@@ -32,7 +32,7 @@ void tcp_conn::OnRead()
 {
 	if (_recv_buf == nullptr)
 	{
-		_recv_buf = ngx_allocate(_pool, _expected_len);
+		_recv_buf = ngx_palloc(_pool, _expected_len);
 		if (nullptr == _recv_buf)
 			return;
 	}
@@ -61,7 +61,7 @@ void tcp_conn::OnRead()
 		_expected_len = _msg_head_fnc((char*)_recv_buf, _recv_len);
 		if (_expected_len > _head_len)
 		{
-			void* buf = ngx_allocate(_pool, _expected_len);
+			void* buf = ngx_palloc(_pool, _expected_len);
 			if (NULL == buf)
 				return;
 			memcpy(buf, _recv_buf, _recv_len);

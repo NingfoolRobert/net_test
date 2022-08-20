@@ -158,8 +158,10 @@
     <ClInclude Include="eventloop.h" />
     <ClInclude Include="fmt_log.h" />
     <ClInclude Include="Impl.h" />
-    <ClInclude Include="memory_pool.h" />
     <ClInclude Include="net_client_base.h" />
+    <ClInclude Include="ngx_list.h" />
+    <ClInclude Include="ngx_log.h" />
+    <ClInclude Include="ngx_pool.h" />
     <ClInclude Include="tcp_conn.h" />
   </ItemGroup>
   <ItemGroup>
@@ -167,8 +169,10 @@
     <ClCompile Include="client.cpp" />
     <ClCompile Include="eventloop.cpp" />
     <ClCompile Include="Impl.cpp" />
-    <ClCompile Include="memory_pool.cpp" />
     <ClCompile Include="net_client_base.cpp" />
+    <ClCompile Include="ngx_list.cpp" />
+    <ClCompile Include="ngx_log.cpp" />
+    <ClCompile Include="ngx_pool.cpp" />
     <ClCompile Include="tcp_conn.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

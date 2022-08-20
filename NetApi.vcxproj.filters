@@ -30,9 +30,6 @@
     <ClInclude Include="net_client_base.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="memory_pool.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="fmt_log.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -40,6 +37,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Impl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ngx_list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ngx_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ngx_pool.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,10 +65,16 @@
     <ClCompile Include="net_client_base.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="memory_pool.cpp">
+    <ClCompile Include="Impl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Impl.cpp">
+    <ClCompile Include="ngx_list.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ngx_log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ngx_pool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

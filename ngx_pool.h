@@ -1,5 +1,5 @@
-#ifndef _MEMORY_POOL_H_
-#define _MEMORY_POOL_H_
+#ifndef _NGX_POOL_H_
+#define _NGX_POOL_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +38,7 @@ void  ngx_destroy_pool(struct ngx_pool_s *pool);
 
 void  ngx_reset_pool(struct ngx_pool_s *pool);
 
-void*  ngx_allocate(struct ngx_pool_s* pool, size_t  size);
+void*  ngx_palloc(struct ngx_pool_s* pool, size_t  size);
 
 void  ngx_free(struct ngx_pool_s* pool, void* p);
 

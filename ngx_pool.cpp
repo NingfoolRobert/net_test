@@ -1,4 +1,4 @@
-#include "memory_pool.h"
+#include "ngx_pool.h"
 
 #define PAGE_SIZE  4096
 
@@ -66,7 +66,7 @@ void ngx_reset_pool(struct ngx_pool_s *pool)
 	//TODO 
 }
 
-void* ngx_allocate(struct ngx_pool_s* pool, size_t size)
+void* ngx_palloc(struct ngx_pool_s* pool, size_t size)
 {
 	if (size <= 0)
 		return NULL;
