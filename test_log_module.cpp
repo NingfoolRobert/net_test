@@ -25,7 +25,7 @@ int main()
 	while (1)
 	{
 		nCnt++;
-		g_log_ptr->write_level_log(log_level_info, "test one %d", nCnt);
+		ngx_log_info("test one %d", nCnt);
 		Sleep(6);
 	}
 }
