@@ -47,7 +47,7 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	//
 	unsigned int prefix_len = strlen(szTmp);
 	va_list args;
-	va_start(fmt, args);
+	va_start(args, fmt);
 	unsigned int nLen = vsnprintf(NULL, 0, fmt, args);
 	nLen += prefix_len;
 	ngx_log_data_t* log = (ngx_log_data_t*)ngx_palloc(_pool, sizeof(ngx_log_data_t));
