@@ -145,12 +145,12 @@ bool CBizUser::Impl::connect()
 
 	if (!conn->connect(host_ip[ip_idx], port))
 	{
-		ngx_log_error("connect server fail., ip:port=%s:%d", _impl->cfg.url, _impl->port);
+		ngx_log_error("connect server fail., ip:port=%s:%d", cfg.url, port);
 		return false;
 	}
 	//
 	conn->_break_timestamp = 0;
-	ngx_log_info("connect server success, ip:port=%s:%d", _impl->cfg.url, _impl->port);
+	ngx_log_info("connect server success, ip:port=%s:%d", cfg.url, port);
 	return true;
 }
 

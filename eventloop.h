@@ -11,8 +11,9 @@
 
 typedef void(*PTIMERCALLBACK)(void*);
 struct tagtimercb {
+	unsigned short			timer_id;
+	short					count;				//-1: 
 	unsigned int			time_gap;			//ms 
-	unsigned int			count;				// -1: 
 	unsigned long long		timestamp;			//ms
 	void*					param;				//callback param 
 	PTIMERCALLBACK			cb;
@@ -31,6 +32,8 @@ public:
 	void	remove(net_client_base* conn);
 
 	void	add_timer(tagtimercb  cb);
+
+	void	remove_timer(unsigned short timer_id);
 
 	void	wakeup();
 private:

@@ -124,7 +124,10 @@ void eventloop::process_timer()
 	{
 		tagtimercb timer = *it;
 		if (timer.timestamp + timer.time_gap > now)
+		{
 			timer.cb(timer.param);
+			timer.timestamp = now;
+		}
 		//
 		if (timer.count >= 0)
 		{
@@ -151,7 +154,31 @@ void eventloop::remove(net_client_base* conn)
 void eventloop::add_timer(tagtimercb cb)
 {
 	std::unique_lock<std::mutex> _(_lck_timer);
+	unsigned long long	now = 0;
+#if _WIN32
+	timeb tbnow;
+	ftime(&tbnow);
+	now = tbnow.time * 1000 + tbnow.millitm;
+#else 
+	timeval tv;
+	get_time_of(&tv);
+	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#endif
+	cb.timestamp = now;
 	_list_timers.push_back(cb);
+}
+
+void eventloop::remove_timer(unsigned short timer_id)
+{
+	std::unique_lock<std::mutex> _(_lck_timer);
+	auto it = _list_timers.begin();
+	while (it != _list_timers.end())
+	{
+		if (it->timer_id == timer_id)
+			it = _list_timers.erase(it);
+		else
+			++it;
+	}
 }
 
 void eventloop::wakeup()
