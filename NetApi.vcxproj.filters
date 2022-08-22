@@ -30,9 +30,6 @@
     <ClInclude Include="net_client_base.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="fmt_log.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="cycle_memory_block.h">
       <Filter>头文件</Filter>
     </ClInclude>

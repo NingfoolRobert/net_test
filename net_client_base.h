@@ -37,7 +37,7 @@ public:
 
 	virtual int 	send_msg(const char* pData, unsigned int nMsgLen);
 public:
-#if _WIN32 
+#ifdef _WIN32 
 	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
 #else 
 	int		create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
@@ -59,7 +59,7 @@ public:
 
 	void	close();
 public:
-#if _WIN32 
+#ifdef _WIN32 
 	SOCKET		_fd;
 #else 
 	int			_fd;

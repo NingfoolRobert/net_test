@@ -6,7 +6,7 @@
 typedef struct tagCommonCfg {
 	char				url[32];			//
 	unsigned char		auto_reconnect;		//default: 0,dont connect, 1:auto connect
-	unsigned char		log_level;			// 1:trace,2:debug, 3:info,4:notice, 5:warn, 6:error, 7:fatal
+	unsigned char		log_level;			// 1:trace,2:debug, 3:info,4:notice, 5:warn, 6:error, 7:fatal, 8:off log
 	unsigned short		hearbeat_int;		//default:30
 	unsigned int		userid;
 	char				pwd[32];
