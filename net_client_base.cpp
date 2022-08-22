@@ -1,5 +1,5 @@
 #include "net_client_base.h"
-
+#include "eventloop.h"
 
 #ifdef _WIN32
 #include <sys/timeb.h>
@@ -7,7 +7,10 @@
 #pragma  comment(lib, "ws2_32.lib")
 #endif 
 
-net_client_base::net_client_base():_break_timestamp(0)
+net_client_base::net_client_base(eventloop* loop, PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb):
+	_break_timestamp(0),
+	_msg_cb(fnc),
+	_dis_conn_cb(dis_conn_cb)
 {
 #ifdef _WIN32 
 	_fd = INVALID_SOCKET;
@@ -15,7 +18,6 @@ net_client_base::net_client_base():_break_timestamp(0)
 	_fd = -1;
 #endif 
 }
-
 
 net_client_base::~net_client_base()
 {
@@ -132,4 +134,16 @@ int net_client_base::send_msg(const char* pData, unsigned int nMsgLen)
 	//
 	int sended_len = ::send(_fd, pData, nMsgLen, 0);
 	return sended_len;
+}
+
+void net_client_base::OnTerminate()
+{
+	_break_timestamp = time(NULL);
+	if (_loop)
+		_loop->remove(this);
+	//
+	if (_dis_conn_cb)
+		_dis_conn_cb(this);
+	//
+	close();
 }

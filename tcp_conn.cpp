@@ -10,10 +10,8 @@
 #endif 
 
 tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PDISCONNCALLBACK dis_conn_fnc, PNETMSGCALLBACK pfnc) :
-	_loop(eloop),
+	net_client_base(eloop, pfnc, dis_conn_fnc),
 	_msg_head_fnc(msg_head_fnc),
-	_msg_fnc(pfnc),
-	_dis_conn_fnc(dis_conn_fnc),
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
 	_recv_len(0), 
@@ -45,12 +43,12 @@ void tcp_conn::OnRead()
 #else 
 		if (errno != EAGAIN || errno != EINTR)	
 #endif 
-			OnDisConnect();
+			OnTerminate();
 		return;
 	}
 	else if (recv_len == 0)//peer close 
 	{
-		OnDisConnect();
+		OnTerminate();
 		return;
 	}
 
@@ -91,13 +89,13 @@ void tcp_conn::OnSend()
 		if (errno != EAGAIN && errno != EINTR)
 #endif 
 		{
-			OnDisConnect();
+			OnTerminate();
 			return;
 		}
 	}
 	else if (send_len == 0)
 	{
-		OnDisConnect();
+		OnTerminate();
 		return;
 	}
 	//
@@ -119,7 +117,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 			if (errno != EAGAIN && errno != EINTR)
 #endif 
 			{
-				OnDisConnect();
+				OnTerminate();
 				return -1;
 			}
 			//
@@ -131,7 +129,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		}
 		else if (send_len == 0)
 		{
-			OnDisConnect();
+			OnTerminate();
 			return -1;
 		}
 		//
@@ -160,19 +158,17 @@ unsigned int tcp_conn::get_wait_send_cnt()
 	return _snd_wait_buf->size();
 }
 
-bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
+void tcp_conn::OnTerminate()
 {
-	return _msg_fnc(pData, nDataLen);
+	net_client_base::OnTerminate();
+	net_client_base::close();
 }
 
-void tcp_conn::OnDisConnect()
+bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
 {
-	_break_timestamp = time(NULL);
-	//
-	if (_loop)
-		_loop->remove(this);
-	//
-	if(_dis_conn_fnc)
-		_dis_conn_fnc(this);
+	if (_msg_cb)
+		return _msg_cb(pData, nDataLen);
+	return true;
 }
+
 

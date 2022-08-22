@@ -194,7 +194,7 @@ void eventloop::wakeup()
 void eventloop::create_wakeup_fd()
 {
 #ifdef _WIN32 
-	_wake_listen_fd = new net_client_base();
+	_wake_listen_fd = new net_client_base(this, NULL, NULL);
 	_wake_listen_fd->create();
 	_wake_listen_fd->set_reuse_addr();
 	unsigned int host_ip = inet_addr("127.0.0.1");
@@ -208,13 +208,13 @@ void eventloop::create_wakeup_fd()
 	//
 	int port = ntohl(svr_addr.sin_port);
 	
-	_wake_send_fd = new net_client_base();
+	_wake_send_fd = new net_client_base(this, NULL, NULL);
 	_wake_send_fd->create();
 	_wake_send_fd->connect(host_ip, port);
 	
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
-	_wake_recv_fd = new net_client_base();
+	_wake_recv_fd = new net_client_base(this, NULL, NULL);
 	_wake_recv_fd->_fd = ::accept(_wake_listen_fd->_fd, (struct sockaddr*)&client_addr, &client_addr_len);
 	
 	_wake_recv_fd->set_nio();

@@ -13,6 +13,7 @@
 #endif 
 
 class net_client_base;
+class eventloop;
 
 typedef  unsigned int(*PMSGLENPARSEFUNC)(const char* pData, int nDataLen);
 
@@ -25,7 +26,7 @@ class eventloop;
 class net_client_base
 {
 public:
-	net_client_base();
+	net_client_base(eventloop* loop, PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb);
 	virtual ~net_client_base();
 
 public:
@@ -36,6 +37,8 @@ public:
 	virtual  unsigned int  get_wait_send_cnt() { return 0; }
 
 	virtual int 	send_msg(const char* pData, unsigned int nMsgLen);
+
+	virtual  void  OnTerminate();
 public:
 #ifdef _WIN32 
 	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
@@ -65,6 +68,10 @@ public:
 	int			_fd;
 #endif 
 	time_t		_break_timestamp;
+protected:
+	eventloop*					_loop;
+	PNETMSGCALLBACK				_msg_cb;
+	PDISCONNCALLBACK			_dis_conn_cb;
 };
 
 

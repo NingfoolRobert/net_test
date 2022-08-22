@@ -28,21 +28,15 @@ public:
 	virtual int	   send_msg(const char* pData, unsigned int nMsgLen);
 
 	virtual  unsigned int  get_wait_send_cnt();
+
+	virtual void   OnTerminate();
 public:
 
 public:
 	bool   OnMessage(char* pData, unsigned int nDataLen);
-
-	void   OnDisConnect();
 private:
-	eventloop*			_loop;
 	PMSGLENPARSEFUNC		_msg_head_fnc;
-	unsigned int		_head_len;
-
-	PDISCONNCALLBACK		_dis_conn_fnc;
-	PNETMSGCALLBACK			_msg_fnc;
-
-
+	unsigned int			_head_len;
 private:
 	ngx_pool_t			*_pool;
 	unsigned int		_expected_len;
