@@ -162,6 +162,7 @@
     <ClInclude Include="eventloop.h" />
     <ClInclude Include="Impl.h" />
     <ClInclude Include="net_client_base.h" />
+    <ClInclude Include="ngx_buf.h" />
     <ClInclude Include="ngx_list.h" />
     <ClInclude Include="ngx_log.h" />
     <ClInclude Include="ngx_pool.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="eventloop.cpp" />
     <ClCompile Include="Impl.cpp" />
     <ClCompile Include="net_client_base.cpp" />
+    <ClCompile Include="ngx_buf.cpp" />
     <ClCompile Include="ngx_list.cpp" />
     <ClCompile Include="ngx_log.cpp" />
     <ClCompile Include="ngx_pool.cpp" />

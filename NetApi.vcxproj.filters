@@ -45,6 +45,9 @@
     <ClInclude Include="ngx_pool.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ngx_buf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client.cpp">
@@ -72,6 +75,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ngx_pool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ngx_buf.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
