@@ -36,6 +36,7 @@ static inline size_t  ngx_list_init(ngx_list_t *list, ngx_pool_t *pool, size_t n
 	list->last = &list->part;
 	list->nalloc = n;
 	list->pool = pool;
+	list->size = size;
 	return 0;
 }
 

@@ -27,11 +27,15 @@ bool OnMessage(const char* data, unsigned int len)
 	if (nullptr == pUser)
 		return true;
 	//log on msg 
-	if(*data == 1)
+	if (*data == 1)
+	{
 		pUser->OnLogon(0);
+	}
 	//heartbeat
-	if(len == 20)
+	if (len == 20)
+	{
 		pUser->OnHeartBeat();
+	}
 	//
 	return pUser->OnMessage(0, 0, (void*)data, len);
 }
