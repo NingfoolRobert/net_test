@@ -5,22 +5,16 @@
 #include <sys/timeb.h>
 #endif 
 
-
-ngx_log*			g_log_ptr = nullptr;
-
 static const char*   log_level_prefix[] = { "", "[TRACE] ", "[DEBUG] ", "[INFO] ", "[NOTIC] ", "[WARN] ", "[ERROR] ", "[FATAL] " };
-
 
 ngx_log::ngx_log(const char* file_name) :_level(log_level_info),  _head(NULL)
 {
-	g_log_ptr = this;
 	if(file_name)	strcpy(_name, file_name);
 	_pool = ngx_create_pool(1);
 }
 
 ngx_log::~ngx_log()
 {
-	g_log_ptr = nullptr;
 	ngx_destroy_pool(_pool);
 	_head = NULL;
 }
@@ -87,6 +81,11 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 			pre->next = log;
 		}
 	}
+}
+
+void ngx_log::write_data(void* data, unsigned int len)
+{
+
 }
 
 void ngx_log::print_log_file(ngx_log* log_file)

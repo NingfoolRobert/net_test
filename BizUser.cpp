@@ -80,8 +80,7 @@ void  ActiveWorkThread(CBizUser::Impl* impl) {
 	WSACleanup();
 #endif 
 	//
-	char szTmp[1024] = { 0 };
-	ngx_log_info("%s api stoped ...", g_impl->api_name);
+	ngx_log_info(impl->log, "%s api stoped ...", g_impl->api_name);
 
 }
 
@@ -123,13 +122,13 @@ bool CBizUser::start(const COMMONCFG& cfg)
 {
 	if (0 != _impl->cfg.url[0])// || _impl->started)
 	{
-		ngx_log_fatal("init %s fail, not define url", _impl->api_name);
+		ngx_log_fatal(_impl->log, "init %s fail, not define url", _impl->api_name);
 		return false;
 	}
 	//
 	if (_impl->started)
 	{
-		ngx_log_warn("init %s fail, api started", _impl->api_name);
+		ngx_log_warn(_impl->log, "init %s fail, api started", _impl->api_name);
 		return false;
 	}
 #ifdef _WIN32 
@@ -152,9 +151,7 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	_impl->conn->set_tcp_nodelay();
 	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx],  _impl->port))
 	{
-		//LogError("connect server fail. ip:port=%s:%d", _impl->cfg.ip, _impl->cfg.port);
-		delete _impl->conn;
-		delete _impl->loop;
+		ngx_log_error(_impl->log, "connect server fail, ip:port=%d:%d", _impl->host_ip[_impl->ip_idx], _impl->port);
 		return false;
 	}
 	//

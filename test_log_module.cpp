@@ -17,15 +17,15 @@ void  write_log_thread(ngx_log* obj) {
 int main()
 {
     std::cout << "Hello World!\n"; 
-	g_log_ptr = new ngx_log("./test.log");
-	std::thread thr1(write_log_thread, g_log_ptr);
+	ngx_log *log = new ngx_log("./test.log");
+	std::thread thr1(write_log_thread, log);
 	thr1.detach();
 	
 	int nCnt = 0;
 	while (1)
 	{
 		nCnt++;
-		ngx_log_info("test one %d", nCnt);
+		ngx_log_info(log, "test one %d", nCnt);
 		Sleep(6);
 	}
 }

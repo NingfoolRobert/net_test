@@ -43,6 +43,8 @@ public:
 public:
 	void  write_level_log(unsigned int level, const char* fmt, ...);
 
+	void  write_data(void* data, unsigned int  len);
+
 	void  set_level(int level) { _level = level; }
 public:
 	void  print_log_file(ngx_log* log_file);
@@ -55,13 +57,12 @@ private:
 	ngx_log_data_t*			_head;			//
 };
 
-extern ngx_log*			g_log_ptr;
 
 
-#define  ngx_log_info(fmt, ...)				g_log_ptr->write_level_log(log_level_info, fmt, ##__VA_ARGS__)
-#define  ngx_log_error(fmt, ...)			g_log_ptr->write_level_log(log_level_error, fmt, ##__VA_ARGS__)
-#define  ngx_log_warn(fmt, ...)				g_log_ptr->write_level_log(log_level_warn, fmt, ##__VA_ARGS__)
-#define  ngx_log_trace(fmt, ...)			g_log_ptr->write_level_log(log_level_trace, fmt, ##__VA_ARGS__)
-#define  ngx_log_fatal(fmt, ...)			g_log_ptr->write_level_log(log_level_fatal, fmt, ##__VA_ARGS__)
+#define  ngx_log_info(log, fmt, ...)			log->write_level_log(log_level_info, fmt, ##__VA_ARGS__)
+#define  ngx_log_error(log, fmt, ...)			log->write_level_log(log_level_error, fmt, ##__VA_ARGS__)
+#define  ngx_log_warn(log, fmt, ...)			log->write_level_log(log_level_warn, fmt, ##__VA_ARGS__)
+#define  ngx_log_trace(log, fmt, ...)			log->write_level_log(log_level_trace, fmt, ##__VA_ARGS__)
+#define  ngx_log_fatal(log, fmt, ...)			log->write_level_log(log_level_fatal, fmt, ##__VA_ARGS__)
 
 #endif

@@ -6,13 +6,13 @@
 #include <iphlpapi.h>
 #include <conio.h>
 #include <assert.h>
-//#pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "IPHLPAPI.lib")
 #endif 
 
 //
 void write_log_timer_cb(void* param) {
-	g_log_ptr->print_log_file(g_log_ptr);
+	CBizUser::Impl *impl = (CBizUser::Impl*)param;
+	impl->log->print_log_file(impl->log);
 }
 //
 
@@ -33,7 +33,7 @@ CBizUser::Impl::Impl():
 	//
 	char szLogFileName[256] = { 0 };
 	sprintf(szLogFileName, "./%s.log", api_name);
-	g_log_ptr = new ngx_log(szLogFileName);
+	this->log = new ngx_log(szLogFileName);
 }
 //
 CBizUser::Impl::~Impl() {
@@ -48,16 +48,25 @@ CBizUser::Impl::~Impl() {
 		conn = nullptr;
 	}
 	//
-	ngx_log_info("%s stoped...", api_name);
-	g_log_ptr->print_log_file(g_log_ptr);
-	delete g_log_ptr;
-	g_log_ptr = NULL;
+	ngx_log_info(this->log,"%s stoped...", api_name);
+	this->log->print_log_file(this->log);
+	delete this->log;
+	this->log = NULL;
 }
 
 bool CBizUser::Impl::init()
 {
 	if (started)
 		return false;
+	//
+	//
+	if (nullptr == this->log)
+	{
+		this->log = new ngx_log(this->api_name);
+		if (this->log == NULL)
+			return false;
+	}
+
 	//dns parse, host_ip && ip_cnt;
 	parse_url();
 	if (ip_cnt == 0)
@@ -71,7 +80,7 @@ bool CBizUser::Impl::init()
 		this->loop = new eventloop;
 		if (nullptr == this->loop)
 		{
-			ngx_log_error("memory error.");
+			ngx_log_error(this->log, "memory error.");
 			return false;
 		}
 		//
@@ -82,6 +91,7 @@ bool CBizUser::Impl::init()
 		time_cb.param = this;
 		this->loop->add_timer(time_cb);
 	}
+	
 	
 	//
 	return true;
@@ -122,8 +132,7 @@ bool CBizUser::Impl::connect()
 		conn = new tcp_conn(loop, msg_head_fnc, 16, dis_conn_cb, msg_cb);
 		if (nullptr == conn)
 		{
-			char szTmp[1024] = { 0 };
-			sprintf(szTmp, "memory error!");
+			ngx_log_error(log, "memory error!");
 			return false;
 		}
 	}
@@ -145,12 +154,12 @@ bool CBizUser::Impl::connect()
 
 	if (!conn->connect(host_ip[ip_idx], port))
 	{
-		ngx_log_error("connect server fail., ip:port=%s:%d", cfg.url, port);
+		ngx_log_error(this->log, "connect server fail., ip:port=%s:%d", cfg.url, port);
 		return false;
 	}
 	//
 	conn->_break_timestamp = 0;
-	ngx_log_info("connect server success, ip:port=%s:%d", cfg.url, port);
+	ngx_log_info(this->log,"connect server success, ip:port=%s:%d", cfg.url, port);
 	return true;
 }
 
@@ -234,8 +243,7 @@ void CBizUser::Impl::get_local_ip()
 
 void CBizUser::Impl::uninit()
 {
-
+	this->started = false;
 	loop->wakeup();
-
 }
 

@@ -4,6 +4,7 @@
 
 #include "BizUser.h"
 #include "eventloop.h"
+#include "ngx_log.h"
 
 #define HOST_IP_MAX			4
 #define HOST_MAC_MAX		5
@@ -14,6 +15,7 @@ typedef  void(*PTIMERCALLBACK)(void* param);
 struct CBizUser::Impl {
 	COMMONCFG				cfg;
 	eventloop				*loop;
+	ngx_log					*log;
 	net_client_base*		conn;
 	unsigned int			timeout;		//event loop ms;
 	unsigned char			logoned;
