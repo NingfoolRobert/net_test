@@ -51,7 +51,7 @@ private:
 private:
 	bool		_stop_flag;
 	
-#if _WIN32
+#ifdef _WIN32
 	net_client_base*					_wake_listen_fd;
 	net_client_base*					_wake_send_fd;
 	net_client_base*					_wake_recv_fd;

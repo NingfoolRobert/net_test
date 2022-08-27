@@ -23,6 +23,7 @@ net_client_base::~net_client_base()
 {
 	close();
 }
+
 #ifdef _WIN32 
 SOCKET net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
 #else 
@@ -138,6 +139,9 @@ int net_client_base::send_msg(const char* pData, unsigned int nMsgLen)
 
 void net_client_base::OnTerminate()
 {
+	if (_break_timestamp)
+		return;
+	//
 	_break_timestamp = time(NULL);
 	if (_loop)
 		_loop->remove(this);

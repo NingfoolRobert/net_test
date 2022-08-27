@@ -51,6 +51,7 @@ bool OnNetMsg(char* pData, unsigned int nMsgLen)
 			//TODO ¶¨Ê±ÐÄÌø
 			//g_impl->loop->add_timer();
 		}
+		//
 		return true;
 	}
 	//
@@ -63,28 +64,25 @@ void OnHeartBeatTimer(void* param)
 	//g_impl->conn->send_msg()
 	if (g_impl->conn->_break_timestamp)
 		return;
-	//gene heartbeat message 
+	//todo gene heartbeat message 
 	g_impl->conn->send_msg(nullptr, 0);
 }
 
-
-//////////////////////////////////////
-void  ActiveWorkThread(CBizUser::Impl* impl) {
-	
-	std::vector<net_client_base*> vecTmp;
-	while (impl->started)
-	{
-		impl->loop->loop(vecTmp, 10);
-	}
-#ifdef _WIN32 
-	WSACleanup();
-#endif 
-	//
-	ngx_log_info(impl->log, "%s api stoped ...", g_impl->api_name);
-
-}
-
-
+// 
+// void  ActiveWorkThread(CBizUser::Impl* impl) {
+// 	
+// 	std::vector<net_client_base*> vecTmp;
+// 	while (impl->started)
+// 	{
+// 		impl->loop->loop(vecTmp, 10);
+// 	}
+// #ifdef _WIN32 
+// 	WSACleanup();
+// #endif 
+// 	//
+// 	ngx_log_info(impl->log, "%s api stoped ...", g_impl->api_name);
+// 
+// }
 
 ///////////////////////////////////////
 CBizUser::CBizUser()
@@ -99,23 +97,13 @@ CBizUser::CBizUser()
 
 CBizUser::~CBizUser()
 {
-	if (_impl->conn)
-	{
-		delete _impl->conn;
-		_impl->conn = NULL;
-	}
-	//
-	if (_impl->loop)
-	{
-		delete _impl->loop;
-		_impl->loop = NULL;
-	}
-	
 	if (_impl)
 	{
+		stop();
 		delete _impl;
 		_impl = NULL;
 	}
+
 }
 
 bool CBizUser::start(const COMMONCFG& cfg)
@@ -135,14 +123,16 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	WSADATA  wsa_data;
 	WSAStartup(MAKEWORD(2, 2), &wsa_data);
 #endif 
-	_impl->init();
+	//
+	if (!_impl->init()) {
+		return false;
+	}
 	//
 #if _WIN32 
-
 	SOCKET sock = _impl->conn->create();
 	if(INVALID_SOCKET == sock)
 #else 
-	int sock = _impl->conn->Create();
+	int sock = _impl->conn->create();
 	if (sock == -1)
 #endif 
 	{
@@ -159,10 +149,6 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	//
 	_impl->conn->set_nio();
 	_impl->loop->add(_impl->conn);
-	_impl->started = 1;
-
-	std::thread* thr = new std::thread(ActiveWorkThread, _impl);
-	thr->detach();
 	//start log on 
 	
 	//
@@ -171,8 +157,7 @@ bool CBizUser::start(const COMMONCFG& cfg)
 
 void CBizUser::stop()
 {
-	_impl->started = false;	
-	_impl->loop->wakeup();
+	_impl->uninit();
 }
 
 void CBizUser::reconnect()

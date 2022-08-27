@@ -220,7 +220,6 @@ void eventloop::create_wakeup_fd()
 	_wake_recv_fd->set_nio();
 	_wake_send_fd->set_nio();
 #else 
-
 	_wake_fd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 #endif 
 }

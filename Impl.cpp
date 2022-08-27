@@ -1,6 +1,7 @@
 #include "Impl.h"
 #include "tcp_conn.h"
 #include "ngx_log.h"
+#include <thread>
 
 #ifdef _WIN32
 #include <iphlpapi.h>
@@ -16,6 +17,18 @@ void write_log_timer_cb(void* param) {
 }
 //
 
+void active_work_thread(void* param) {
+	
+	std::vector<net_client_base*> vecTmp;
+	CBizUser::Impl* impl = (CBizUser::Impl*)param;
+	impl->started = true;
+	while (impl->started)
+	{
+		impl->loop->loop(vecTmp, impl->timeout);
+	}
+	//
+	ngx_log_info(impl->log, "%s stoped...", impl->api_name);
+}
 
 ///////////////////////////////
 CBizUser::Impl::Impl():
@@ -37,21 +50,27 @@ CBizUser::Impl::Impl():
 }
 //
 CBizUser::Impl::~Impl() {
+	//
 	if (loop)
 	{
 		delete loop;
 		loop = nullptr;
 	}
+	//
 	if (conn)
 	{
 		delete conn;
 		conn = nullptr;
 	}
 	//
-	ngx_log_info(this->log,"%s stoped...", api_name);
-	this->log->print_log_file(this->log);
-	delete this->log;
-	this->log = NULL;
+	if (log)
+	{
+		this->log->print_log_file(this->log);
+		delete log;
+		log = NULL;
+	}
+	//
+	
 }
 
 bool CBizUser::Impl::init()
@@ -59,10 +78,11 @@ bool CBizUser::Impl::init()
 	if (started)
 		return false;
 	//
-	//
 	if (nullptr == this->log)
 	{
-		this->log = new ngx_log(this->api_name);
+		char szApiFileName[256] = { 0 };
+		sprintf(szApiFileName, "./%s.log", this->api_name);
+		this->log = new ngx_log(szApiFileName);
 		if (this->log == NULL)
 			return false;
 	}
@@ -91,9 +111,10 @@ bool CBizUser::Impl::init()
 		time_cb.param = this;
 		this->loop->add_timer(time_cb);
 	}
-	
-	
 	//
+	std::thread thr(&active_work_thread, this);
+	thr.detach();
+
 	return true;
 }
 
@@ -243,7 +264,12 @@ void CBizUser::Impl::get_local_ip()
 
 void CBizUser::Impl::uninit()
 {
+	if (!started)
+		return;
+		
 	this->started = false;
+	//
+	this->conn->OnTerminate();
 	loop->wakeup();
 }
 
