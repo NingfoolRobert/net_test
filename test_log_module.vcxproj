@@ -151,13 +151,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ngx_buf.cpp" />
     <ClCompile Include="ngx_log.cpp" />
     <ClCompile Include="ngx_pool.cpp" />
+    <ClCompile Include="ngx_queue.cpp" />
     <ClCompile Include="test_log_module.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ngx_buf.h" />
     <ClInclude Include="ngx_log.h" />
     <ClInclude Include="ngx_pool.h" />
+    <ClInclude Include="ngx_queue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

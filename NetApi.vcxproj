@@ -166,6 +166,7 @@
     <ClInclude Include="ngx_list.h" />
     <ClInclude Include="ngx_log.h" />
     <ClInclude Include="ngx_pool.h" />
+    <ClInclude Include="ngx_queue.h" />
     <ClInclude Include="tcp_conn.h" />
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +179,7 @@
     <ClCompile Include="ngx_list.cpp" />
     <ClCompile Include="ngx_log.cpp" />
     <ClCompile Include="ngx_pool.cpp" />
+    <ClCompile Include="ngx_queue.cpp" />
     <ClCompile Include="tcp_conn.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

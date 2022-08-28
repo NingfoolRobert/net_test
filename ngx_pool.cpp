@@ -101,7 +101,7 @@ void ngx_free(struct ngx_pool_s* pool, void* p)
 	struct ngx_block_s* pnode = pool->head;
 	while(pnode != nullptr)
 	{
-		if (p >= pnode->start && p <= pnode->last)
+		if (p >= pnode->start && p <= pnode->end)
 		{
 			pnode->ref--;
 			//
@@ -109,6 +109,7 @@ void ngx_free(struct ngx_pool_s* pool, void* p)
 				pnode->last = pnode->start;
 			return;
 		}
+		pnode = pnode->next;
 	}
 	//large memory 
 	struct ngx_large_s* curr = pool->large;
@@ -174,14 +175,23 @@ void * ngx_allocate_block(struct ngx_pool_s* pool, size_t size)
 //allocate large memory block
 void* ngx_allocate_large(struct ngx_pool_s* pool, size_t size)
 {
-	struct ngx_large_s* node = pool->large;
-	while (node->next) node = node->next;
 	//
 	struct ngx_large_s* large = (struct ngx_large_s*)malloc(size + sizeof(struct ngx_large_s));
 	if (nullptr == large)
 		return NULL;
-	node->next = large;
+	//
 	large->size = size;
 	large->next = nullptr;
+	if (NULL == pool->large)
+	{
+		pool->large = large;
+	}
+	else
+	{
+		struct ngx_large_s* node = pool->large;
+		while (node->next) node = node->next;
+		node->next = large;
+	}
+	
 	return large->data;
 }

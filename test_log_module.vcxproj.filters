@@ -24,12 +24,24 @@
     <ClCompile Include="ngx_pool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ngx_queue.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ngx_buf.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ngx_log.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ngx_pool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ngx_queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ngx_buf.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

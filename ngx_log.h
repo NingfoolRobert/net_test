@@ -9,7 +9,9 @@
 #include <pthread.h>
 #endif 
 #include <mutex>
-#include "ngx_pool.h"
+
+#include "ngx_queue.h"
+#include "ngx_buf.h"
 
 
 
@@ -26,14 +28,6 @@ enum enum_log_level
 	log_level_off
 };
 
-//typedef struct ngx_log_data_s  ngx_log_data_t;
-
-typedef struct ngx_log_data_s
-{
-	char				*data;
-	size_t				 len;
-	ngx_log_data_s		*next;
-}ngx_log_data_t;
 
 class ngx_log
 {
@@ -53,8 +47,8 @@ public:
 	int						_level;
 private:
 	std::mutex				_lck;
-	ngx_pool_t*				_pool;
-	ngx_log_data_t*			_head;			//
+	ngx_pool_t				*_pool;
+	ngx_queue_t				*_wait_logs;
 };
 
 

@@ -14,12 +14,11 @@ tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int
 	_msg_head_fnc(msg_head_fnc),
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
-	_recv_len(0), 
-	_recv_buf(nullptr),
-	_snd_wait_buf(nullptr)
+	_rcv_buf(nullptr),
+	_snd_buf(NULL)
 {
 	_pool = ngx_create_pool(1);
-	_snd_wait_buf = new cycle_memory_block(2 * 1024 * 1024);
+	_wait_snds = ngx_create_queue(_pool, sizeof(ngx_buf_t*), 1024);
 }
 
 tcp_conn::~tcp_conn()
@@ -28,14 +27,14 @@ tcp_conn::~tcp_conn()
 
 void tcp_conn::OnRead()
 {
-	if (_recv_buf == nullptr)
+	if (_rcv_buf == nullptr)
 	{
-		_recv_buf = ngx_palloc(_pool, _expected_len);
-		if (nullptr == _recv_buf)
+		_rcv_buf = ngx_create_buf(_pool, _expected_len);
+		if (nullptr == _rcv_buf)
 			return;
 	}
 	//
-	int recv_len = ::recv(_fd, (char*)_recv_buf + _recv_len, _expected_len - _recv_len, 0);
+	int recv_len = ::recv(_fd, (char*)_rcv_buf + _rcv_buf->len, _expected_len - _rcv_buf->len, 0);
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
@@ -53,26 +52,26 @@ void tcp_conn::OnRead()
 	}
 
 	//
-	_recv_len += recv_len;
-	if (_expected_len == _recv_len)
+	_rcv_buf->len += recv_len;
+	if (_expected_len == _head_len)
 	{
-		_expected_len = _msg_head_fnc((char*)_recv_buf, _recv_len);
-		if (_expected_len > _head_len)
+		_expected_len = _msg_head_fnc((char*)_rcv_buf->data, _rcv_buf->len);
+		if (_expected_len > _head_len && _expected_len > _rcv_buf->cap)
 		{
-			void* buf = ngx_palloc(_pool, _expected_len);
+			ngx_buf_t* buf = ngx_create_buf(_pool, _expected_len);
 			if (NULL == buf)
 				return;
-			memcpy(buf, _recv_buf, _recv_len);
-			ngx_free(_pool, _recv_buf);
-			_recv_buf = buf;
+			memcpy(buf->data, _rcv_buf->data, _rcv_buf->len);
+			ngx_free(_pool, _rcv_buf);
+			_rcv_buf = buf;
 		}
 	}
 	//
-	if (_recv_len = _expected_len && _recv_len >= _head_len)
+	if (_rcv_buf->len = _expected_len && _rcv_buf->len >= _head_len)
 	{
-		OnMessage((char*)_recv_buf,  _expected_len);
+		OnMessage((char*)_rcv_buf->data,  _expected_len);
 		_expected_len = _head_len;
-		_recv_len = 0;
+		_rcv_buf->len = 0;
 		return;
 	}
 }
@@ -80,7 +79,17 @@ void tcp_conn::OnRead()
 void tcp_conn::OnSend()
 {
 	std::unique_lock<std::mutex> _(_lck);
-	int send_len = net_client_base::send_msg(_snd_wait_buf->data(), _snd_wait_buf->c_length());
+	if (NULL == _snd_buf )
+	{
+		if (ngx_queue_empty(_wait_snds))
+			return;
+		_snd_buf = (ngx_buf_t*)ngx_queue_get(_wait_snds);
+	}
+	//
+	if (NULL == _snd_buf || _snd_buf->len <= _snd_len)
+		return;
+	//
+	int send_len = net_client_base::send_msg((char*)(_snd_buf->data) + _snd_len, _snd_buf->len - _snd_len);
 	if (send_len < 0)
 	{
 #ifdef _WIN32
@@ -99,69 +108,87 @@ void tcp_conn::OnSend()
 		return;
 	}
 	//
-	_snd_wait_buf->pop(send_len);
+	_snd_len += send_len;
+	if (_snd_len == _snd_buf->len)
+	{
+		ngx_free(_pool, _snd_buf);
+		_snd_buf = NULL;
+		_snd_len = 0;
+	}
 }
+
 
 
 int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 {
 	std::unique_lock<std::mutex> _(_lck);
-	if (_snd_wait_buf == nullptr || _snd_wait_buf->size())
+	if (_snd_buf || !ngx_queue_empty(_wait_snds))
 	{
-		int send_len = net_client_base::send_msg(pData, nMsgLen);
-		if (send_len < 0)
+		ngx_buf_t* buf = ngx_create_buf(_pool, nMsgLen);
+		if (NULL == buf)
 		{
-#ifdef _WIN32
-			if (GetLastError() != EWOULDBLOCK)
-#else 
-			if (errno != EAGAIN && errno != EINTR)
-#endif 
-			{
-				OnTerminate();
-				return -1;
-			}
-			//
-			if (!_snd_wait_buf->append((void*)pData, nMsgLen))
-			{
-				return 1;
-			}
-			return 0;
+			return -1;
 		}
-		else if (send_len == 0)
+		memcpy(buf->data, pData, nMsgLen);
+		buf->len = nMsgLen;
+		if (ngx_queue_push(_wait_snds, &buf))
+			return 0;
+		return -1;
+	}
+	//
+	int snd_len = net_client_base::send_msg(pData, nMsgLen);
+	if (snd_len < 0)
+	{
+#ifdef _WIN32
+		if (GetLastError() != EWOULDBLOCK)
+#else 
+		if (errno != EAGAIN && errno != EINTR)
+#endif 
 		{
 			OnTerminate();
 			return -1;
 		}
-		//
-		if (send_len < nMsgLen)
+		
+		ngx_buf_t* buf = ngx_create_buf(_pool, nMsgLen);
+		if (NULL == buf)
 		{
-			if (!_snd_wait_buf->append((void*)(pData + send_len), nMsgLen - send_len))
-			{
-				return 1;
-			}
+			return -1;
 		}
-		else if (send_len == nMsgLen)
-		{
+
+		memcpy(buf->data, pData, nMsgLen);
+		buf->len = nMsgLen;
+		if (ngx_queue_push(_wait_snds, &buf))
 			return 0;
-		}
-		return 1;
+		return -1;
+	}
+	else if (snd_len == 0)
+	{
+		OnTerminate();
+		return -1;
 	}
 	//
-	if (!_snd_wait_buf->append((void*)pData, nMsgLen))
-		return 1;
+	if (nMsgLen == snd_len)
+		return 0;
+	//
+	_snd_len = snd_len;
+	_snd_buf = ngx_create_buf(_pool, nMsgLen);
+	memcpy(_snd_buf->data, pData, nMsgLen);
+	_snd_buf->len = nMsgLen;
 	return 0;
 }
 
 unsigned int tcp_conn::get_wait_send_cnt()
 {
 	std::unique_lock<std::mutex> _(_lck);
-	return _snd_wait_buf->size();
+	return ngx_queue_size(_wait_snds);
 }
 
 void tcp_conn::OnTerminate()
 {
 	net_client_base::OnTerminate();
 	net_client_base::close();
+	if(_rcv_buf) _rcv_buf->len = 0;
+	if(_snd_buf) _snd_buf->len = 0;
 }
 
 bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)

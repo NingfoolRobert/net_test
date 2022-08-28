@@ -7,20 +7,22 @@
 
 static const char*   log_level_prefix[] = { "", "[TRACE] ", "[DEBUG] ", "[INFO] ", "[NOTIC] ", "[WARN] ", "[ERROR] ", "[FATAL] " };
 
-ngx_log::ngx_log(const char* file_name) :_level(log_level_info),  _head(NULL)
+ngx_log::ngx_log(const char* file_name) :_level(log_level_info), _wait_logs(NULL)
 {
 	if(file_name)	strcpy(_name, file_name);
 	_pool = ngx_create_pool(1);
+	_wait_logs = ngx_create_queue(_pool, sizeof(ngx_buf_t*), 4096);
 }
 
 ngx_log::~ngx_log()
 {
 	ngx_destroy_pool(_pool);
-	_head = NULL;
+	_wait_logs = NULL;
 }
 
 void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 {
+	std::unique_lock<std::mutex> _(_lck);
 	if (level < _level || level >= log_level_off)
 		return;
 	
@@ -33,7 +35,7 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, tbNow.millitm, log_level_prefix[level]);
 #else 
 	struct timeval tv;
-	get_time_of(&tv, NULL);
+	gettimeofday(&tv, NULL);
 	struct tm tmNow;
 	localtime_s(&tmNow, &tv.tv_sec);
 	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, tv.tv_usec / 1000, log_level_prefix[level]);
@@ -44,70 +46,62 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	va_start(args, fmt);
 	unsigned int nLen = vsnprintf(NULL, 0, fmt, args);
 	nLen += prefix_len;
-	ngx_log_data_t* log = (ngx_log_data_t*)ngx_palloc(_pool, sizeof(ngx_log_data_t));
-	if (NULL == log)
+	ngx_buf_t* buf = ngx_create_buf(_pool, nLen + 3);
+	if (NULL == buf)
 	{
 		va_end(args);
 		return;
 	}
-#ifdef _WIN32
-	log->data = (char*)ngx_palloc(_pool, nLen + 3);
-	log->len = nLen + 2;
-#else 
-	log->data = ngx_palloc(_pool, nLen + 2);
-	log->len = nLen + 1;
-#endif
-	
-	log->next = NULL;
-	memcpy(log->data, szTmp, prefix_len);
 	//
-	vsnprintf((char*)(log->data) + prefix_len, nLen - prefix_len, fmt, args);
-	va_end(args);
-	
+	memcpy(buf->data, szTmp, prefix_len);
+	vsnprintf((char*)(buf->data) + prefix_len, nLen - prefix_len, fmt, args);
+	//
+
 #ifdef _WIN32
-	strcpy((char*)(log->data) + nLen, "\r\n");
+	strcpy((char*)(buf->data) + nLen, "\r\n");
+	buf->len = nLen + 2;
 #else 
-	strcpy((char*)(log->data) + nLen, "\n");
-#endif 
+	strcpy((char*)(buf->data) + nLen, "\n");
+	buf->len = nLen + 1;
+#endif
+	va_end(args); 
+	//
 	{
-		if (_head == NULL)
-		{
-			_head = log;
-		}
+		if (_wait_logs->nalloc > ngx_queue_size(_wait_logs))
+			ngx_queue_push(_wait_logs, &buf);
 		else
-		{
-			ngx_log_data_t *pre = _head;
-			while (pre->next)  pre = pre->next;
-			pre->next = log;
-		}
+			printf("push log fail, %s", buf->data);
 	}
 }
 
 void ngx_log::write_data(void* data, unsigned int len)
 {
-
+	std::unique_lock<std::mutex> _(_lck);
+	ngx_buf_t* buf = (ngx_buf_t*)ngx_create_buf(_pool, len);
+	if (NULL == buf)
+		return;
+	
+	memcpy(buf->data, data, len);
+	if (!ngx_queue_push(_wait_logs, &buf))
+		ngx_buf_free(_pool, buf);
 }
 
 void ngx_log::print_log_file(ngx_log* log_file)
 {
-	if (NULL == _head || NULL == _head->data)
-		return;
-	// = _head;
+	std::unique_lock<std::mutex> _(_lck);
+	ngx_buf_t *buf = NULL;
+	//
 	FILE* pFile = fopen(_name, "ab+");
 	if (NULL == pFile)
 		return;
-	//
-	ngx_log_data_t *pre, *next;
-	pre = _head;
-	while(pre)
-	{ 
-		next = pre->next;
-		fwrite(pre->data, 1, pre->len, pFile);
-		//
-		ngx_free(_pool, pre->data);
-		_head = next;
-		ngx_free(_pool, pre);
-		pre = next;
+	while (!ngx_queue_empty(_wait_logs))
+	{
+		buf = *(ngx_buf_t**)ngx_queue_get(_wait_logs);
+		if (NULL == buf)
+			break;
+		
+		fwrite(buf->data, 1, buf->len, pFile);
+		ngx_free(_pool, buf);
 	}
 	fclose(pFile);
 }

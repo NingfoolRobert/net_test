@@ -5,7 +5,8 @@
 #include <stdlib.h>
 
 #define	NGX_ALIGNMENT						8
-#define ngx_align(n, alignment)				(((n) + (alignment - 1)) & ~(alignment -1))
+//#define ngx_align(n, alignment)				(((n) + (alignment - 1)) & ~(alignment -1))
+#define ngx_align(n, alignment)					(((n)+(alignment - 1)) & ~(alignment - 1))
 #define ngx_align_ptr(p, alignment)			(void*)((((size_t)p) + (alignment - 1)) & ~(alignment - 1))	
 
 struct ngx_pool_s;

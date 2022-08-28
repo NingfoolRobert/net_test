@@ -6,7 +6,8 @@
 
 #include "ngx_pool.h"
 #include "cycle_memory_block.h"
-
+#include "ngx_queue.h"
+#include "ngx_buf.h"
 #include <vector>
 #include <mutex>
 
@@ -40,11 +41,12 @@ private:
 private:
 	ngx_pool_t			*_pool;
 	unsigned int		_expected_len;
-	unsigned int		_recv_len;
-	void*				_recv_buf;
+	ngx_buf_t*			_rcv_buf;
 	
 	std::mutex			_lck;
-	cycle_memory_block*	_snd_wait_buf;
+	unsigned int		_snd_len;
+	ngx_buf_t*			_snd_buf;
+	ngx_queue_t*		_wait_snds;
 };
 
 
