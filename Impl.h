@@ -3,8 +3,7 @@
 
 
 #include "BizUser.h"
-#include "eventloop.h"
-#include "ngx_log.h"
+#include "ngx_core.h"
 
 #define HOST_IP_MAX			4
 #define HOST_MAC_MAX		5
@@ -12,35 +11,14 @@
 
 
 
-struct ngx_core_s {
-	ngx_log				*log;
-	eventloop			*loop;
-	net_client_base		*conn;
-	unsigned int		 timeout;
-	unsigned char		 logoned;
-	unsigned char		 started;	
-	unsigned short		 resever;
-
-};
-
-
 typedef  void(*PTIMERCALLBACK)(void* param);
 
 struct CBizUser::Impl {
-	COMMONCFG				cfg;
-	eventloop				*loop;
-	ngx_log					*log;
-	net_client_base*		conn;
-	unsigned int			timeout;		//event loop ms;
-	unsigned char			logoned;
-	unsigned char			started;
-	unsigned char			ip_cnt;
-	unsigned char			ip_idx;
-	unsigned int			host_ip[HOST_IP_MAX];		//DNS => host_ip
-	unsigned short			port;
-	char					api_name[30];
-	char					mac[HOST_MAC_MAX][MAC_LENGTH_MAX];		//mac addr
-
+	ngx_core_t				*core;
+	net_client_base			*conn;			//
+	void					*biz_user;		//
+	unsigned int			logoned;		//
+	
 	PTIMERCALLBACK			timer_cb;
 	PDISCONNCALLBACK		dis_conn_cb;
 	PNETMSGCALLBACK			msg_cb;
@@ -56,11 +34,15 @@ struct CBizUser::Impl {
 
 	bool	connect();
 
-	void	parse_url();
+	ngx_log*  get_log();
 
-	void	get_local_mac();
+	bool	logon();
 
-	void	get_local_ip();
+	void	async(net_client_base* conn);
+
+	void	unasync(net_client_base* conn);
+
+	
 };
 
 

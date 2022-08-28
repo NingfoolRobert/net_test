@@ -18,11 +18,11 @@ struct tagtimercb {
 	void*					param;				//callback param 
 	PTIMERCALLBACK			cb;
 };
-class ngx_log;
+
 class eventloop
 {
 public:
-	explicit eventloop(ngx_log* log);
+	explicit eventloop(void* core);
 	virtual ~eventloop();
 public:
 	int		loop(std::vector<net_client_base*> _active_conn,  int timeout);
@@ -59,7 +59,7 @@ private:
 	int									_wake_fd;
 #endif 
 public:
-	ngx_log				*_log;
+	void				*_core;
 };
 
 

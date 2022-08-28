@@ -1,6 +1,5 @@
 #include "tcp_conn.h"
-#include "eventloop.h"
-#include "ngx_log.h"
+#include "ngx_core.h"
 
 #ifdef _WIN32
 #include <ws2tcpip.h>
@@ -40,10 +39,10 @@ void tcp_conn::OnRead()
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK) {
-			ngx_log_error(_loop->_log, "net error(%d), ip:port=%s:%d...", GetLastError(), _ip, _port);
+			ngx_log_error(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN || errno != EINTR) {
-			ngx_log_error(_loop->_log, "net error(%d), ip:port=%s:%d...", errno(), _ip, _port);
+			ngx_log_error(_loop->_log, "net error(%d), ip:port=%d:%d...", errno(), _ip, _port);
 #endif 
 			OnTerminate();
 		}
@@ -51,7 +50,7 @@ void tcp_conn::OnRead()
 	}
 	else if (recv_len == 0)//peer close 
 	{
-		ngx_log_warn(_loop->_log, "peer disconnect, ip:port=%s:%d...", _ip, _port);
+		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect, ip:port=%d:%d...", _ip, _port);
 		OnTerminate();
 		return;
 	}
@@ -99,10 +98,10 @@ void tcp_conn::OnSend()
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK){
-			ngx_log_warn(_loop->_log, "send error(%d), ip:port=%s:%d...", GetLastError(), _ip, _port);
+			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "send error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN && errno != EINTR) {
-			ngx_log_warn(_loop->_log, "send error(%d), ip:port=%s:%d...", errno, _ip, _port);
+			ngx_log_warn(_loop->_core->log, "send error(%d), ip:port=%d:%d...", errno, _ip, _port);
 #endif 
 			OnTerminate();
 			return;
@@ -110,7 +109,7 @@ void tcp_conn::OnSend()
 	}
 	else if (send_len == 0)
 	{
-		ngx_log_warn(_loop->_log, "peer disconnect, ip:port=%s:%d...", _ip, _port);
+		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect, ip:port=%d:%d...", _ip, _port);
 		OnTerminate();
 		return;
 	}
@@ -147,11 +146,11 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK)
 		{
-			ngx_log_warn(_loop->_log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
+			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN && errno != EINTR)
 		{
-			ngx_log_warn(_loop->_log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
+			ngx_log_warn(((ngx_core_t*)(_loop->_core))->_log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
 #endif 
 			OnTerminate();
 			return -1;
@@ -171,7 +170,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	}
 	else if (snd_len == 0)
 	{
-		ngx_log_warn(_loop->_log, "peer disconnect...");
+		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect...");
 		OnTerminate();
 		return -1;
 	}

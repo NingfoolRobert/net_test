@@ -1,10 +1,13 @@
 
 #include "eventloop.h"
 #include "ngx_log.h"
+#include "net_client_base.h"
+#include "ngx_core.h"
 
 #if _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
+
 #else
 #include <unistd.h>
 #include <sys/select.h>
@@ -12,7 +15,8 @@
 
 
 
-eventloop::eventloop(ngx_log* log):_log(log)
+
+eventloop::eventloop(void* core) :_core(core)
 {
 #ifdef _WIN32
 	_wake_recv_fd = NULL;

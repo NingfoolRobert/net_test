@@ -51,6 +51,10 @@ private:
 	ngx_queue_t				*_wait_logs;
 };
 
+unsigned int	ngx_file_size(const char* file_name);
+
+void ngx_file_rename(const char*  old_file_name, const char* new_file_name);
+
 
 
 #define  ngx_log_info(log, fmt, ...)			log->write_level_log(log_level_info, fmt, ##__VA_ARGS__)

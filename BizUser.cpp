@@ -8,24 +8,18 @@
 #include <string.h>
 #include <thread>
 
-
-
-//
-class CBizUser* pUser = nullptr;
-CBizUser::Impl* g_impl = nullptr;
 ///////////////////////////////////////
-void  OnNetDisConn() {
-	//print disconnet 
-	pUser->OnDisConnect();
-	//
-	if(g_impl->cfg.auto_reconnect)
-		pUser->reconnect();
+void  OnNetDisConn(net_client_base* conn) {
+// 	CBizUser::Impl *impl = (CBizUser::Impl*)param;
+// 	CBizUser* pUser = (CBizUser*)(impl->biz_user);
+/*	pUser->OnDisConnect();*/
 }
 //
 bool OnMessage(const char* data, unsigned int len)
 {
-	if (nullptr == pUser)
-		return true;
+	void* param;
+	CBizUser::Impl *impl = (CBizUser::Impl*)param;
+	CBizUser* pUser = (CBizUser*)(impl->biz_user);
 	//log on msg 
 	if (*data == 1)
 	{
@@ -42,31 +36,32 @@ bool OnMessage(const char* data, unsigned int len)
 //
 bool OnNetMsg(char* pData, unsigned int nMsgLen)
 {
-	unsigned int nMsgID, nMsgNo;
-	if (nMsgID == 1)
-	{
-		pUser->OnLogon(nMsgNo);
-		if (nMsgNo == 0)	//log on success
-		{
-			//TODO 定时心跳
-			//g_impl->loop->add_timer();
-		}
-		//
-		return true;
-	}
-	//
-	return pUser->OnMessage(nMsgID, nMsgNo, pData, nMsgLen);
+	return true;
+// 	unsigned int nMsgID, nMsgNo;
+// 	if (nMsgID == 1)
+// 	{
+// 		pUser->OnLogon(nMsgNo);
+// 		if (nMsgNo == 0)	//log on success
+// 		{
+// 			//TODO 定时心跳
+// 			//g_impl->loop->add_timer();
+// 		}
+// 		//
+// 		return true;
+// 	}
+// 	//
+// 	return pUser->OnMessage(nMsgID, nMsgNo, pData, nMsgLen);
 }
 //
-void OnHeartBeatTimer(void* param)
-{
-	//heartbeat message to send
-	//g_impl->conn->send_msg()
-	if (g_impl->conn->_break_timestamp)
-		return;
-	//todo gene heartbeat message 
-	g_impl->conn->send_msg(nullptr, 0);
-}
+// void OnHeartBeatTimer(void* param)
+// {
+// 	//heartbeat message to send
+// 	//g_impl->conn->send_msg()
+// 	if (g_impl->conn->_break_timestamp)
+// 		return;
+// 	//todo gene heartbeat message 
+// 	g_impl->conn->send_msg(nullptr, 0);
+// }
 
 // 
 // void  ActiveWorkThread(CBizUser::Impl* impl) {
@@ -88,10 +83,7 @@ void OnHeartBeatTimer(void* param)
 CBizUser::CBizUser()
 {
 	_impl = new Impl;
-	g_impl = _impl;
-	_impl->logoned = 0;
-	_impl->started = 0;
-	pUser = this;
+	_impl->biz_user = this;
 }
 
 
@@ -108,21 +100,6 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
-	if (0 != _impl->cfg.url[0])// || _impl->started)
-	{
-		ngx_log_fatal(_impl->log, "init %s fail, not define url", _impl->api_name);
-		return false;
-	}
-	//
-	if (_impl->started)
-	{
-		ngx_log_warn(_impl->log, "init %s fail, api started", _impl->api_name);
-		return false;
-	}
-#ifdef _WIN32 
-	WSADATA  wsa_data;
-	WSAStartup(MAKEWORD(2, 2), &wsa_data);
-#endif 
 	//
 	if (!_impl->init()) {
 		return false;
@@ -139,52 +116,48 @@ bool CBizUser::start(const COMMONCFG& cfg)
 		return false;
 	}
 	_impl->conn->set_tcp_nodelay();
-	if (!_impl->conn->connect(_impl->host_ip[_impl->ip_idx],  _impl->port))
+	if (!_impl->connect())
 	{
-		ngx_log_error(_impl->log, "connect server fail, ip:port=%d:%d", _impl->host_ip[_impl->ip_idx], _impl->port);
+		return false;
+	}
+	//
+	ngx_log_info(_impl->get_log(), "connect server success, ip:port=%s", _impl->core->cfg.url);
+	OnConnect();
+	//
+	_impl->async(_impl->conn);
+	//
+	return _impl->logon();
+}
+
+void CBizUser::stop()
+{
+	if(_impl->conn && _impl->conn->_break_timestamp == 0)
+		_impl->conn->OnTerminate();
+	//
+	_impl->uninit();
+	ngx_log_info(_impl->get_log(), "stoped %s...", _impl->core->api_name);
+}
+
+bool  CBizUser::reconnect()
+{
+	if (_impl->conn->_break_timestamp == 0 || _impl->core->cfg.auto_reconnect)
+		return false;
+	//
+	_impl->core->loop->remove(_impl->conn);
+	if (!_impl->connect())
+	{
 		return false;
 	}
 	//
 	OnConnect();
 	//
-	_impl->conn->set_nio();
-	_impl->loop->add(_impl->conn);
-	//start log on 
-	
-	//
-	return true;
-}
-
-void CBizUser::stop()
-{
-	_impl->uninit();
-}
-
-void CBizUser::reconnect()
-{
-	if (_impl->conn->_break_timestamp == 0 || _impl->cfg.auto_reconnect) 
-		return;
-	//
-	if (NULL == _impl->conn || NULL == _impl->loop)
-		return;
-	
-	_impl->loop->remove(_impl->conn);
-
-	if (!_impl->connect())
-	{
-		return;
-	}
-	//
-	_impl->loop->add(_impl->conn);
-	OnConnect();
-	//TODO logon
-	
-	//
+	_impl->logon();
+	_impl->async(_impl->conn);
 }
 
 bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen)
 {
-	if (!_impl->started || !_impl->logoned || nMsgLen == 0 || nullptr == pData)
+	if (!_impl->logoned || nMsgLen == 0 || nullptr == pData)
 		return false;
 
 	if (nullptr == _impl->conn || _impl->conn->_break_timestamp)

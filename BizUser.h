@@ -51,7 +51,7 @@ public:
 
 	void	stop();
 	
-	void	reconnect();
+	bool	reconnect();
 
 	bool	send_message(unsigned int nMsgID, unsigned int nMsgNo, char*  pData, unsigned int nMsgLen);
 

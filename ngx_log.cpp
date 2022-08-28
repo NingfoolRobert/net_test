@@ -7,6 +7,18 @@
 
 static const char*   log_level_prefix[] = { "", "[TRACE] ", "[DEBUG] ", "[INFO] ", "[NOTIC] ", "[WARN] ", "[ERROR] ", "[FATAL] " };
 
+
+unsigned int ngx_file_size(const char* file_name)
+{
+	//TODO 
+	return 0;
+}
+
+void ngx_file_rename(const char* old_file_name, const char* new_file_name)
+{
+
+}
+
 ngx_log::ngx_log(const char* file_name) :_level(log_level_info), _wait_logs(NULL)
 {
 	if(file_name)	strcpy(_name, file_name);
