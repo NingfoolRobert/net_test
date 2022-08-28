@@ -100,6 +100,7 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
+	memcpy(&_impl->core->cfg, &cfg, sizeof(cfg));
 	//
 	if (!_impl->init()) {
 		return false;
@@ -115,7 +116,7 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	{
 		return false;
 	}
-	_impl->conn->set_tcp_nodelay();
+	//
 	if (!_impl->connect())
 	{
 		return false;
