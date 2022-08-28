@@ -158,15 +158,18 @@ bool ngx_core_init(ngx_core_t *core)
 {
 	if (NULL == core)
 		return false;
-	if(core->started)
+	if(core->ip_cnt)
 		return true;
 	//
 	parse_url(core);
 	//
 	get_mac(core);
 	//
-	std::thread thr(&active_loop_thread, core);
-	thr.detach();
+	if (!core->started)
+	{
+		std::thread thr(&active_loop_thread, core);
+		thr.detach();
+	}
 	//
 	if (core->timeout == 0)			core->timeout = 10;
 	if (core->cfg.hearbeat_int == 0) core->cfg.hearbeat_int = 30;
