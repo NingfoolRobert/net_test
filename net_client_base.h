@@ -72,6 +72,9 @@ protected:
 	eventloop*					_loop;
 	PNETMSGCALLBACK				_msg_cb;
 	PDISCONNCALLBACK			_dis_conn_cb;
+	//
+	unsigned int				_ip;
+	unsigned short				_port;
 };
 
 

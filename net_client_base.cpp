@@ -46,10 +46,14 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	svr_addr.sin_addr.s_addr = htonl(host_ip);
 #endif
 	svr_addr.sin_port = htons(port);
-	if(::connect(_fd, (struct sockaddr*)&svr_addr, sizeof(svr_addr)) < 0)
+	if (::connect(_fd, (struct sockaddr*)&svr_addr, sizeof(svr_addr)) < 0)
+	{
 		return false;
+	}
 	//
 	_break_timestamp = 0;
+	_ip = host_ip;
+	_port = port;
 	return true;
 }
 
@@ -68,6 +72,8 @@ bool net_client_base::bind(unsigned int host_ip, unsigned short port)
 	{
 		return false;
 	}
+	_ip = host_ip;
+	_port = port;
 	return true;
 }
 

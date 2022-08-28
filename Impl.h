@@ -10,6 +10,20 @@
 #define HOST_MAC_MAX		5
 #define MAC_LENGTH_MAX		24
 
+
+
+struct ngx_core_s {
+	ngx_log				*log;
+	eventloop			*loop;
+	net_client_base		*conn;
+	unsigned int		 timeout;
+	unsigned char		 logoned;
+	unsigned char		 started;	
+	unsigned short		 resever;
+
+};
+
+
 typedef  void(*PTIMERCALLBACK)(void* param);
 
 struct CBizUser::Impl {

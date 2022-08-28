@@ -1,5 +1,6 @@
 #include "tcp_conn.h"
 #include "eventloop.h"
+#include "ngx_log.h"
 
 #ifdef _WIN32
 #include <ws2tcpip.h>
@@ -38,15 +39,19 @@ void tcp_conn::OnRead()
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK)
+		if (GetLastError() != EWOULDBLOCK) {
+			ngx_log_error(_loop->_log, "net error(%d), ip:port=%s:%d...", GetLastError(), _ip, _port);
 #else 
-		if (errno != EAGAIN || errno != EINTR)	
+		if (errno != EAGAIN || errno != EINTR) {
+			ngx_log_error(_loop->_log, "net error(%d), ip:port=%s:%d...", errno(), _ip, _port);
 #endif 
 			OnTerminate();
+		}
 		return;
 	}
 	else if (recv_len == 0)//peer close 
 	{
+		ngx_log_warn(_loop->_log, "peer disconnect, ip:port=%s:%d...", _ip, _port);
 		OnTerminate();
 		return;
 	}
@@ -93,17 +98,19 @@ void tcp_conn::OnSend()
 	if (send_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK)
+		if (GetLastError() != EWOULDBLOCK){
+			ngx_log_warn(_loop->_log, "send error(%d), ip:port=%s:%d...", GetLastError(), _ip, _port);
 #else 
-		if (errno != EAGAIN && errno != EINTR)
+		if (errno != EAGAIN && errno != EINTR) {
+			ngx_log_warn(_loop->_log, "send error(%d), ip:port=%s:%d...", errno, _ip, _port);
 #endif 
-		{
 			OnTerminate();
 			return;
 		}
 	}
 	else if (send_len == 0)
 	{
+		ngx_log_warn(_loop->_log, "peer disconnect, ip:port=%s:%d...", _ip, _port);
 		OnTerminate();
 		return;
 	}
@@ -116,8 +123,6 @@ void tcp_conn::OnSend()
 		_snd_len = 0;
 	}
 }
-
-
 
 int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 {
@@ -141,10 +146,13 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK)
+		{
+			ngx_log_warn(_loop->_log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN && errno != EINTR)
-#endif 
 		{
+			ngx_log_warn(_loop->_log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
+#endif 
 			OnTerminate();
 			return -1;
 		}
@@ -163,6 +171,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	}
 	else if (snd_len == 0)
 	{
+		ngx_log_warn(_loop->_log, "peer disconnect...");
 		OnTerminate();
 		return -1;
 	}
@@ -188,7 +197,7 @@ void tcp_conn::OnTerminate()
 	net_client_base::OnTerminate();
 	net_client_base::close();
 	if(_rcv_buf) _rcv_buf->len = 0;
-	if(_snd_buf) _snd_buf->len = 0;
+	_snd_len = 0;
 }
 
 bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)

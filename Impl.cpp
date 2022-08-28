@@ -97,7 +97,7 @@ bool CBizUser::Impl::init()
 	//
 	if (nullptr == this->loop)
 	{
-		this->loop = new eventloop;
+		this->loop = new eventloop(log);
 		if (nullptr == this->loop)
 		{
 			ngx_log_error(this->log, "memory error.");

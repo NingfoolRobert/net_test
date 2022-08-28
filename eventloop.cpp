@@ -1,5 +1,6 @@
 
 #include "eventloop.h"
+#include "ngx_log.h"
 
 #if _WIN32
 #include <sys/timeb.h>
@@ -10,7 +11,8 @@
 #endif 
 
 
-eventloop::eventloop()
+
+eventloop::eventloop(ngx_log* log):_log(log)
 {
 #ifdef _WIN32
 	_wake_recv_fd = NULL;
@@ -19,6 +21,7 @@ eventloop::eventloop()
 #else 
 	_wake_fd = -1;
 #endif 
+	create_wakeup_fd();
 }
 
 eventloop::~eventloop()
