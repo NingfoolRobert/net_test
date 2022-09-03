@@ -14,8 +14,6 @@
 #endif 
 
 
-
-
 eventloop::eventloop(void* core) :_core(core)
 {
 #ifdef _WIN32
@@ -85,6 +83,17 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 	tv.tv_sec = timeout / 1000;
 	tv.tv_usec = (timeout % 1000) * 1000;
 	int nret = select(max_fd + 1, &rd_fds, &wt_fds, nullptr, &tv);
+	if (nret <= 0)
+		return 0;
+	//
+#ifdef _WIN32 
+	if (FD_ISSET(_wake_recv_fd->_fd, &rd_fds))
+#else 
+	if (FD_ISSET(_wake_fd, &rd_fds))
+#endif 
+	{
+		handle_read();
+	}
 	//
 	for (auto it = conns.begin(); it != conns.end(); ++it)
 	{
@@ -95,13 +104,7 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 			pConn->OnSend();
 	}
 
-#ifdef _WIN32 
-	if (FD_ISSET(_wake_recv_fd->_fd, &rd_fds))
-#else 
-	if(FD_ISSET(_wake_fd, &rd_fds))
-#endif 
-		handle_read();
-	return 0;
+	return _active_conn.size();
 }
 
 void eventloop::add(net_client_base* conn)

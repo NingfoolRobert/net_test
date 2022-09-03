@@ -14,9 +14,9 @@
 typedef  void(*PTIMERCALLBACK)(void* param);
 
 struct CBizUser::Impl {
-	ngx_core_t				*core;
+	ngx_core_t				core;
 	net_client_base			*conn;			//
-	void					*biz_user;		//
+	void					*biz;
 	unsigned int			logoned;		//
 	
 	PTIMERCALLBACK			timer_cb;

@@ -31,10 +31,16 @@ void  write_log_timer(void* param) {
 	if (NULL == param)
 		return;
 	ngx_core_t* core = (ngx_core_t*)param;
-	unsigned int size = ngx_file_size(core->log->_name);
+	unsigned long long  size = ngx_file_size(core->log->_name);
 	if (size >= core->log_max_size)
 	{
 		char szFileName[256] = { 0 };
+		struct tm tmNow;
+		time_t tNow = time(NULL);
+		localtime_s(&tmNow, &tNow);
+		sprintf(szFileName, "./%04d%02d%02d_%02d%02d%02d_%s.log", tmNow.tm_year + 1900,
+			tmNow.tm_mon +1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec,
+			core->api_name);
 		ngx_file_rename(core->log->_name, szFileName);
 	}
 	//
@@ -158,23 +164,6 @@ bool ngx_core_init(ngx_core_t *core)
 {
 	if (NULL == core)
 		return false;
-	if(core->ip_cnt)
-		return true;
-	//
-	parse_url(core);
-	//
-	get_mac(core);
-	//
-	if (!core->started)
-	{
-		std::thread thr(&active_loop_thread, core);
-		thr.detach();
-	}
-	//
-	if (core->timeout == 0)			core->timeout = 10;
-	if (core->cfg.hearbeat_int == 0) core->cfg.hearbeat_int = 30;
-	if (core->cfg.log_level == 0) core->cfg.log_level = log_level_info;
-	if (core->log_max_size == 0)	 core->log_max_size = LOG_FILE_MAX_SIZE;
 	//
 	char szFileFullName[256] = { 0 };
 	sprintf(szFileFullName, "./%s.log", core->api_name);
@@ -186,6 +175,23 @@ bool ngx_core_init(ngx_core_t *core)
 			printf("memory error.");
 			return false;
 		}
+	}
+	//
+	if (core->timeout == 0)			core->timeout = 10;
+	if (core->cfg.hearbeat_int == 0) core->cfg.hearbeat_int = 30;
+	if (core->cfg.log_level == 0) core->cfg.log_level = log_level_info;
+	if (core->log_max_size == 0)	 core->log_max_size = LOG_FILE_MAX_SIZE;
+	core->ip_cnt = 0;
+	//
+	parse_url(core);
+	//
+	get_mac(core);
+	//
+	if (!core->started)
+	{
+		std::thread thr(&active_loop_thread, core);
+		thr.detach();
+		//
 		tagtimercb tb;
 		tb.cb = write_log_timer;
 		tb.count = 0;
@@ -197,6 +203,7 @@ bool ngx_core_init(ngx_core_t *core)
 	if (core->ip_cnt == 0)
 	{
 		ngx_log_error(core->log, "not find the server address:%s.", core->cfg.url);
+		ngx_core_uninit(core);
 		return false;
 	}
 	//

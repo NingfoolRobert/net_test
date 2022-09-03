@@ -27,6 +27,7 @@ struct ngx_core_s
 	unsigned int			api_version;				//
 	unsigned int			log_max_size;				//
 	char					mac[HOST_MAC_MAX][MAC_LENGTH_MAX];		//mac addr
+	void					*biz;
 };
 
 void parse_url(ngx_core_t  *core);

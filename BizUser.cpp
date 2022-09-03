@@ -9,17 +9,17 @@
 #include <thread>
 
 ///////////////////////////////////////
-void  OnNetDisConn(net_client_base* conn) {
-// 	CBizUser::Impl *impl = (CBizUser::Impl*)param;
-// 	CBizUser* pUser = (CBizUser*)(impl->biz_user);
-/*	pUser->OnDisConnect();*/
+void  OnNetDisConn(ngx_core_t* core, net_client_base* conn) {
+ 	CBizUser::Impl *impl = (CBizUser::Impl*)(core->biz);
+ 	CBizUser* pUser = (CBizUser*)(impl->biz);
+	pUser->OnDisConnect();
+	ngx_log_warn(core->log, "disconnect server, ip:port=%s:%d", core->host_ip[core->ip_idx], core->port[core->ip_idx]);
 }
 //
-bool OnMessage(const char* data, unsigned int len)
+bool OnMessage(ngx_core_t* core, const char* data, unsigned int len)
 {
-	void* param;
-	CBizUser::Impl *impl = (CBizUser::Impl*)param;
-	CBizUser* pUser = (CBizUser*)(impl->biz_user);
+	CBizUser::Impl *impl = (CBizUser::Impl*)(core->biz);
+	CBizUser* pUser = (CBizUser*)(impl->biz);
 	//log on msg 
 	if (*data == 1)
 	{
@@ -33,57 +33,13 @@ bool OnMessage(const char* data, unsigned int len)
 	//
 	return pUser->OnMessage(0, 0, (void*)data, len);
 }
-//
-bool OnNetMsg(char* pData, unsigned int nMsgLen)
-{
-	return true;
-// 	unsigned int nMsgID, nMsgNo;
-// 	if (nMsgID == 1)
-// 	{
-// 		pUser->OnLogon(nMsgNo);
-// 		if (nMsgNo == 0)	//log on success
-// 		{
-// 			//TODO ¶¨Ê±ÐÄÌø
-// 			//g_impl->loop->add_timer();
-// 		}
-// 		//
-// 		return true;
-// 	}
-// 	//
-// 	return pUser->OnMessage(nMsgID, nMsgNo, pData, nMsgLen);
-}
-//
-// void OnHeartBeatTimer(void* param)
-// {
-// 	//heartbeat message to send
-// 	//g_impl->conn->send_msg()
-// 	if (g_impl->conn->_break_timestamp)
-// 		return;
-// 	//todo gene heartbeat message 
-// 	g_impl->conn->send_msg(nullptr, 0);
-// }
-
-// 
-// void  ActiveWorkThread(CBizUser::Impl* impl) {
-// 	
-// 	std::vector<net_client_base*> vecTmp;
-// 	while (impl->started)
-// 	{
-// 		impl->loop->loop(vecTmp, 10);
-// 	}
-// #ifdef _WIN32 
-// 	WSACleanup();
-// #endif 
-// 	//
-// 	ngx_log_info(impl->log, "%s api stoped ...", g_impl->api_name);
-// 
-// }
 
 ///////////////////////////////////////
 CBizUser::CBizUser()
 {
 	_impl = new Impl;
-	_impl->biz_user = this;
+	_impl->core.biz = _impl;
+	_impl->biz = this;
 }
 
 
@@ -100,29 +56,19 @@ CBizUser::~CBizUser()
 
 bool CBizUser::start(const COMMONCFG& cfg)
 {
-	memcpy(&_impl->core->cfg, &cfg, sizeof(cfg));
+	memcpy(&_impl->core.cfg, &cfg, sizeof(cfg));
 	//
 	if (!_impl->init()) {
 		return false;
 	}
 	//
-#if _WIN32 
-	SOCKET sock = _impl->conn->create();
-	if(INVALID_SOCKET == sock)
-#else 
-	int sock = _impl->conn->create();
-	if (sock == -1)
-#endif 
-	{
-		return false;
-	}
-	//
+	ngx_log_info(_impl->get_log(), "start connect server, ip:port=%s", _impl->core.cfg.url);
 	if (!_impl->connect())
 	{
 		return false;
 	}
 	//
-	ngx_log_info(_impl->get_log(), "connect server success, ip:port=%s", _impl->core->cfg.url);
+	ngx_log_info(_impl->get_log(), "connect server success, ip:port=%s", _impl->core.cfg.url);
 	OnConnect();
 	//
 	_impl->async(_impl->conn);
@@ -136,15 +82,15 @@ void CBizUser::stop()
 		_impl->conn->OnTerminate();
 	//
 	_impl->uninit();
-	ngx_log_info(_impl->get_log(), "stoped %s...", _impl->core->api_name);
+	ngx_log_info(_impl->get_log(), "stoped %s...", _impl->core.api_name);
 }
 
 bool  CBizUser::reconnect()
 {
-	if (_impl->conn->_break_timestamp == 0 || _impl->core->cfg.auto_reconnect)
+	if (_impl->conn->_break_timestamp == 0 || _impl->core.cfg.auto_reconnect)
 		return false;
 	//
-	_impl->core->loop->remove(_impl->conn);
+	_impl->core.loop->remove(_impl->conn);
 	if (!_impl->connect())
 	{
 		return false;

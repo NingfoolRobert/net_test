@@ -51,7 +51,7 @@ private:
 	ngx_queue_t				*_wait_logs;
 };
 
-unsigned int	ngx_file_size(const char* file_name);
+unsigned long long	ngx_file_size(const char* file_name);
 
 void ngx_file_rename(const char*  old_file_name, const char* new_file_name);
 
