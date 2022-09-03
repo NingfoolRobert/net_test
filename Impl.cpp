@@ -76,6 +76,13 @@ bool CBizUser::Impl::connect()
 
 void CBizUser::Impl::uninit()
 {
+	if (conn)
+	{
+		core.loop->remove(conn);
+		conn->OnTerminate();
+		//TODO auto_reconnect;
+	}
+	//
 	ngx_core_uninit(&core);
 }
 

@@ -42,9 +42,14 @@ private:
 	void	handle_read();
 
 	void	process_timer();
+
+	void	update_conns();
 private:
 	std::mutex							_lck;
 	std::set<net_client_base*>			_conns;
+	std::mutex							_wait_lck;
+	std::vector<net_client_base*>		_remove_conns;
+	std::vector<net_client_base*>		_wait_conns;
 private:
 	std::mutex							_lck_timer;
 	std::vector<tagtimercb>				_list_timers;

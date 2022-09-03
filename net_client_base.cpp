@@ -149,8 +149,6 @@ void net_client_base::OnTerminate()
 		return;
 	//
 	_break_timestamp = time(NULL);
-	if (_loop)
-		_loop->remove(this);
 	//
 	if (_dis_conn_cb)
 		_dis_conn_cb(this);

@@ -52,6 +52,7 @@ eventloop::~eventloop()
 int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 {
 	process_timer();
+	update_conns();
 	//
 	int max_fd = 0;
 	std::vector<net_client_base*> conns;
@@ -95,6 +96,7 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 		handle_read();
 	}
 	//
+	std::unique_lock<std::mutex> _(_lck);
 	for (auto it = conns.begin(); it != conns.end(); ++it)
 	{
 		auto pConn = *it;
@@ -109,10 +111,8 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 
 void eventloop::add(net_client_base* conn)
 {
-	std::unique_lock<std::mutex> _(_lck);
-	auto it = _conns.find(conn);
-	if (it == _conns.end())
-		_conns.insert(conn);
+	std::unique_lock<std::mutex> _(_wait_lck);
+	_wait_conns.push_back(conn);
 }
 
 void eventloop::process_timer()
@@ -152,13 +152,34 @@ void eventloop::process_timer()
 	}
 }
 
+void eventloop::update_conns()
+{
+	std::vector<net_client_base*> vecTmp;
+	std::vector<net_client_base*> vecTmp1;
+	{
+		std::unique_lock<std::mutex> _(_wait_lck);
+		vecTmp.swap(_remove_conns);
+		vecTmp1.swap(_wait_conns);
+	}
+	//
+	std::unique_lock<std::mutex> _(_lck);
+	for (size_t i = 0; i < vecTmp.size(); i++)
+	{
+		auto it = _conns.find(vecTmp[i]);
+		if (it != _conns.end())
+			_conns.erase(it);
+	}
+
+	for (size_t i = 0; i < vecTmp1.size(); i++)
+	{
+		_conns.insert(vecTmp1[i]);
+	}
+}
+
 void eventloop::remove(net_client_base* conn)
 {
-	std::unique_lock<std::mutex> _(_lck);
-	auto it = _conns.find(conn);
-	if (it == _conns.end())
-		return;
-	_conns.erase(conn);
+	std::unique_lock<std::mutex> _(_wait_lck);
+	_remove_conns.push_back(conn);
 }
 
 void eventloop::add_timer(tagtimercb cb)
