@@ -74,18 +74,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)_32</TargetName>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)_64</TargetName>
+    <IncludePath>..\core;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_32</TargetName>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_64</TargetName>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -156,34 +160,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\core\Common.h" />
+    <ClInclude Include="..\core\cycle_memory_block.h" />
+    <ClInclude Include="..\core\eventloop.h" />
+    <ClInclude Include="..\core\net_client_base.h" />
+    <ClInclude Include="..\core\ngx_buf.h" />
+    <ClInclude Include="..\core\ngx_core.h" />
+    <ClInclude Include="..\core\ngx_list.h" />
+    <ClInclude Include="..\core\ngx_log.h" />
+    <ClInclude Include="..\core\ngx_pool.h" />
+    <ClInclude Include="..\core\ngx_queue.h" />
+    <ClInclude Include="..\core\ngx_version.h" />
+    <ClInclude Include="..\core\tcp_conn.h" />
     <ClInclude Include="BizUser.h" />
-    <ClInclude Include="cycle_memory_block.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="eventloop.h" />
     <ClInclude Include="Impl.h" />
-    <ClInclude Include="net_client_base.h" />
-    <ClInclude Include="ngx_buf.h" />
-    <ClInclude Include="ngx_core.h" />
-    <ClInclude Include="ngx_list.h" />
-    <ClInclude Include="ngx_log.h" />
-    <ClInclude Include="ngx_pool.h" />
-    <ClInclude Include="ngx_queue.h" />
-    <ClInclude Include="ngx_version.h" />
-    <ClInclude Include="tcp_conn.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\core\eventloop.cpp" />
+    <ClCompile Include="..\core\net_client_base.cpp" />
+    <ClCompile Include="..\core\ngx_buf.cpp" />
+    <ClCompile Include="..\core\ngx_core.cpp" />
+    <ClCompile Include="..\core\ngx_list.cpp" />
+    <ClCompile Include="..\core\ngx_log.cpp" />
+    <ClCompile Include="..\core\ngx_pool.cpp" />
+    <ClCompile Include="..\core\ngx_queue.cpp" />
+    <ClCompile Include="..\core\tcp_conn.cpp" />
     <ClCompile Include="BizUser.cpp" />
-    <ClCompile Include="client.cpp" />
-    <ClCompile Include="eventloop.cpp" />
     <ClCompile Include="Impl.cpp" />
-    <ClCompile Include="net_client_base.cpp" />
-    <ClCompile Include="ngx_buf.cpp" />
-    <ClCompile Include="ngx_core.cpp" />
-    <ClCompile Include="ngx_list.cpp" />
-    <ClCompile Include="ngx_log.cpp" />
-    <ClCompile Include="ngx_pool.cpp" />
-    <ClCompile Include="ngx_queue.cpp" />
-    <ClCompile Include="tcp_conn.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

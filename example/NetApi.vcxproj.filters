@@ -18,81 +18,78 @@
     <ClInclude Include="BizUser.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="eventloop.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="tcp_conn.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="net_client_base.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="cycle_memory_block.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Impl.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_list.h">
+    <ClInclude Include="..\core\Common.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_log.h">
+    <ClInclude Include="..\core\cycle_memory_block.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_pool.h">
+    <ClInclude Include="..\core\eventloop.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_buf.h">
+    <ClInclude Include="..\core\net_client_base.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_queue.h">
+    <ClInclude Include="..\core\ngx_buf.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_core.h">
+    <ClInclude Include="..\core\ngx_core.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_version.h">
+    <ClInclude Include="..\core\ngx_list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\ngx_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\ngx_pool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\ngx_queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\ngx_version.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\tcp_conn.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="BizUser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="eventloop.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="tcp_conn.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="net_client_base.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Impl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_list.cpp">
+    <ClCompile Include="..\core\eventloop.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_log.cpp">
+    <ClCompile Include="..\core\net_client_base.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_pool.cpp">
+    <ClCompile Include="..\core\ngx_buf.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_buf.cpp">
+    <ClCompile Include="..\core\ngx_core.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_queue.cpp">
+    <ClCompile Include="..\core\ngx_list.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_core.cpp">
+    <ClCompile Include="..\core\ngx_log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\ngx_pool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\ngx_queue.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\tcp_conn.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
