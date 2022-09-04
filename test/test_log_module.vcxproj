@@ -72,15 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -151,17 +155,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ngx_buf.cpp" />
-    <ClCompile Include="ngx_log.cpp" />
-    <ClCompile Include="ngx_pool.cpp" />
-    <ClCompile Include="ngx_queue.cpp" />
+    <ClCompile Include="..\core\ngx_buf.cpp" />
+    <ClCompile Include="..\core\ngx_log.cpp" />
+    <ClCompile Include="..\core\ngx_pool.cpp" />
+    <ClCompile Include="..\core\ngx_queue.cpp" />
     <ClCompile Include="test_log_module.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ngx_buf.h" />
-    <ClInclude Include="ngx_log.h" />
-    <ClInclude Include="ngx_pool.h" />
-    <ClInclude Include="ngx_queue.h" />
+    <ClInclude Include="..\core\ngx_buf.h" />
+    <ClInclude Include="..\core\ngx_log.h" />
+    <ClInclude Include="..\core\ngx_pool.h" />
+    <ClInclude Include="..\core\ngx_queue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

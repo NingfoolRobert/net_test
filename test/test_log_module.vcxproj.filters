@@ -18,30 +18,30 @@
     <ClCompile Include="test_log_module.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_log.cpp">
+    <ClCompile Include="..\core\ngx_buf.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_pool.cpp">
+    <ClCompile Include="..\core\ngx_log.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_queue.cpp">
+    <ClCompile Include="..\core\ngx_pool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ngx_buf.cpp">
+    <ClCompile Include="..\core\ngx_queue.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ngx_log.h">
+    <ClInclude Include="..\core\ngx_buf.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_pool.h">
+    <ClInclude Include="..\core\ngx_log.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_queue.h">
+    <ClInclude Include="..\core\ngx_pool.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ngx_buf.h">
+    <ClInclude Include="..\core\ngx_queue.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
