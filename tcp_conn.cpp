@@ -198,11 +198,4 @@ void tcp_conn::OnTerminate()
 	_snd_len = 0;
 }
 
-bool tcp_conn::OnMessage(char* pData, unsigned int nDataLen)
-{
-	if (_msg_cb)
-		return _msg_cb(_loop->_core, pData, nDataLen);
-	return true;
-}
-
 

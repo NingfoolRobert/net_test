@@ -31,10 +31,6 @@ public:
 	virtual  unsigned int  get_wait_send_cnt();
 
 	virtual void   OnTerminate();
-public:
-
-public:
-	bool   OnMessage(char* pData, unsigned int nDataLen);
 private:
 	PMSGLENPARSEFUNC		_msg_head_fnc;
 	unsigned int			_head_len;

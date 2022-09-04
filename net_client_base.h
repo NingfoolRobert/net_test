@@ -40,6 +40,8 @@ public:
 
 	virtual  void   OnTerminate();
 public:
+	bool OnMessage(void* data, unsigned int len);
+public:
 #ifdef _WIN32 
 	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
 #else 

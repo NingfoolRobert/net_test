@@ -161,6 +161,13 @@ void net_client_base::OnTerminate()
 	_break_timestamp = time(NULL);
 	//
 	if (_dis_conn_cb)
-		_dis_conn_cb(_loop->_core, this);
+		(*_dis_conn_cb)(_loop->_core, this);
+}
+
+bool net_client_base::OnMessage(void* data, unsigned int len)
+{
+	if (_msg_cb)
+		return (*_msg_cb)(_loop->_core, data, len);
+	return false;
 }
 
