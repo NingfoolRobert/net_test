@@ -14,7 +14,7 @@ tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int
 	_msg_head_fnc(msg_head_fnc),
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
-	_rcv_buf(nullptr),
+	_rcv_buf(NULL),
 	_snd_buf(NULL)
 {
 	_pool = ngx_create_pool(1);

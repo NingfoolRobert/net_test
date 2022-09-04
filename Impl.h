@@ -25,7 +25,7 @@ struct CBizUser::Impl {
 
 	~Impl();
 
-	bool	init();
+	bool init(const char*  name, unsigned int version);
 
 	void	uninit();
 

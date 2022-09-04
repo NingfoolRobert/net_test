@@ -83,7 +83,7 @@ bool CBizUser::start(const COMMONCFG& cfg)
 {
 	memcpy(&_impl->core.cfg, &cfg, sizeof(cfg));
 	//
-	if (!_impl->init()) {
+	if (!_impl->init("net_api",0x01)) {
 		return false;
 	}
 	//

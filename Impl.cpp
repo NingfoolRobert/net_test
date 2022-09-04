@@ -26,9 +26,11 @@ CBizUser::Impl::~Impl() {
 	uninit();	
 }
 
-bool CBizUser::Impl::init()
+bool CBizUser::Impl::init(const char* name, unsigned int version)
 {
 	//
+	if(name)strcpy(core.api_name, name);
+	core.api_version = version;
 	if (!ngx_core_init(&core))
 	{
 		ngx_log_fatal(get_log(), "init %s fail, version:%d.%d, please check congfig...", core.api_name,
