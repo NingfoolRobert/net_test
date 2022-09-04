@@ -215,4 +215,5 @@ void ngx_core_uninit(ngx_core_t *core)
 	core->started = false;
 	core->loop->wakeup();
 	while (core->loop);
+	core->log->print_log_file(core->log);
 }

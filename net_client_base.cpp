@@ -134,6 +134,14 @@ void net_client_base::close()
 #endif 
 }
 
+void net_client_base::terminate()
+{
+	//
+	if (_loop)
+		_loop->remove(this);
+	_break_timestamp = time(NULL);
+}
+
 int net_client_base::send_msg(const char* pData, unsigned int nMsgLen)
 {
 	if (_break_timestamp)
@@ -148,10 +156,11 @@ void net_client_base::OnTerminate()
 	if (_break_timestamp)
 		return;
 	//
+	close();
+	//
 	_break_timestamp = time(NULL);
 	//
 	if (_dis_conn_cb)
-		_dis_conn_cb(this);
-	//
-	close();
+		_dis_conn_cb(_loop->_core, this);
 }
+

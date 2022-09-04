@@ -11,11 +11,16 @@
 #endif 
 
 ///////////////////////////////
-CBizUser::Impl::Impl()
+CBizUser::Impl::Impl(PMSGLENPARSEFUNC head_fnc, PNETMSGCALLBACK msg_cb, PDISCONNCALLBACK dis_cb)
 {
 	memset(&core, 0, sizeof(core));
 	conn = nullptr;
+
+	msg_head_fnc = head_fnc;
+	msg_cb = msg_cb;
+	dis_conn_cb = dis_conn_cb;
 }
+
 //
 CBizUser::Impl::~Impl() {
 	uninit();	
@@ -76,11 +81,12 @@ bool CBizUser::Impl::connect()
 
 void CBizUser::Impl::uninit()
 {
-	if (conn)
+	if (core.loop == NULL)
+		return;
+	//
+	if (conn && conn->_break_timestamp == 0)
 	{
-		core.loop->remove(conn);
-		conn->OnTerminate();
-		//TODO auto_reconnect;
+		conn->terminate();
 	}
 	//
 	ngx_core_uninit(&core);

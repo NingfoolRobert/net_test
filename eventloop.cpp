@@ -167,7 +167,10 @@ void eventloop::update_conns()
 	{
 		auto it = _conns.find(vecTmp[i]);
 		if (it != _conns.end())
+		{
 			_conns.erase(it);
+			vecTmp[i]->OnTerminate();
+		}
 	}
 
 	for (size_t i = 0; i < vecTmp1.size(); i++)

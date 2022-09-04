@@ -15,11 +15,11 @@
 class net_client_base;
 class eventloop;
 
-typedef  unsigned int(*PMSGLENPARSEFUNC)(const char* pData, int nDataLen);
+typedef  unsigned int(*PMSGLENPARSEFUNC)(void*, unsigned int);
 
-typedef  void(*PDISCONNCALLBACK)(net_client_base*);
+typedef  void(*PDISCONNCALLBACK)(void*, net_client_base*);
 
-typedef  bool(*PNETMSGCALLBACK)(char* pData, unsigned int nMsgLen);
+typedef  bool(*PNETMSGCALLBACK)(void*, void* , unsigned int);
 
 class eventloop;
 
@@ -38,7 +38,7 @@ public:
 
 	virtual int 	send_msg(const char* pData, unsigned int nMsgLen);
 
-	virtual  void  OnTerminate();
+	virtual  void   OnTerminate();
 public:
 #ifdef _WIN32 
 	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
@@ -61,6 +61,8 @@ public:
 	bool	set_reuse_port(bool flag = 1);
 
 	void	close();
+	
+	void	terminate();
 public:
 #ifdef _WIN32 
 	SOCKET		_fd;

@@ -11,20 +11,17 @@
 
 
 
-typedef  void(*PTIMERCALLBACK)(void* param);
-
 struct CBizUser::Impl {
 	ngx_core_t				core;
 	net_client_base			*conn;			//
 	void					*biz;
 	unsigned int			logoned;		//
 	
-	PTIMERCALLBACK			timer_cb;
 	PDISCONNCALLBACK		dis_conn_cb;
 	PNETMSGCALLBACK			msg_cb;
 	PMSGLENPARSEFUNC		msg_head_fnc;
 	///////////////////////////////////////////
-	Impl();
+	Impl(PMSGLENPARSEFUNC head_fnc, PNETMSGCALLBACK msg_cb, PDISCONNCALLBACK dis_cb);
 
 	~Impl();
 
