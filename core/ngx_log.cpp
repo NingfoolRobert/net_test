@@ -10,8 +10,7 @@ static const char*   log_level_prefix[] = { "", "[TRACE] ", "[DEBUG] ", "[INFO] 
 
 unsigned long long ngx_file_size(const char* file_name)
 {
-	//TODO 
-	FILE*  pFile = fopen(file_name, "a+");
+	FILE*  pFile = fopen(file_name, "r");
 	if (pFile == NULL)
 		return 0;
 	unsigned long long size = ftell(pFile);

@@ -3,10 +3,10 @@
 #include "Impl.h"
 #include "tcp_conn.h"
 #include "ngx_log.h"
-
-
 #include <string.h>
-#include <thread>
+
+#define  NET_API_VERSION		0x01
+
 /////////////////////////////////////////////////////////
 unsigned int msg_head_parse(void* data, unsigned int nLen)
 {
@@ -20,7 +20,7 @@ void  OnNetDisConn(void* param, net_client_base* conn) {
  	CBizUser* pUser = (CBizUser*)(impl->biz);
 	ngx_log_warn(core->log, "disconnect server, ip:port=%s:%d", core->host_ip[core->ip_idx], core->port[core->ip_idx]);
 	pUser->OnDisConnect();
-	if (core->cfg.auto_reconnect)
+	if (core->cfg.auto_reconnect && core->started)
 		pUser->reconnect();
 	//
 }
@@ -33,17 +33,15 @@ bool OnNetMsg(void* param, void* data, unsigned int len)
 	//log on msg 
 	if (*(int*)data == 1)
 	{
-		//log on success; 
-		if (1)
+		int ret;
+		pUser->OnLogon(ret);
+		if (0 == ret)//log on success; 
 		{
-			pUser->OnLogon(0);
 			ngx_log_info(core->log, "log on success, userid:%d,...", core->cfg.userid);
 			//heartbeat timer;
 		}
-		else
+		else//log on fail; 
 		{
-			//log on fail; 
-			pUser->OnLogon(1);
 			ngx_log_error(core->log,"log on server fail. err:%d, reason:%s", 1, "not find the userid or password");
 			impl->uninit();
 		}
@@ -83,7 +81,7 @@ bool CBizUser::start(const COMMONCFG& cfg)
 {
 	memcpy(&_impl->core.cfg, &cfg, sizeof(cfg));
 	//
-	if (!_impl->init("net_api",0x01)) {
+	if (!_impl->init("net_test_api", NET_API_VERSION)) {
 		return false;
 	}
 	//
