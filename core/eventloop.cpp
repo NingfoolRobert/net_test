@@ -111,8 +111,12 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 
 void eventloop::add(net_client_base* conn)
 {
-	std::unique_lock<std::mutex> _(_wait_lck);
-	_wait_conns.push_back(conn);
+	{
+		std::unique_lock<std::mutex> _(_wait_lck);
+		_wait_conns.push_back(conn);
+	}
+	//
+	wakeup();
 }
 
 void eventloop::process_timer()
@@ -181,8 +185,12 @@ void eventloop::update_conns()
 
 void eventloop::remove(net_client_base* conn)
 {
-	std::unique_lock<std::mutex> _(_wait_lck);
-	_remove_conns.push_back(conn);
+	{
+		std::unique_lock<std::mutex> _(_wait_lck);
+		_remove_conns.push_back(conn);
+	}
+	//
+	wakeup();
 }
 
 void eventloop::add_timer(tagtimercb cb)

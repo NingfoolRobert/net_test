@@ -153,8 +153,6 @@ int net_client_base::send_msg(const char* pData, unsigned int nMsgLen)
 
 void net_client_base::OnTerminate()
 {
-	if (_break_timestamp)
-		return;
 	//
 	close();
 	//
