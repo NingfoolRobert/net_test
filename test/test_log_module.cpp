@@ -1,15 +1,21 @@
 ﻿// test_log_module.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
-#include <iostream>
 #include "ngx_log.h"
 
+#include <iostream>
 #include <thread>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 void  write_log_thread(ngx_log* obj) {
 	while (1) {
+#ifdef _WIN32 
 		Sleep(10);
+#else 
+		usleep(10 * 1000);
+#endif 
 		obj->print_log_file(obj);
 	}
 }
@@ -26,8 +32,13 @@ int main()
 	{
 		nCnt++;
 		ngx_log_info(log, "test one %d", nCnt);
+#ifdef _WIN32 
 		Sleep(6);
+#else 
+		usleep(6 * 1000);
+#endif 
 	}
+	return 0;
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(TARGET_NAME test_net_api)
+set(TARGET_NAME DemoNetApi)
+
 
 
 file(GLOB ${TARGET_NAME}_HEADER_FILES 
@@ -17,3 +18,27 @@ add_library(${TARGET_NAME}
 	${${TARGET_NAME}_SOURCE_FILES}
 	)
 target_link_libraries(${TARGET_NAME} PRIVATE  core)
+
+set_target_properties(${TARGET_NAME}  PROPERTIES  CXX_VISIBILITY_PRESET	  hidden)
+set_target_properties(${TARGET_NAME}  PROPERTIES  C_VISIBILITY_PRESET	  hidden)
+set_target_properties(${TARGET_NAME}  PROPERTIES  VISIBILITY_INLINES_HIDDEN ON)
+
+file(GLOB ${TARGET_NAME}_PUBLIC_HEADER_FILES  
+	"${CMAKE_CURRENT_SOURCE_DIR}/BizUser.h"
+	"${TOP_DIR}/core/Common.h"
+	)
+
+set_target_properties(${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${${TARGET_NAME}_PUBLIC_HEADER_FILES}")
+message(STATUS "PUBLIC_HEADER: ${PUBLIC_HEADER}")
+install(TARGETS  ${TARGET_NAME}
+	EXPORT  ${TARGET_NAME}_targets 
+	PUBLIC_HEADER		DESTINATION		include 
+	ARCHIVE				DESTINATION		lib 
+	LIBRARY				DESTINATION		lib 
+	RUNTIME				DESTINATION		bin)
+
+install(EXPORT  ${TARGET_NAME}_targets 
+	NAMESPACE	${TARGET_NAME}::
+	FILE		${TARGET_NAME}Config.cmake 
+	DESTINATION lib/cmake/${TARGET_NAME}
+	)
