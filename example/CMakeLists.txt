@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 
 set(TARGET_NAME DemoNetApi)
 
-
-
 file(GLOB ${TARGET_NAME}_HEADER_FILES 
 	LIST_DIRECTORIES  FALSE  CONFIGURE_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h*"
@@ -12,11 +10,27 @@ file(GLOB ${TARGET_NAME}_SOURCE_FILES
 	LIST_DIRECTORIES FALSE CONFIGURE_DEPENDS 
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.c*")
 
+#add_library(${TARGET_NAME}_static 
+#	STATIC
+#	${${TARGET_NAME}_HEADER_FILES}
+#	${${TARGET_NAME}_SOURCE_FILES}
+#	)
+#target_link_libraries(${TARGET_NAME}_static PRIVATE  core)
+## 想要生成动态库和静态库相同名称的的库文件，则需要一个指令set_target_properties
+## 这里只是通过重新命名的方法使其名字相同的，构建时还需不能相同
+#set_target_properties(${TARGET_NAME}_static PROPERTIES OUTPUT_NAME "${TARGET_NAME}")
+## 获取相关属性也是通过set_target_properties
+#get_target_property(OUTPUT_VALUE ${TARGET_NAME}_static OUTPUT_NAME)
+
 add_library(${TARGET_NAME} 
 	SHARED
 	${${TARGET_NAME}_HEADER_FILES}
 	${${TARGET_NAME}_SOURCE_FILES}
 	)
+## 动态库版本号设置 , VERSION指代动态库版本，SOVERSION 指代 API 版本。
+set_target_properties(${TARGET_NAME} PROPERTIES VERSION 0.1 SOVERSION 1)
+# 其中，lib***.so.1.2为动态库的文件名(realname)，lib***.so.1为动态库的别名(soname)，
+# lib***.so为动态库的链接名（linkname）。
 target_link_libraries(${TARGET_NAME} PRIVATE  core)
 
 set_target_properties(${TARGET_NAME}  PROPERTIES  CXX_VISIBILITY_PRESET	  hidden)
@@ -30,15 +44,18 @@ file(GLOB ${TARGET_NAME}_PUBLIC_HEADER_FILES
 
 set_target_properties(${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${${TARGET_NAME}_PUBLIC_HEADER_FILES}")
 message(STATUS "PUBLIC_HEADER: ${PUBLIC_HEADER}")
-install(TARGETS  ${TARGET_NAME}
+install(TARGETS  ${TARGET_NAME} 
+	#${TARGET_NAME}_static
 	EXPORT  ${TARGET_NAME}_targets 
 	PUBLIC_HEADER		DESTINATION		include 
 	ARCHIVE				DESTINATION		lib 
 	LIBRARY				DESTINATION		lib 
 	RUNTIME				DESTINATION		bin)
 
-install(EXPORT  ${TARGET_NAME}_targets 
+install(EXPORT  ${TARGET_NAME}_targets  
 	NAMESPACE	${TARGET_NAME}::
 	FILE		${TARGET_NAME}Config.cmake 
 	DESTINATION lib/cmake/${TARGET_NAME}
 	)
+
+add_subdirectory(test)
