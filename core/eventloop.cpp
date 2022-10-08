@@ -7,10 +7,9 @@
 #if _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
-
 #else
-#include <unistd.h>
 #include <sys/select.h>
+#include <sys/eventfd.h>
 #endif 
 
 
@@ -58,12 +57,12 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 	std::vector<net_client_base*> conns;
 	fd_set  rd_fds;
 	fd_set  wt_fds;
-	SOCKET	_max_fd; 
+	int 	_max_fd; 
 #ifdef _WIN32 
 	FD_SET(_wake_recv_fd->_fd, &rd_fds);
 #else
 	FD_SET(_wake_fd, &rd_fds);
-	max_fd = max(_wake_fd, max_fd);
+	max_fd = std::max(_wake_fd, max_fd);
 #endif 
 	{
 		std::unique_lock<std::mutex> _(_lck);
@@ -73,7 +72,7 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 			conns.push_back(pConn);
 			FD_SET(pConn->_fd, &rd_fds);
 #ifndef _WIN32 
-			max_fd = max(pConn->_fd, max_fd);
+			max_fd = std::max(pConn->_fd, max_fd);
 #endif 
 			if (pConn->get_wait_send_cnt())
 				FD_SET(pConn->_fd, &wt_fds);
@@ -127,8 +126,8 @@ void eventloop::process_timer()
 	ftime(&tbnow);
 	now = tbnow.time * 1000 + tbnow.millitm;
 #else 
-	timeval tv;
-	get_time_of(&tv);
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	//
@@ -203,7 +202,7 @@ void eventloop::add_timer(tagtimercb cb)
 	now = tbnow.time * 1000 + tbnow.millitm;
 #else 
 	timeval tv;
-	get_time_of(&tv);
+	gettimeofday(&tv, NULL);
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	cb.timestamp = now;

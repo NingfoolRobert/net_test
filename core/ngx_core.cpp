@@ -1,14 +1,30 @@
 #include "ngx_core.h"
 #include "eventloop.h"
 
+#include <ctime>
 #include <vector>
 #include <thread>
+#include <string.h>
 
 #ifdef _WIN32
 #include <iphlpapi.h>
 #include <conio.h>
 #include <assert.h>
 #pragma comment(lib, "IPHLPAPI.lib")
+#else 
+#include <sys/ioctl.h>
+#include <fcntl.h> 
+#include <net/if.h> 
+#include <sys/socket.h> 
+#include <errno.h> 
+#include <netdb.h> 
+#include <sys/types.h> 
+#endif 
+
+#ifdef _WIN32 
+#define  ngx_strtok			strtok_s 
+#else  
+#define  ngx_strtok			strtok_r 
 #endif 
 
 #define  LOG_FILE_MAX_SIZE		(100 * 1024 * 1024)
@@ -37,7 +53,11 @@ void  write_log_timer(void* param) {
 		char szFileName[256] = { 0 };
 		struct tm tmNow;
 		time_t tNow = time(NULL);
+#ifndef _WIN32 
+		localtime_r(&tNow, &tmNow);
+#else 
 		localtime_s(&tmNow, &tNow);
+#endif 
 		sprintf(szFileName, "./%04d%02d%02d_%02d%02d%02d_%s.log", tmNow.tm_year + 1900,
 			tmNow.tm_mon +1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec,
 			core->api_name);
@@ -57,7 +77,11 @@ void parse_url(ngx_core_t *core)
 	strcpy(szTmp, core->cfg.url);
 	const char*  splite = ";£»";
 	char* pSave = NULL;
+#ifndef _WIN32 
+	char *ptr = strtok_r(szTmp, splite, &pSave);
+#else 
 	char* ptr = strtok_s(szTmp, splite, &pSave);
+#endif 
 	while (ptr)
 	{
 		char*  pTmp = strrchr(ptr, ':');
@@ -82,7 +106,7 @@ void parse_url(ngx_core_t *core)
 			core->host_ip[core->ip_cnt++] = ntohl(((struct in_addr*)pptr)->s_addr);
 		}
 
-		ptr = strtok_s(NULL, splite, &pSave);
+		ptr = ngx_strtok(NULL, splite, &pSave);
 	}
 
 }
@@ -119,12 +143,12 @@ void get_mac(ngx_core_t *core)
 	free(pAdapterInfo);
 #else 
 	int idx = 0;
-	struct ifreq ifr {};
-	struct ifconf ifc {};
+	struct ifreq ifr{};
+	struct ifconf ifc{};
 	char buf[1024];
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
 	if (sock == -1) {
-		strcpy(mac[idx], "n/a");
+		strcpy(core->mac[idx], "n/a");
 		return;
 	}
 	//
@@ -132,13 +156,13 @@ void get_mac(ngx_core_t *core)
 	ifc.ifc_buf = buf;
 	if (ioctl(sock, SIOCGIFCONF, &ifc) == -1)
 	{
-		strcpy(mac[idx], "n/a");
+		strcpy(core->mac[idx], "n/a");
 		return;
 	}
 	//
 	struct ifreq* it = ifc.ifc_req;
 	const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
-	for (; it != end; ++it)
+	for (; it != end; it++)
 	{
 		strcpy(ifr.ifr_name, it->ifr_name);
 		if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0)

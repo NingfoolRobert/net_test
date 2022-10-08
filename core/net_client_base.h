@@ -1,6 +1,8 @@
 #ifndef _NET_CLINET_BASE_H_
 #define _NET_CLINET_BASE_H_
 
+#include <stdio.h> 
+#include <stdlib.h>
 #ifdef _WIN32 
 #include <WinSock2.h>
 #include <windows.h>
@@ -10,6 +12,9 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netinet/tcp.h>
+#include <fcntl.h>
+#include <error.h>
 #endif 
 
 class net_client_base;

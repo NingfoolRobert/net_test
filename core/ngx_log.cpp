@@ -1,5 +1,5 @@
 #include "ngx_log.h"
-
+#include <string.h>
 #include <stdarg.h>
 #ifdef _WIN32 
 #include <sys/timeb.h>
@@ -25,7 +25,7 @@ void ngx_file_rename(const char* old_file_name, const char* new_file_name)
 
 ngx_log::ngx_log(const char* file_name) :_level(log_level_info), _wait_logs(NULL)
 {
-	if(file_name)	strcpy(_name, file_name);
+	if(file_name) strcpy(_name, file_name);
 	_pool = ngx_create_pool(1);
 	_wait_logs = ngx_create_queue(_pool, sizeof(ngx_buf_t*), 4096);
 }
@@ -53,7 +53,7 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	struct tm tmNow;
-	localtime_s(&tmNow, &tv.tv_sec);
+	localtime_r(&tv.tv_sec, &tmNow);
 	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, tv.tv_usec / 1000, log_level_prefix[level]);
 #endif 
 	//

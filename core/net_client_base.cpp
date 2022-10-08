@@ -1,6 +1,6 @@
 #include "net_client_base.h"
 #include "eventloop.h"
-
+#include <string.h>
 #ifdef _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
@@ -97,7 +97,7 @@ bool net_client_base::set_nio(int mode /*= 1*/)
 	ioctlsocket(_fd, FIONBIO, (u_long*)&mode);
 #else
 	int flags = fcntl(_fd, F_GETFL, 0);
-	fcntl(_fd, F_SETFL, mode == 1? O_NONBLOCK | flags : ~O_NONBLOCK & flags)
+	fcntl(_fd, F_SETFL, mode == 1? O_NONBLOCK | flags : ~O_NONBLOCK & flags);
 #endif 
 	return true;
 }

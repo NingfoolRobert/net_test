@@ -42,7 +42,7 @@ void tcp_conn::OnRead()
 			ngx_log_error(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN || errno != EINTR) {
-			ngx_log_error(_loop->_log, "net error(%d), ip:port=%d:%d...", errno(), _ip, _port);
+			ngx_log_error(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
 #endif 
 			terminate();
 		}
@@ -101,7 +101,7 @@ void tcp_conn::OnSend()
 			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "send error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
 #else 
 		if (errno != EAGAIN && errno != EINTR) {
-			ngx_log_warn(_loop->_core->log, "send error(%d), ip:port=%d:%d...", errno, _ip, _port);
+			ngx_log_warn(((ngx_core_t*)_loop->_core)->log, "send error(%d), ip:port=%d:%d...", errno, _ip, _port);
 #endif 
 			terminate();
 			return;
@@ -150,7 +150,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 #else 
 		if (errno != EAGAIN && errno != EINTR)
 		{
-			ngx_log_warn(((ngx_core_t*)(_loop->_core))->_log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
+			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
 #endif 
 			terminate();
 			return -1;

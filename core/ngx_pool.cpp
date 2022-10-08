@@ -13,7 +13,7 @@ struct ngx_pool_s * ngx_create_pool(size_t size)
 	pool = (struct ngx_pool_s*)malloc(PAGE_SIZE);
 	int ret = pool == NULL ? 1 : 0;
 #else 
-	int ret = posix_memalign((void**)&pool, MP_ALIGNMENT, size);
+	int ret = posix_memalign((void**)&pool, NGX_ALIGNMENT, size);
 #endif
 	if (ret)
 		return NULL;
@@ -144,7 +144,7 @@ void * ngx_allocate_block(struct ngx_pool_s* pool, size_t size)
 	block = (char*)malloc(PAGE_SIZE);
 	int ret = block == NULL ? 1 : 0;
 #else 
-	int ret = posix_memalign((void**)&block, PAGE_SIZE);
+	int ret = posix_memalign((void**)&block, PAGE_SIZE, PAGE_SIZE);
 #endif 
 	if (ret)
 		return NULL;
