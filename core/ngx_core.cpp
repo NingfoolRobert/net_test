@@ -100,7 +100,6 @@ void parse_url(ngx_core_t *core)
 		if (hptr == NULL || hptr->h_addrtype != AF_INET)
 			continue;
 		//
-		struct in_addr addr_;
 		for (char** pptr = hptr->h_addr_list; pptr; pptr++)
 		{
 			core->host_ip[core->ip_cnt++] = ntohl(((struct in_addr*)pptr)->s_addr);

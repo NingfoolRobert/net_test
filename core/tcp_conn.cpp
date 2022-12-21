@@ -56,7 +56,7 @@ void tcp_conn::OnRead()
 	}
 
 	//
-	_rcv_buf->len += recv_len;
+	_rcv_buf->len += (unsigned int)recv_len;
 	if (_expected_len == _head_len)
 	{
 		_expected_len = _msg_head_fnc((char*)_rcv_buf->data, _rcv_buf->len);
@@ -71,7 +71,7 @@ void tcp_conn::OnRead()
 		}
 	}
 	//
-	if (_rcv_buf->len = _expected_len && _rcv_buf->len >= _head_len)
+	if (_rcv_buf->len == _expected_len && _rcv_buf->len >= _head_len)
 	{
 		OnMessage((char*)_rcv_buf->data,  _expected_len);
 		_expected_len = _head_len;
@@ -79,6 +79,7 @@ void tcp_conn::OnRead()
 		return;
 	}
 }
+
 
 void tcp_conn::OnSend()
 {
@@ -175,7 +176,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		return -1;
 	}
 	//
-	if (nMsgLen == snd_len)
+	if (nMsgLen == (unsigned int)snd_len)
 		return 0;
 	//
 	_snd_len = snd_len;

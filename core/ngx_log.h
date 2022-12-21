@@ -45,7 +45,7 @@ public:
 	void  print_log_file(ngx_log* log_file);
 public:
 	char					_name[256];
-	int						_level;
+	unsigned int			_level;
 private:
 	std::mutex				_lck;
 	ngx_pool_t				*_pool;

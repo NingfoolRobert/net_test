@@ -79,7 +79,7 @@ void* ngx_palloc(struct ngx_pool_s* pool, size_t size)
 	while (curr)
 	{
 		mem_addr = (char*)ngx_align_ptr(curr->last, NGX_ALIGNMENT);
-		if (curr->end - mem_addr >= size)
+		if ((size_t)(curr->end - mem_addr) >= size)
 		{
 			curr->ref++;
 			curr->last = mem_addr + size;
@@ -113,7 +113,7 @@ void ngx_free(struct ngx_pool_s* pool, void* p)
 	}
 	//large memory 
 	struct ngx_large_s* curr = pool->large;
-	struct ngx_large_s* next = curr->next;
+	//struct ngx_large_s* nxt = curr->next;
 	struct ngx_large_s* pre = NULL;
 	while (curr)
 	{
@@ -132,7 +132,7 @@ void ngx_free(struct ngx_pool_s* pool, void* p)
 		}
 		pre = curr;
 		curr = curr->next;
-		next = curr->next;
+		//nxt = curr->next;
 	}
 }
 
@@ -160,7 +160,7 @@ void * ngx_allocate_block(struct ngx_pool_s* pool, size_t size)
 
 	struct ngx_block_s*  current = pool->curr;
 	struct ngx_block_s*  curr = NULL;
-	for (curr = current ; curr->next; curr == curr->next)
+	for (curr = current ; curr->next; curr = curr->next)
 	{
 		if (curr->faild++ > 4)
 			current = curr->next;

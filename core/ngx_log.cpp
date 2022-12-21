@@ -54,7 +54,7 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	gettimeofday(&tv, NULL);
 	struct tm tmNow;
 	localtime_r(&tv.tv_sec, &tmNow);
-	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, tv.tv_usec / 1000, log_level_prefix[level]);
+	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, (int)(tv.tv_usec / 1000), log_level_prefix[level]);
 #endif 
 	//
 	unsigned int prefix_len = strlen(szTmp);
@@ -86,7 +86,7 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 		if (_wait_logs->nalloc > ngx_queue_size(_wait_logs))
 			ngx_queue_push(_wait_logs, &buf);
 		else
-			printf("push log fail, %s", buf->data);
+			printf("push log fail, %s\n", (char*)buf->data);
 	}
 }
 

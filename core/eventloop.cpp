@@ -57,7 +57,6 @@ int eventloop::loop(std::vector<net_client_base*> _active_conn, int timeout)
 	std::vector<net_client_base*> conns;
 	fd_set  rd_fds;
 	fd_set  wt_fds;
-	int 	_max_fd; 
 #ifdef _WIN32 
 	FD_SET(_wake_recv_fd->_fd, &rd_fds);
 #else
@@ -230,6 +229,8 @@ void eventloop::wakeup()
 #else 
 	int len = ::write(_wake_fd, &one, sizeof(one));
 #endif 
+	if(len < (int)sizeof(one))
+		printf("%s, send data len < sizeof(uint64_t)", __FUNCTION__);
 }
 
 void eventloop::create_wakeup_fd()
@@ -270,7 +271,10 @@ void eventloop::handle_read()
 	char szTmp[32] = { 0 };
 #ifdef _WIN32 
 	int readed = ::recv(_wake_recv_fd->_fd, szTmp, 32, 0);
+	if(readed < sizeof(int))
 #else 
 	int readed = ::read(_wake_fd, szTmp, 32);
 #endif
+	if(readed < (int)sizeof(uint64_t))
+		printf("%s, recv data < sizeof(uint64_t)\n", __FUNCTION__);
 }
