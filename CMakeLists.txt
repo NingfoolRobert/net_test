@@ -20,3 +20,4 @@ set(CMAKE_DEBUG_POSTFIX "_d")
 add_subdirectory(core)
 add_subdirectory(example)
 add_subdirectory(test)
+

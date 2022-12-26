@@ -33,7 +33,7 @@ bool OnNetMsg(void* param, void* data, unsigned int len)
 	//log on msg 
 	if (*(int*)data == 1)
 	{
-		int ret;
+		int ret = 0;
 		pUser->OnLogon(ret);
 		if (0 == ret)//log on success; 
 		{
