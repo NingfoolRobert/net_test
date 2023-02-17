@@ -55,6 +55,7 @@ public:
 
 	bool	send_message(unsigned int nMsgID, unsigned int nMsgNo, char*  pData, unsigned int nMsgLen);
 
+	const char*  get_version();
 private:
 	Impl*	_impl;
 };

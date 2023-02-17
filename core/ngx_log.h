@@ -56,12 +56,12 @@ unsigned long long	ngx_file_size(const char* file_name);
 
 void ngx_file_rename(const char*  old_file_name, const char* new_file_name);
 
-
+#define getFileName(pszFileFullName)   strrchr(pszFileFullName, '\\')? strrchr(pszFileFullName, '\\') + 1 : pszFileFullName
 
 #define  ngx_log_info(log, fmt, ...)			log->write_level_log(log_level_info, fmt, ##__VA_ARGS__)
-#define  ngx_log_error(log, fmt, ...)			log->write_level_log(log_level_error, fmt, ##__VA_ARGS__)
-#define  ngx_log_warn(log, fmt, ...)			log->write_level_log(log_level_warn, fmt, ##__VA_ARGS__)
+#define  ngx_log_error(log, fmt, ...)			log->write_level_log(log_level_error, "%s(%d) " fmt, getFileName(__FILE__), __LINE__, ##__VA_ARGS__)
+#define  ngx_log_warn(log, fmt, ...)			log->write_level_log(log_level_warn, "%s(%d) " fmt, getFileName(__FILE__), __LINE__, ##__VA_ARGS__)
 #define  ngx_log_trace(log, fmt, ...)			log->write_level_log(log_level_trace, fmt, ##__VA_ARGS__)
-#define  ngx_log_fatal(log, fmt, ...)			log->write_level_log(log_level_fatal, fmt, ##__VA_ARGS__)
+#define  ngx_log_fatal(log, fmt, ...)			log->write_level_log(log_level_fatal, "%s(%d) " fmt, getFileName(__FILE__), __LINE__, ##__VA_ARGS__)
 
 #endif

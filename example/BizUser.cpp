@@ -3,9 +3,8 @@
 #include "Impl.h"
 #include "tcp_conn.h"
 #include "ngx_log.h"
+#include "version.h"
 #include <string.h>
-
-#define  NET_API_VERSION		0x01
 
 /////////////////////////////////////////////////////////
 unsigned int msg_head_parse(void* data, unsigned int nLen)
@@ -33,7 +32,7 @@ bool OnNetMsg(void* param, void* data, unsigned int len)
 	//log on msg 
 	if (*(int*)data == 1)
 	{
-		int ret = 0;
+		int ret;
 		pUser->OnLogon(ret);
 		if (0 == ret)//log on success; 
 		{
@@ -70,7 +69,9 @@ CBizUser::~CBizUser()
 {
 	if (_impl)
 	{
-		stop();
+		if(_impl->core.started)
+			stop();
+		//
 		delete _impl;
 		_impl = NULL;
 	}
@@ -81,13 +82,20 @@ bool CBizUser::start(const COMMONCFG& cfg)
 {
 	memcpy(&_impl->core.cfg, &cfg, sizeof(cfg));
 	//
-	if (!_impl->init("net_test_api", NET_API_VERSION)) {
+	if (!_impl->init("BIZ", 12)) {
 		return false;
 	}
+	//
+	ngx_log_info(_impl->get_log(), "%s %d.%d.%d, init start ...", _impl->core.api_name, 
+			_impl->core.api_version & 0xFF0000 >> 16, 
+			_impl->core.api_version & 0xFF00 >> 8, 
+			_impl->core.api_version);
 	//
 	ngx_log_info(_impl->get_log(), "start connect server, ip:port=%s", _impl->core.cfg.url);
 	if (!_impl->connect())
 	{
+		ngx_log_fatal(_impl->get_log(), "connect server fail, ip:port=%s", _impl->core.cfg.url);
+		_impl->uninit();
 		return false;
 	}
 	//
@@ -96,7 +104,12 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	//
 	_impl->async(_impl->conn);
 	//
-	return _impl->logon();
+	if(!_impl->logon())
+	{
+		_impl->uninit();
+		return false;
+	}
+	return true;
 }
 
 void CBizUser::stop()
@@ -136,3 +149,8 @@ bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, char* pDat
 	return _impl->conn->send_msg(pData, nMsgLen);
 }
 
+	
+const char*  CBizUser::get_version()
+{
+	return API_VERSION;
+}

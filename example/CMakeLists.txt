@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 set(TARGET_NAME DemoNetApi)
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/version.h.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/version.h")
+
 file(GLOB ${TARGET_NAME}_HEADER_FILES 
 	LIST_DIRECTORIES  FALSE  CONFIGURE_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h*"
@@ -21,7 +24,7 @@ file(GLOB ${TARGET_NAME}_SOURCE_FILES
 #set_target_properties(${TARGET_NAME}_static PROPERTIES OUTPUT_NAME "${TARGET_NAME}")
 ## 获取相关属性也是通过set_target_properties
 #get_target_property(OUTPUT_VALUE ${TARGET_NAME}_static OUTPUT_NAME)
-
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(${TARGET_NAME} 
 	SHARED
 	${${TARGET_NAME}_HEADER_FILES}
@@ -58,4 +61,4 @@ install(EXPORT  ${TARGET_NAME}_targets
 	DESTINATION lib/cmake/${TARGET_NAME}
 	)
 
-add_subdirectory(test)
+#add_subdirectory(test)
