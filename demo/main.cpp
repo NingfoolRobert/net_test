@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
 	a.parse_check(argc, argv);
 	if(a.exist("version"))
 	{
-		printf("gateway version :	%s\n", APIGW_VERSION);
-		printf("gateway compile timestamp: %s\n", APIGW_COMPILE_TIME);
+		printf("%s version :	%s\n", APIGW_VERSION_NAME,  APIGW_VERSION);
+		printf("%s compile timestamp: %s\n",APIGW_VERSION_NAME, APIGW_COMPILE_TIME);
 		return 0;
 	}
 	//
