@@ -1,13 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
-
 set(TARGET_NAME DemoNetApi)
+
+if(MSVC)
+	add_definitions(-D_EXPORTING)
+	set(${TARGET_NAME}_RC_FILE  "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.rc")
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}.rc.in"
+		"${${TARGET_NAME}_RC_FILE}")
+endif()
+
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/version.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/version.h")
 
 file(GLOB ${TARGET_NAME}_HEADER_FILES 
 	LIST_DIRECTORIES  FALSE  CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/*.h*"
+	"${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
 	)
 file(GLOB ${TARGET_NAME}_SOURCE_FILES
 	LIST_DIRECTORIES FALSE CONFIGURE_DEPENDS 
@@ -29,7 +37,11 @@ add_library(${TARGET_NAME}
 	SHARED
 	${${TARGET_NAME}_HEADER_FILES}
 	${${TARGET_NAME}_SOURCE_FILES}
+	${${TARGET_NAME}_RC_FILE}
 	)
+if(MVSC)
+	#set_target_properties(${TARGET_NAME} PROPERTIES "${${TARGET_NAME}_RC_FILE}")
+endif()
 ## 动态库版本号设置 , VERSION指代动态库版本，SOVERSION 指代 API 版本。
 set_target_properties(${TARGET_NAME} PROPERTIES VERSION 0.1 SOVERSION 1)
 # 其中，lib***.so.1.2为动态库的文件名(realname)，lib***.so.1为动态库的别名(soname)，
@@ -47,6 +59,10 @@ file(GLOB ${TARGET_NAME}_PUBLIC_HEADER_FILES
 
 set_target_properties(${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${${TARGET_NAME}_PUBLIC_HEADER_FILES}")
 message(STATUS "PUBLIC_HEADER: ${PUBLIC_HEADER}")
+#符号导出
+set_target_properties(${TARGET_NAME}	PROPERTIES 
+	WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+#install 
 install(TARGETS  ${TARGET_NAME} 
 	#${TARGET_NAME}_static
 	EXPORT  ${TARGET_NAME}_targets 
