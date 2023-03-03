@@ -42,7 +42,7 @@ bool cycle_memory_block::append(void* data_, size_t len)
 	
 	if (_data_end + len > end())
 	{
-		int c_len = end() - _data_end;
+		size_t c_len = end() - _data_end;
 		memcpy(_data_end, data_, c_len);
 		memcpy(_begin, (char*)data_ + c_len, len - c_len);
 		

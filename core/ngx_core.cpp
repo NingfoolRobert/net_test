@@ -33,12 +33,12 @@ void  active_loop_thread(void* param) {
 	// 
 	ngx_core_t* core = (ngx_core_t*)param;
 	core->started = 1;
-	std::vector<net_client_base*> vecTmp;
-	eventloop loop(param);
+	eventloop loop;
+	loop._core = param;
 	core->loop = &loop;
 	while (core->started)
 	{
-		core->loop->loop(vecTmp, core->timeout);
+		core->loop->loop(core->timeout);
 	}
 	core->loop = NULL;
 }
@@ -215,7 +215,7 @@ bool ngx_core_init(ngx_core_t *core)
 		std::thread thr(&active_loop_thread, core);
 		thr.detach();
 		//
-		tagtimercb tb;
+		timer_data_t tb;
 		tb.cb = write_log_timer;
 		tb.count = 0;
 		tb.time_gap = 10;

@@ -32,7 +32,6 @@
 class DLL_PUBLIC CBizUser
 {
 public:
-	struct Impl;
 	CBizUser();
 	virtual ~CBizUser();
 public:
@@ -53,10 +52,11 @@ public:
 	
 	bool	reconnect();
 
-	bool	send_message(unsigned int nMsgID, unsigned int nMsgNo, char*  pData, unsigned int nMsgLen);
+	bool	send_message(unsigned int nMsgID, unsigned int nMsgNo, const char*  pData, unsigned int nMsgLen);
 
 	const char*  get_version();
 private:
+	struct Impl;
 	Impl*	_impl;
 };
 

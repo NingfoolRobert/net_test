@@ -1,5 +1,6 @@
 #include "tcp_conn.h"
-#include "ngx_core.h"
+#include "net_client_base.h"
+#include <string.h>
 
 #ifdef _WIN32
 #include <ws2tcpip.h>
@@ -9,12 +10,13 @@
 #include <errno.h>
 #endif 
 
-tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int nHeadLen, PDISCONNCALLBACK dis_conn_fnc, PNETMSGCALLBACK pfnc) :
-	net_client_base(eloop, pfnc, dis_conn_fnc),
+tcp_conn::tcp_conn(unsigned int nHeadLen, PMSGLENPARSEFUNC msg_head_fnc, PNETMSGCALLBACK pfnc, PDISCONNCALLBACK disconn_cb) :
+	net_client_base(pfnc, disconn_cb),
 	_msg_head_fnc(msg_head_fnc),
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
 	_rcv_buf(NULL),
+	_snd_len(0),
 	_snd_buf(NULL)
 {
 	_pool = ngx_create_pool(1);
@@ -23,6 +25,11 @@ tcp_conn::tcp_conn(eventloop* eloop, PMSGLENPARSEFUNC msg_head_fnc, unsigned int
 
 tcp_conn::~tcp_conn()
 {
+	ngx_free(_pool, _rcv_buf);
+	_rcv_buf = NULL;
+	ngx_free(_pool, _snd_buf);
+	_snd_buf = NULL;
+	ngx_free(_pool, _wait_snds);
 }
 
 void tcp_conn::OnRead()
@@ -34,15 +41,15 @@ void tcp_conn::OnRead()
 			return;
 	}
 	//
-	int recv_len = ::recv(_fd, (char*)_rcv_buf + _rcv_buf->len, _expected_len - _rcv_buf->len, 0);
+	int recv_len = net_client_base::recv((char*)_rcv_buf + _rcv_buf->len, (unsigned int)(_expected_len - _rcv_buf->len));
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK) {
-			ngx_log_error(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
+			_errno = GetLastError();
 #else 
 		if (errno != EAGAIN || errno != EINTR) {
-			ngx_log_error(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
+			_errno = errno;
 #endif 
 			terminate();
 		}
@@ -50,7 +57,7 @@ void tcp_conn::OnRead()
 	}
 	else if (recv_len == 0)//peer close 
 	{
-		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect, ip:port=%d:%d...", _ip, _port);
+		_errno = -1;
 		terminate();
 		return;
 	}
@@ -73,7 +80,7 @@ void tcp_conn::OnRead()
 	//
 	if (_rcv_buf->len == _expected_len && _rcv_buf->len >= _head_len)
 	{
-		OnMessage((char*)_rcv_buf->data,  _expected_len);
+		OnMessage((char*)_rcv_buf->data,  (unsigned int)_expected_len);
 		_expected_len = _head_len;
 		_rcv_buf->len = 0;
 		return;
@@ -86,7 +93,7 @@ void tcp_conn::OnSend()
 	std::unique_lock<std::mutex> _(_lck);
 	if (NULL == _snd_buf )
 	{
-		if (ngx_queue_empty(_wait_snds))
+		if (!ngx_queue_empty(_wait_snds))
 			return;
 		_snd_buf = (ngx_buf_t*)ngx_queue_get(_wait_snds);
 	}
@@ -94,15 +101,15 @@ void tcp_conn::OnSend()
 	if (NULL == _snd_buf || _snd_buf->len <= _snd_len)
 		return;
 	//
-	int send_len = net_client_base::send_msg((char*)(_snd_buf->data) + _snd_len, _snd_buf->len - _snd_len);
+	int send_len = net_client_base::send((char*)(_snd_buf->data) + _snd_len, (unsigned int)(_snd_buf->len - _snd_len));
 	if (send_len < 0)
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK){
-			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "send error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
+			_errno = GetLastError();
 #else 
 		if (errno != EAGAIN && errno != EINTR) {
-			ngx_log_warn(((ngx_core_t*)_loop->_core)->log, "send error(%d), ip:port=%d:%d...", errno, _ip, _port);
+			_errno = errno;
 #endif 
 			terminate();
 			return;
@@ -110,7 +117,7 @@ void tcp_conn::OnSend()
 	}
 	else if (send_len == 0)
 	{
-		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect, ip:port=%d:%d...", _ip, _port);
+		_errno = -1;
 		terminate();
 		return;
 	}
@@ -126,6 +133,9 @@ void tcp_conn::OnSend()
 
 int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 {
+	if (_brk_tm)
+		return -1;
+	//
 	std::unique_lock<std::mutex> _(_lck);
 	if (_snd_buf || !ngx_queue_empty(_wait_snds))
 	{
@@ -141,17 +151,15 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		return -1;
 	}
 	//
-	int snd_len = net_client_base::send_msg(pData, nMsgLen);
+	int snd_len = net_client_base::send(pData, nMsgLen);
 	if (snd_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK)
-		{
-			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", GetLastError(), _ip, _port);
+		if (GetLastError() != EWOULDBLOCK){
+			_errno = GetLastError();
 #else 
-		if (errno != EAGAIN && errno != EINTR)
-		{
-			ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "net error(%d), ip:port=%d:%d...", errno, _ip, _port);
+		if (errno != EAGAIN && errno != EINTR){
+			_errno = errno;
 #endif 
 			terminate();
 			return -1;
@@ -171,7 +179,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	}
 	else if (snd_len == 0)
 	{
-		ngx_log_warn(((ngx_core_t*)(_loop->_core))->log, "peer disconnect...");
+		_errno = -1;
 		terminate();
 		return -1;
 	}
@@ -186,17 +194,11 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	return 0;
 }
 
-unsigned int tcp_conn::get_wait_send_cnt()
+size_t tcp_conn::wait_sndmsg_size()
 {
 	std::unique_lock<std::mutex> _(_lck);
 	return ngx_queue_size(_wait_snds);
 }
 
-void tcp_conn::OnTerminate()
-{
-	net_client_base::OnTerminate();
-	if(_rcv_buf) _rcv_buf->len = 0;
-	_snd_len = 0;
-}
 
 

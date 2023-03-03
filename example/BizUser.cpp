@@ -1,48 +1,46 @@
 #include "BizUser.h"
 #include "eventloop.h"
 #include "Impl.h"
+#include "ngx_core.h"
 #include "tcp_conn.h"
 #include "ngx_log.h"
 #include "version.h"
 #include <string.h>
 
+ngx_core_t*  g_core = NULL;
 /////////////////////////////////////////////////////////
-unsigned int msg_head_parse(void* data, unsigned int nLen)
+size_t msg_head_parse(void* data, size_t nLen)
 {
 	return 0;
 }
 ///////////////////////////////////////
-void  OnNetDisConn(void* param, net_client_base* conn) {
+void  OnNetDisConn(int err, net_client_base* conn) {
 
-	ngx_core_t* core = (ngx_core_t*)param;
- 	CBizUser::Impl *impl = (CBizUser::Impl*)(core->biz);
- 	CBizUser* pUser = (CBizUser*)(impl->biz);
-	ngx_log_warn(core->log, "disconnect server, ip:port=%s:%d", core->host_ip[core->ip_idx], core->port[core->ip_idx]);
+	CBizUser* pUser = (CBizUser*)(g_core->biz);
+	ngx_log_warn(g_core->log, "disconnect server,err:%d, ip:port=%s:%d", g_core->host_ip[g_core->ip_idx],err, g_core->port[g_core->ip_idx]);
 	pUser->OnDisConnect();
-	if (core->cfg.auto_reconnect && core->started)
+	if (g_core->cfg.auto_reconnect && g_core->started)
 		pUser->reconnect();
 	//
 }
 ///////////////////////////////////////
-bool OnNetMsg(void* param, void* data, unsigned int len)
+bool OnNetMsg(net_client_base* conn, void* data, unsigned int len)
 {
-	ngx_core_t* core = (ngx_core_t*)param;
-	CBizUser::Impl *impl = (CBizUser::Impl*)(core->biz);
-	CBizUser* pUser = (CBizUser*)(impl->biz);
+	CBizUser* pUser = (CBizUser*)(g_core->biz);
 	//log on msg 
 	if (*(int*)data == 1)
 	{
-		int ret;
+		int ret = 0;
 		pUser->OnLogon(ret);
 		if (0 == ret)//log on success; 
 		{
-			ngx_log_info(core->log, "log on success, userid:%d,...", core->cfg.userid);
+			ngx_log_info(g_core->log, "log on success, userid:%d,...", g_core->cfg.userid);
 			//heartbeat timer;
 		}
 		else//log on fail; 
 		{
-			ngx_log_error(core->log,"log on server fail. err:%d, reason:%s", 1, "not find the userid or password");
-			impl->uninit();
+			ngx_log_error(g_core->log,"log on server fail. err:%d, reason:%s", 1, "not find the userid or password");
+			pUser->stop();
 		}
 		return true;
 	}
@@ -60,6 +58,7 @@ bool OnNetMsg(void* param, void* data, unsigned int len)
 CBizUser::CBizUser()
 {
 	_impl = new Impl(msg_head_parse, OnNetMsg, OnNetDisConn);
+	g_core = &_impl->core;	
 	_impl->core.biz = _impl;
 	_impl->biz = this;
 }
@@ -102,6 +101,8 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	ngx_log_info(_impl->get_log(), "connect server success, ip:port=%s", _impl->core.cfg.url);
 	OnConnect();
 	//
+	_impl->conn->set_nio();
+	_impl->conn->set_tcp_nodelay();
 	_impl->async(_impl->conn);
 	//
 	if(!_impl->logon())
@@ -121,7 +122,7 @@ void CBizUser::stop()
 
 bool  CBizUser::reconnect()
 {
-	if (_impl->conn->_break_timestamp == 0)
+	if (_impl->conn->_brk_tm == 0)
 		return false;
 	//
 	ngx_log_info(_impl->get_log(), "start reconnect server...");
@@ -138,12 +139,12 @@ bool  CBizUser::reconnect()
 	return true;
 }
 
-bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, char* pData, unsigned int nMsgLen)
+bool CBizUser::send_message(unsigned int nMsgID, unsigned int nMsgNo, const char* pData, unsigned int nMsgLen)
 {
 	if (!_impl->logoned || nMsgLen == 0 || nullptr == pData)
 		return false;
 
-	if (nullptr == _impl->conn || _impl->conn->_break_timestamp)
+	if (nullptr == _impl->conn || _impl->conn->_brk_tm)
 		return false;
 	//
 	return _impl->conn->send_msg(pData, nMsgLen);

@@ -57,10 +57,10 @@ void ngx_log::write_level_log(unsigned int level, const char* fmt, ...)
 	sprintf(szTmp, "%04d-%02d-%02d %02d:%02d:%02d.%03d %s", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec, (int)(tv.tv_usec / 1000), log_level_prefix[level]);
 #endif 
 	//
-	unsigned int prefix_len = strlen(szTmp);
+	size_t prefix_len = strlen(szTmp);
 	va_list args;
 	va_start(args, fmt);
-	unsigned int nLen = vsnprintf(NULL, 0, fmt, args);
+	size_t nLen = vsnprintf(NULL, 0, fmt, args);
 	nLen += prefix_len;
 	ngx_buf_t* buf = ngx_create_buf(_pool, nLen + 3);
 	if (NULL == buf)

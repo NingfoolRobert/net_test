@@ -3,9 +3,11 @@
 
 #include <stdio.h> 
 #include <stdlib.h>
+#include <atomic>
 #ifdef _WIN32 
 #include <WinSock2.h>
 #include <windows.h>
+#define  ngx_sock		SOCKET 
 #else 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -15,23 +17,22 @@
 #include <netinet/tcp.h>
 #include <fcntl.h>
 #include <error.h>
+#define  ngx_sock		int
 #endif 
 
+class eventloop;
 class net_client_base;
-class eventloop;
-
-typedef  unsigned int(*PMSGLENPARSEFUNC)(void*, unsigned int);
-
-typedef  void(*PDISCONNCALLBACK)(void*, net_client_base*);
-
-typedef  bool(*PNETMSGCALLBACK)(void*, void* , unsigned int);
-
-class eventloop;
+//
+typedef  size_t(*PMSGLENPARSEFUNC)(void*, size_t);
+//connection break;
+typedef  void(*PDISCONNCALLBACK)(int, net_client_base*);
+//message arrive
+typedef  bool(*PNETMSGCALLBACK)(net_client_base*, void* , unsigned int);
 
 class net_client_base
 {
 public:
-	net_client_base(eventloop* loop, PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb);
+	net_client_base(PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb);
 	virtual ~net_client_base();
 
 public:
@@ -39,51 +40,63 @@ public:
 
 	virtual  void	OnSend() {}
 
-	virtual  unsigned int  get_wait_send_cnt() { return 0; }
+	virtual  size_t wait_sndmsg_size() { return 0; }
 
-	virtual int 	send_msg(const char* pData, unsigned int nMsgLen);
-
-	virtual  void   OnTerminate();
+	virtual int 	send_msg(const char* pData, unsigned int nMsgLen) { return 0; }
 public:
-	bool OnMessage(void* data, unsigned int len);
-public:
-#ifdef _WIN32 
-	SOCKET  create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
-#else 
-	int		create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
-#endif
+	ngx_sock	create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
 	//
-	bool	connect(unsigned int host_ip, unsigned short port);
+	bool		connect(unsigned int host_ip, unsigned short port);
 	//
-	bool	bind(unsigned int host_ip, unsigned short port);
+	bool		bind(unsigned int host_ip, unsigned short port);
 	//
-	bool	listen(int backlog = 10);
+	bool		listen(int backlog = 10);
+	//
+	int			send(const char* data, unsigned int len);
+	//
+	int			recv(char* data, unsigned int len);
 
-	bool	set_tcp_nodelay();
+	bool		set_tcp_linger();
 
-	bool	set_nio(int mode = 1);
+	bool		set_tcp_nodelay();
 
-	bool	set_reuse_addr(bool flag = 1);
+	bool		set_nio(int mode = 1);
 
-	bool	set_reuse_port(bool flag = 1);
+	bool		set_reuse_addr(bool flag = 1);
 
-	void	close();
+	bool		set_reuse_port(bool flag = 1);
+
+	void		get_sock_name();
 	
-	void	terminate();
+	void		get_peer_name();
+	
+	char*		get_ip(char*  ip);
+	
+	void		close();
+	
+	void		terminate();
+
+	void		OnClose();
+
+	bool		OnMessage(void* data, unsigned int len);
+	
 public:
-#ifdef _WIN32 
-	SOCKET		_fd;
-#else 
-	int			_fd;
-#endif 
-	time_t		_break_timestamp;
-protected:
-	eventloop*					_loop;
-	PNETMSGCALLBACK				_msg_cb;
-	PDISCONNCALLBACK			_dis_conn_cb;
+	void		add_ref(){ ++_ref; }
+	void		release(){if(--_ref == 0) delete this;}
+public:
+	ngx_sock					_fd;
 	//
-	unsigned int				_ip;
-	unsigned short				_port;
+	time_t						_brk_tm;	//break timestamp
+	int							_errno;
+	eventloop*					_loop;
+	//
+	unsigned int				_ip;		//host ip 
+	unsigned int 				_port;		//
+protected:
+	PNETMSGCALLBACK				_msg_cb;
+	PDISCONNCALLBACK			_disconn_cb;
+private:
+	std::atomic_int				_ref;
 };
 
 

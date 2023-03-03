@@ -2,14 +2,15 @@
 #define _NGX_LOG_H_
 
 #if _WIN32 
-#include <stdio.h>
 #include <time.h>
 #else 
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/time.h>
 #endif 
+#include <stdio.h>
 #include <mutex>
+#include <string.h>
 
 #include "ngx_queue.h"
 #include "ngx_buf.h"
@@ -40,7 +41,7 @@ public:
 
 	void  write_data(void* data, unsigned int  len);
 
-	void  set_level(int level) { _level = level; }
+	void  set_level(unsigned int level) { _level = level; }
 public:
 	void  print_log_file(ngx_log* log_file);
 public:

@@ -47,7 +47,7 @@ bool CBizUser::Impl::connect()
 {
 	if (nullptr == conn)
 	{
-		conn = new tcp_conn(core.loop, msg_head_fnc, 16, dis_conn_cb, msg_cb);
+		conn = new tcp_conn(16, msg_head_fnc, msg_cb, dis_conn_cb);
 		if (nullptr == conn)
 		{
 			ngx_log_error(core.log, "memory error!");
@@ -86,7 +86,7 @@ void CBizUser::Impl::uninit()
 	if (core.loop == NULL)
 		return;
 	//
-	if (conn && conn->_break_timestamp == 0)
+	if (conn && conn->_brk_tm == 0)
 	{
 		conn->terminate();
 	}

@@ -1,16 +1,13 @@
 #ifndef _EVENT_LOOP_H_
 #define _EVENT_LOOP_H_
 
-
-
 #include "net_client_base.h"
-
 #include <set>
 #include <vector>
 #include <mutex>
 
 typedef void(*PTIMERCALLBACK)(void*);
-struct tagtimercb {
+struct timer_data_t {
 	unsigned short			timer_id;
 	short					count;				//-1: 
 	unsigned int			time_gap;			//ms 
@@ -22,20 +19,21 @@ struct tagtimercb {
 class eventloop
 {
 public:
-	explicit eventloop(void* core);
+	eventloop();
 	virtual ~eventloop();
 public:
-	int		loop(std::vector<net_client_base*> _active_conn,  int timeout);
+	int		loop(int timeout);
 
 	void	add(net_client_base*  conn);
 
 	void	remove(net_client_base* conn);
-
-	void	add_timer(tagtimercb  cb);
+	
+	void	add_timer(timer_data_t  cb);
 
 	void	remove_timer(unsigned short timer_id);
 
 	void	wakeup();
+	
 private:
 	void	create_wakeup_fd();
 
@@ -44,6 +42,8 @@ private:
 	void	process_timer();
 
 	void	update_conns();
+	
+	void	remove_all();
 private:
 	std::mutex							_lck;
 	std::set<net_client_base*>			_conns;
@@ -52,14 +52,14 @@ private:
 	std::vector<net_client_base*>		_wait_conns;
 private:
 	std::mutex							_lck_timer;
-	std::vector<tagtimercb>				_list_timers;
+	std::vector<timer_data_t>			_list_timers;
 private:
-	bool		_stop_flag;
+	int		_stop_flag;
 	
 #ifdef _WIN32
-	net_client_base*					_wake_listen_fd;
-	net_client_base*					_wake_send_fd;
-	net_client_base*					_wake_recv_fd;
+	net_client_base*					_wake_listen;
+	net_client_base*					_wake_send;
+	net_client_base*					_wake_recv;
 #else 
 	int									_wake_fd;
 #endif 
