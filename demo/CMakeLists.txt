@@ -1,6 +1,8 @@
 
 set(TARGET_NAME test_demo)
 
+add_definitions(-DSYS_LOG)
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/version.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/version.h")
 

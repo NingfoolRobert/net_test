@@ -9,6 +9,7 @@
 #include "cmdline.h"
 #include "ngx_acceptor.h"
 #include "tcp_conn.h"
+#include "log_def.h"
 
 ////////////////////////////////////////
 bool		g_running = true;
@@ -34,8 +35,13 @@ int main(int argc, char* argv[])
 	{
 		printf("%s version :	%s\n", APIGW_VERSION_NAME,  APIGW_VERSION);
 		printf("%s compile timestamp: %s\n",APIGW_VERSION_NAME, APIGW_COMPILE_TIME);
+		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
+	
+	trace_print("%s\n", __FUNCTION__);
+	info_print("%s\n", __FUNCTION__);
+	error_print("%s\n", __FUNCTION__);
 	//
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGTERM, signal_handle);

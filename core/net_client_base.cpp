@@ -77,12 +77,12 @@ bool net_client_base::bind(unsigned int host_ip, unsigned short port)
 #endif
 	bind_addr.sin_port = htons(port);
 	
-	return ::bind(_fd, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) < 0;
+	return ::bind(_fd, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0;
 }
 
 bool net_client_base::listen(int backlog /*= 10*/)
 {
-	return ::listen(_fd, backlog) < 0;
+	return ::listen(_fd, backlog) == 0;
 }
 	
 int net_client_base::send(const char* data, unsigned int len)
