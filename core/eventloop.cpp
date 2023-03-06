@@ -13,7 +13,7 @@
 #endif 
 
 
-eventloop::eventloop()
+eventloop::eventloop():_running(true)
 {
 #ifdef _WIN32
 	_wake_recv = NULL;
@@ -52,7 +52,6 @@ eventloop::~eventloop()
 int eventloop::loop(int timeout)
 {
 	process_timer();
-	update_conns();
 	//
 	int max_fd = 0;
 	std::vector<net_client_base*> conns;
@@ -70,7 +69,7 @@ int eventloop::loop(int timeout)
 		for (auto it = _conns.begin(); it != _conns.end(); ++it)
 		{
 			auto pConn = *it;
-			conns.push_back(pConn);
+			conns.push_back(pConn); pConn->add_ref();
 			FD_SET(pConn->_fd, &rd_fds);
 #ifndef _WIN32 
 			max_fd = std::max(pConn->_fd, max_fd);
@@ -96,7 +95,6 @@ int eventloop::loop(int timeout)
 		handle_read();
 	}
 	//
-	std::unique_lock<std::mutex> _(_lck);
 	for (auto it = conns.begin(); it != conns.end(); ++it)
 	{
 		auto pConn = *it;
@@ -104,6 +102,8 @@ int eventloop::loop(int timeout)
 			pConn->OnRead();
 		if (FD_ISSET(pConn->_fd, &wt_fds))
 			pConn->OnSend();
+		//
+		pConn->release();
 	}
 
 	return nret; 
@@ -111,12 +111,12 @@ int eventloop::loop(int timeout)
 
 void eventloop::add(net_client_base* conn)
 {
-	if(nullptr == conn) 
+	if(!_running || nullptr == conn) 
 		return ;
 	{
-		std::unique_lock<std::mutex> _(_wait_lck);
+		std::unique_lock<std::mutex> _(_lck);
 		conn->_loop = this;
-		_wait_conns.push_back(conn);
+		_conns.insert(conn);
 	}
 	//
 	wakeup();
@@ -135,57 +135,27 @@ void eventloop::process_timer()
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	//
-	std::unique_lock<std::mutex> _(_lck_timer);
-	auto it = _list_timers.begin();
-	while (it != _list_timers.end())
+	std::vector<timer_data_t> vecTmp;
 	{
-		timer_data_t timer = *it;
-		if (timer.timestamp + timer.time_gap > now)
+		std::unique_lock<std::mutex> _(_lck_timer);
+		vecTmp.swap(_list_timers);
+	}
+
+	for(auto i = 0; i < vecTmp.size(); i++)
+	{
+		timer_data_t& timer = vecTmp[i];
+		if (timer.timestamp + timer.time_gap >= now)
 		{
 			timer.cb(timer.param);
+			if (timer.count > 0) --timer.count;
+		}
+		//
+		if (0 != timer.count)
+		{
 			timer.timestamp = now;
+			std::unique_lock<std::mutex> _(_lck_timer);
+			_list_timers.emplace_back(vecTmp[i]);
 		}
-		//
-		if (timer.count >= 0)
-		{
-			if (--timer.count == 0)
-			{
-				it = _list_timers.erase(it);
-				continue;
-			}
-		}
-		//
-		++it;
-	}
-}
-
-void eventloop::update_conns()
-{
-	std::vector<net_client_base*> vecTmp;
-	std::vector<net_client_base*> vecTmp1;
-	{
-		std::unique_lock<std::mutex> _(_wait_lck);
-		vecTmp.swap(_remove_conns);
-		vecTmp1.swap(_wait_conns);
-	}
-	//disconnect 
-	std::unique_lock<std::mutex> _(_lck);
-	for (size_t i = 0; i < vecTmp.size(); i++)
-	{
-		auto it = _conns.find(vecTmp[i]);
-		if (it != _conns.end())
-		{
-			auto pOld = *it;
-			_conns.erase(it);
-			pOld->release();
-			vecTmp[i]->OnClose();
-		}
-		vecTmp[i]->release();
-	}
-	//new connection 
-	for (size_t i = 0; i < vecTmp1.size(); i++)
-	{
-		_conns.insert(vecTmp1[i]);
 	}
 }
 
@@ -194,9 +164,10 @@ void eventloop::remove(net_client_base* conn)
 	if(NULL == conn) 
 		return ;
 	{
-		std::unique_lock<std::mutex> _(_wait_lck);
-		_remove_conns.push_back(conn);
-		conn->add_ref();
+		std::unique_lock<std::mutex> _(_lck);
+		auto it = _conns.find(conn);
+		if (it != _conns.end())
+			_conns.erase(it);
 	}
 	//
 	wakeup();
@@ -210,37 +181,37 @@ void eventloop::remove_all()
 		for(auto it = _conns.begin();  it != _conns.end(); ++it)
 		{
 			auto pConn = *it;
-			pConn->OnClose();
 			pConn->release();		
 		}
 		_conns.clear();
 	}
 	//
-	std::unique_lock<std::mutex> _(_lck);
-	for(auto i = 0u; i < _wait_conns.size(); ++i)	
-	{
-		auto pConn = _wait_conns[i];
-		if(pConn == NULL)
-			continue;
-		
-		pConn->OnClose();		
-		pConn->release();
-	}
-	//
-	_wait_conns.clear();
-	for(auto i = 0u; i < _remove_conns.size(); ++i)
-	{
-		auto pConn = _remove_conns[i];
-		pConn->release();
-	}
-	//	
-	_remove_conns.clear();
+// 	std::unique_lock<std::mutex> _(_lck);
+// 	for(auto i = 0u; i < _wait_conns.size(); ++i)	
+// 	{
+// 		auto pConn = _wait_conns[i];
+// 		if(pConn == NULL)
+// 			continue;
+// 		
+// 		pConn->OnClose();		
+// 		pConn->release();
+// 	}
+// 	//
+// 	_wait_conns.clear();
+// 	for(auto i = 0u; i < _remove_conns.size(); ++i)
+// 	{
+// 		auto pConn = _remove_conns[i];
+// 		pConn->release();
+// 	}
+// 	//	
+// 	_remove_conns.clear();
 }
 
 
 void eventloop::add_timer(timer_data_t  cb)
 {
 	std::unique_lock<std::mutex> _(_lck_timer);
+	if (_running) return;
 	unsigned long long	now = 0;
 #if _WIN32
 	timeb tbnow;

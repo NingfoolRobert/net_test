@@ -40,21 +40,16 @@ private:
 	void	handle_read();
 
 	void	process_timer();
-
-	void	update_conns();
 	
 	void	remove_all();
 private:
 	std::mutex							_lck;
 	std::set<net_client_base*>			_conns;
-	std::mutex							_wait_lck;
-	std::vector<net_client_base*>		_remove_conns;
-	std::vector<net_client_base*>		_wait_conns;
 private:
 	std::mutex							_lck_timer;
 	std::vector<timer_data_t>			_list_timers;
 private:
-	int		_stop_flag;
+	int		_running;
 	
 #ifdef _WIN32
 	net_client_base*					_wake_listen;
@@ -63,8 +58,6 @@ private:
 #else 
 	int									_wake_fd;
 #endif 
-public:
-	void				*_core;
 };
 
 

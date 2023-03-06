@@ -32,7 +32,7 @@ net_client_base::net_client_base(PNETMSGCALLBACK fnc, PDISCONNCALLBACK disconn_c
 
 net_client_base::~net_client_base()
 {
-	close();
+	terminate();
 }
 
 ngx_sock net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
@@ -164,18 +164,19 @@ void net_client_base::terminate()
 {
 	//
 	if (_loop)
+	{
 		_loop->remove(this);
-	_brk_tm = time(NULL);
-}
-
-
-void net_client_base::OnClose()
-{
+		_loop = NULL;
+	}
 	//
 	close();
+	_brk_tm = time(NULL);
 	//
 	if (_disconn_cb)
+	{
 		(*_disconn_cb)(_errno, this);
+		_disconn_cb = NULL;
+	}
 }
 
 bool net_client_base::OnMessage(void* data, unsigned int len)

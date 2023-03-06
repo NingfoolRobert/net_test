@@ -76,8 +76,6 @@ public:
 	
 	void		terminate();
 
-	void		OnClose();
-
 	bool		OnMessage(void* data, unsigned int len);
 	
 public:

@@ -34,7 +34,6 @@ void  active_loop_thread(void* param) {
 	ngx_core_t* core = (ngx_core_t*)param;
 	core->started = 1;
 	eventloop loop;
-	loop._core = param;
 	core->loop = &loop;
 	while (core->started)
 	{
