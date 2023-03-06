@@ -44,8 +44,10 @@ eventloop::~eventloop()
 		_wake_send = NULL;
 	}
 #else 
-	close(_wake_fd);
-	_wake_fd = -1;
+	if (_wake_fd != -1){
+		close(_wake_fd);
+		_wake_fd = -1;
+	}
 #endif 
 }
 
@@ -141,15 +143,17 @@ void eventloop::process_timer()
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
-			timer_data_t data = *it;
-			if (data.timestamp >= now)
+			timer_data_t t = *it;
+			if (t.timestamp >= now)
 			{
-				vecTmp.push_back(data);
-				if (data.count > 0)	
-					data.count--;
+				vecTmp.push_back(t);
+				if (t.count > 0)
+					t.count--;
 				//
-				if (data.count == 0) 
+				if (t.count == 0) 
 					_timers.erase(it);
+				else 
+					t.timestamp += t.time_gap;
 			}
 		}
 	}
@@ -261,7 +265,7 @@ void eventloop::create_wakeup_fd()
 	_wake_listen->create();
 	_wake_listen->set_reuse_addr();
 	unsigned int host_ip = inet_addr("127.0.0.1");
-	_wake_listen->bind(host_ip, 0);
+	_wake_listen->bind(ntohl(host_ip), 0);
 	_wake_listen->listen();
 	
 	struct sockaddr_in svr_addr;
@@ -273,7 +277,7 @@ void eventloop::create_wakeup_fd()
 	
 	_wake_send = new net_client_base(NULL, NULL);
 	_wake_send->create();
-	_wake_send->connect(host_ip, port);
+	_wake_send->connect(ntohl(host_ip), port);
 	
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);

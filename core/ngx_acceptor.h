@@ -10,11 +10,8 @@
 
 #include "net_client_base.h"
 
-#ifdef _WIN32 
-typedef  void(*PACCEPTCALLBACK)(SOCKET fd);
-#else 
-typedef  void(*PACCEPTCALLBACK)(int fd);
-#endif 
+typedef  void(*PACCEPTCALLBACK)(ngx_sock fd);
+
 
 class ngx_acceptor:
 	public net_client_base

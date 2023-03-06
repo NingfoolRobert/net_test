@@ -3,10 +3,13 @@
 #include <stdio.h> 
 #include <signal.h> 
 #include <stdlib.h> 
+
+#ifndef _WIN32 
 #include <unistd.h>
+#include "cmdline.h"
+#endif 
 #include "global_var.h"
 #include "version.h"
-#include "cmdline.h"
 #include "ngx_acceptor.h"
 #include "tcp_conn.h"
 #include "log_def.h"
@@ -15,16 +18,19 @@
 bool		g_running = true;
 eventloop	g_loop;
 ///////////////////////////////////////
+#ifndef _WIN32 
 void signal_handle(int);
+#endif 
 bool init();
 void uninit();
-void api_apt_cb(int fd);
+void api_apt_cb(ngx_sock fd);
 size_t msg_head_parse(void* data, size_t len);
 void api_discon(int err, net_client_base* conn);
 bool api_msg_process(net_client_base* conn, void* data, unsigned int len);
 ///////////////////////////////////////
 int main(int argc, char* argv[])
 {
+#ifndef _WIN32 
 	cmdline::parser a;
 	a.add<std::string>("config", 'c', "configure file full name [Y]", false, "./gateway.cfg");
 	a.add<int>("port", 'p', "port number", false, 2000, cmdline::range(1024, 65535));
@@ -38,13 +44,16 @@ int main(int argc, char* argv[])
 		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
-	
+#endif
+
 	trace_print("%s\n", __FUNCTION__);
 	info_print("%s\n", __FUNCTION__);
 	error_print("%s\n", __FUNCTION__);
 	//
+#ifndef _WIN32 
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGTERM, signal_handle);
+#endif 
 	//
 	if(!init())
 	{
@@ -53,9 +62,13 @@ int main(int argc, char* argv[])
 	}
 	//
 	ngx_acceptor*  apt = new ngx_acceptor;
+#ifndef _WIN32 
 	if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
+#else 
+	if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
+#endif 
 	{
-		printf("net listen fail. port:%d\n", a.get<int>("port"));
+		printf("net listen fail. port:%d\n", 2000);
 		return -1;
 	}
 	g_loop.add(apt);	
@@ -66,6 +79,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+#ifndef _WIN32 
 void signal_handle(int ret)
 {
 	switch(ret)
@@ -81,6 +95,7 @@ void signal_handle(int ret)
 			break;
 	}
 }
+#endif 
 
 bool init()
 {
@@ -92,7 +107,7 @@ void uninit()
 
 }
 
-void api_apt_cb(int fd)
+void api_apt_cb(ngx_sock fd)
 {
 	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
 	if(nullptr == conn)

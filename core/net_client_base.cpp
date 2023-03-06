@@ -38,6 +38,13 @@ net_client_base::~net_client_base()
 ngx_sock net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
 {
 	_fd = ::socket(domain, socket_type, protocol_type);
+#ifdef _WIN32
+	if (_fd == INVALID_SOCKET)
+		_errno = GetLastError();
+#else 
+	if (_fd == -1)
+		_errno = errno;
+#endif 
 	return _fd;
 }
 
@@ -55,8 +62,13 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	svr_addr.sin_addr.s_addr = htonl(host_ip);
 #endif
 	svr_addr.sin_port = htons(port);
-	if (::connect(_fd, (struct sockaddr*)&svr_addr, sizeof(svr_addr)) < 0)
-	{
+	int ret = ::connect(_fd, (struct sockaddr*)&svr_addr, sizeof(svr_addr));
+	if (ret == -1) {
+#ifdef _WIN32 
+		_errno = GetLastError();
+#else 
+		_errno = errno;
+#endif 
 		return false;
 	}
 	//
@@ -77,12 +89,26 @@ bool net_client_base::bind(unsigned int host_ip, unsigned short port)
 #endif
 	bind_addr.sin_port = htons(port);
 	
-	return ::bind(_fd, (struct sockaddr*)&bind_addr, sizeof(bind_addr)) == 0;
+	int ret = ::bind(_fd, (struct sockaddr*)&bind_addr, sizeof(bind_addr)); 
+	if (ret == -1)
+#ifdef _WIN32 
+		_errno = GetLastError();
+#else 
+		_errno = errno;
+#endif 
+	return ret == 0;
 }
 
 bool net_client_base::listen(int backlog /*= 10*/)
 {
-	return ::listen(_fd, backlog) == 0;
+	int ret = ::listen(_fd, backlog);
+	if (ret == -1)
+#ifdef _WIN32 
+		_errno = GetLastError();
+#else 
+		_errno = errno;
+#endif 
+	return ret == 0;
 }
 	
 int net_client_base::send(const char* data, unsigned int len)
