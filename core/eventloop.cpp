@@ -1,6 +1,6 @@
 #include "eventloop.h"
 #include "log_def.h"
-
+#include <vector>
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -29,7 +29,7 @@ eventloop::~eventloop()
 {
 	remove_all();
 	//
-	_list_timers.clear();
+	_timers.clear();
 #ifdef _WIN32
 	if (_wake_listen) {
 		delete _wake_listen;
@@ -138,24 +138,26 @@ void eventloop::process_timer()
 	std::vector<timer_data_t> vecTmp;
 	{
 		std::unique_lock<std::mutex> _(_lck_timer);
-		vecTmp.swap(_list_timers);
+		auto it = _timers.begin();
+		while (it != _timers.end())
+		{
+			timer_data_t data = *it;
+			if (data.timestamp >= now)
+			{
+				vecTmp.push_back(data);
+				if (data.count > 0)	
+					data.count--;
+				//
+				if (data.count == 0) 
+					_timers.erase(it);
+			}
+		}
 	}
-
-	for(auto i = 0; i < vecTmp.size(); i++)
+	//
+	for(auto i = 0u; i < vecTmp.size(); i++)
 	{
 		timer_data_t& timer = vecTmp[i];
-		if (timer.timestamp + timer.time_gap >= now)
-		{
-			timer.cb(timer.param);
-			if (timer.count > 0) --timer.count;
-		}
-		//
-		if (0 != timer.count)
-		{
-			timer.timestamp = now;
-			std::unique_lock<std::mutex> _(_lck_timer);
-			_list_timers.emplace_back(vecTmp[i]);
-		}
+		timer.cb(timer.param);
 	}
 }
 
@@ -223,17 +225,17 @@ void eventloop::add_timer(timer_data_t  cb)
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	cb.timestamp = now;
-	_list_timers.push_back(cb);
+	_timers.push_back(cb);
 }
 
 void eventloop::remove_timer(unsigned short timer_id)
 {
 	std::unique_lock<std::mutex> _(_lck_timer);
-	auto it = _list_timers.begin();
-	while (it != _list_timers.end())
+	auto it = _timers.begin();
+	while (it != _timers.end())
 	{
 		if (it->timer_id == timer_id)
-			it = _list_timers.erase(it);
+			it = _timers.erase(it);
 		else
 			++it;
 	}

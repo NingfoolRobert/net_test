@@ -3,7 +3,7 @@
 
 #include "net_client_base.h"
 #include <set>
-#include <vector>
+#include <list>
 #include <mutex>
 
 typedef void(*PTIMERCALLBACK)(void*);
@@ -47,7 +47,7 @@ private:
 	std::set<net_client_base*>			_conns;
 private:
 	std::mutex							_lck_timer;
-	std::vector<timer_data_t>			_list_timers;
+	std::list<timer_data_t>				_timers;
 private:
 	int		_running;
 	
