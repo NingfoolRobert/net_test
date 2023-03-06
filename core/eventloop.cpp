@@ -19,6 +19,10 @@ eventloop::eventloop():_running(true)
 	_wake_recv = NULL;
 	_wake_listen = NULL;
 	_wake_send = NULL;
+
+	WSAData wsd;
+	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
+		return;
 #else 
 	_wake_fd = -1;
 #endif 
@@ -27,6 +31,7 @@ eventloop::eventloop():_running(true)
 
 eventloop::~eventloop()
 {
+	_running = false;
 	remove_all();
 	//
 	_timers.clear();
@@ -43,6 +48,8 @@ eventloop::~eventloop()
 		delete _wake_send;
 		_wake_send = NULL;
 	}
+	//
+	WSACleanup();
 #else 
 	if (_wake_fd != -1){
 		close(_wake_fd);
@@ -247,14 +254,19 @@ void eventloop::remove_timer(unsigned short timer_id)
 
 void eventloop::wakeup()
 {
+	if (!_running)
+		return;
 	uint64_t one = 1;
 #ifdef _WIN32
-	int len = _wake_send->send_msg((char*)&one, sizeof(one));
+	if (_wake_send) {
+		int len = _wake_send->send((char*)&one, sizeof(one));
 #else 
+	if(_wake_fd != -1){
 	int len = ::write(_wake_fd, &one, sizeof(one));
 #endif 
-	if(len < (int)sizeof(one))
+	if (len < (int)sizeof(one))
 		error_print("%s, send data len < sizeof(uint64_t)", __FUNCTION__);
+	}
 }
 	
 void eventloop::create_wakeup_fd()
@@ -264,20 +276,24 @@ void eventloop::create_wakeup_fd()
 	_wake_listen->_loop = this;
 	_wake_listen->create();
 	_wake_listen->set_reuse_addr();
-	unsigned int host_ip = inet_addr("127.0.0.1");
-	_wake_listen->bind(ntohl(host_ip), 0);
+	unsigned int host_ip = ntohl(inet_addr("127.0.0.1"));
+	_wake_listen->bind(host_ip, 0);
 	_wake_listen->listen();
 	
 	struct sockaddr_in svr_addr;
 	int sock_len = sizeof(svr_addr);
-	if (getsockname(_wake_listen->_fd, (struct sockaddr*)&svr_addr, &sock_len) < 0)
+	int ret = getsockname(_wake_listen->_fd, (struct sockaddr*)&svr_addr, &sock_len);
+	if (ret < 0)
+	{
+		int err = GetLastError();
 		return;
+	}
 	//
-	int port = ntohl(svr_addr.sin_port);
+	int port = ntohs(svr_addr.sin_port);
 	
 	_wake_send = new net_client_base(NULL, NULL);
 	_wake_send->create();
-	_wake_send->connect(ntohl(host_ip), port);
+	_wake_send->connect(host_ip, port);
 	
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
@@ -295,7 +311,7 @@ void eventloop::handle_read()
 {
 	char szTmp[32] = { 0 };
 #ifdef _WIN32 
-	int readed = ::recv(_wake_recv->_fd, szTmp, 32, 0);
+	int readed = _wake_recv->recv(szTmp, 32);
 	if(readed < (int)sizeof(int))
 #else 
 	int readed = ::read(_wake_fd, szTmp, 32);

@@ -1,11 +1,8 @@
-#include <csignal>
-#include <cstddef>
 #include <stdio.h> 
-#include <signal.h> 
-#include <stdlib.h> 
-
 #ifndef _WIN32 
+#include <signal.h> 
 #include <unistd.h>
+#include <stdlib.h> 
 #include "cmdline.h"
 #endif 
 #include "global_var.h"
@@ -44,39 +41,51 @@ int main(int argc, char* argv[])
 		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
+#else 
+	WSAData wsd;
+	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
+		return -1;
 #endif
 
-	trace_print("%s\n", __FUNCTION__);
-	info_print("%s\n", __FUNCTION__);
-	error_print("%s\n", __FUNCTION__);
-	//
-#ifndef _WIN32 
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGTERM, signal_handle);
+ 		trace_print("%s\n", __FUNCTION__);
+ 		info_print("%s\n", __FUNCTION__);
+ 		error_print("%s\n", __FUNCTION__);
+
+
+ 		//
+ 	#ifndef _WIN32 
+ 		signal(SIGPIPE, SIG_IGN);
+ 		signal(SIGTERM, signal_handle);
+ 	#endif 
+ 		//
+ 		if(!init())
+ 		{
+ 			printf("%s init fail...\n", APIGW_VERSION_NAME);
+ 			return -1;
+ 		}
+ 		//
+ 		ngx_acceptor*  apt = new ngx_acceptor;
+ 	#ifndef _WIN32 
+ 		if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
+ 	#else 
+ 		if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
+ 	#endif 
+ 		{
+ 			printf("net listen fail. port:%d\n", 2000);
+ 			return -1;
+ 		}
+ 		g_loop.add(apt);	
+
+
+
+ 		while(g_running) g_loop.loop(10);
+ 		//
+ 		uninit();	
+ 	 	printf("%s stop ...\n", APIGW_VERSION_NAME);
+#ifdef _WIN32 
+		WSACleanup();
 #endif 
-	//
-	if(!init())
-	{
-		printf("%s init fail...\n", APIGW_VERSION_NAME);
-		return -1;
-	}
-	//
-	ngx_acceptor*  apt = new ngx_acceptor;
-#ifndef _WIN32 
-	if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
-#else 
-	if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
-#endif 
-	{
-		printf("net listen fail. port:%d\n", 2000);
-		return -1;
-	}
-	g_loop.add(apt);	
-	while(g_running) g_loop.loop(10);
-	//
-	uninit();	
-	printf("%s stop ...\n", APIGW_VERSION_NAME);
-	return 0;
+ 	return 0;
 }
 
 #ifndef _WIN32 
@@ -109,21 +118,21 @@ void uninit()
 
 void api_apt_cb(ngx_sock fd)
 {
-	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
-	if(nullptr == conn)
-	{
-		printf("memory error.");
-		return ;
-	}
-	//	
-	conn->_fd = fd;
-	conn->set_nio();
-	conn->set_tcp_nodelay();
-	conn->set_tcp_linger();
-	conn->get_peer_name();
-	g_loop.add(conn);
-	char ip[16] = { 0 };
-	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
+// 	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
+// 	if(nullptr == conn)
+// 	{
+// 		printf("memory error.");
+// 		return ;
+// 	}
+// 	//	
+// 	conn->_fd = fd;
+// 	conn->set_nio();
+// 	conn->set_tcp_nodelay();
+// 	conn->set_tcp_linger();
+// 	conn->get_peer_name();
+// 	g_loop.add(conn);
+// 	char ip[16] = { 0 };
+// 	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
