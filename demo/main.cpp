@@ -53,10 +53,10 @@ int main(int argc, char* argv[])
 
 
  		//
- 	#ifndef _WIN32 
+#ifndef _WIN32 
  		signal(SIGPIPE, SIG_IGN);
  		signal(SIGTERM, signal_handle);
- 	#endif 
+#endif 
  		//
  		if(!init())
  		{
@@ -65,11 +65,11 @@ int main(int argc, char* argv[])
  		}
  		//
  		ngx_acceptor*  apt = new ngx_acceptor;
- 	#ifndef _WIN32 
+#ifndef _WIN32 
  		if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
- 	#else 
+#else 
  		if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
- 	#endif 
+#endif 
  		{
  			printf("net listen fail. port:%d\n", 2000);
  			return -1;
