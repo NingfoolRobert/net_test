@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 	if(a.exist("version"))
 	{
 		printf("%s version :	%s\n", APIGW_VERSION_NAME,  APIGW_VERSION);
-		printf("%s compile timestamp: %s\n",APIGW_VERSION_NAME, APIGW_COMPILE_TIME);
+		printf("%s compile timestamp: %s %s\n",APIGW_VERSION_NAME, __DATE__, __TIME__);
 		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
@@ -93,22 +93,7 @@ int main(int argc, char* argv[])
  	return 0;
 }
 
-void signal_handle(int ret)
-{
-// 	switch(ret)
-// 	{
-// 		case SIGINT:
-// 		case SIGTERM:		//exit 
-// 			g_running = false;
-// 			g_loop.wakeup();
-// 			break;
-// 		case SIGSEGV:
-// 			printf("\n %s core dump...\n", APIGW_VERSION_NAME);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-}
+
 
 
 bool init()
@@ -162,6 +147,24 @@ bool api_msg_process(net_client_base* conn, void* data, unsigned int len)
 }
 
 
+#ifndef _WIN32
+void signal_handle(int ret)
+{
+	switch (ret)
+	{
+	case SIGINT:
+	case SIGTERM:		//exit 
+		g_running = false;
+		g_loop.wakeup();
+		break;
+	case SIGSEGV:
+		printf("\n %s core dump...\n", APIGW_VERSION_NAME);
+		break;
+	default:
+		break;
+	}
+}
+#else 
 BOOL WINAPI ConsoleHandler(DWORD cEvent)
 {
 	switch (cEvent)
@@ -185,3 +188,4 @@ BOOL WINAPI ConsoleHandler(DWORD cEvent)
 	info_print("%d\n", cEvent);
 	return TRUE;
 }
+#endif 

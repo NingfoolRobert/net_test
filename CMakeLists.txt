@@ -3,8 +3,41 @@ cmake_minimum_required(VERSION 3.10)
 project(net_api_test 
 		VERSION  0.1.0)
 
-set(CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS} -g -ggdb -O0 -Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3 -W -DNDEBUG -lm")
+
+if(MSVC)
+	message(STATUS "Platform : Windows")
+	if(CMAKE_CL_64)
+		message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} x64")
+	else()
+		message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} x86")
+	endif()
+	
+	message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+	add_definitions(-D_UNICODE)
+	SET(CMAKE_C_FLAGS_DEBUG  "${CMAKE_C_FLAGS_DEBUG} /MTd")
+	SET(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+	SET(CMAKE_C_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} /MT")
+	SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS} /wd4100 /wd4505 /wd4996")
+	#Build Type
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		add_compile_options(
+			/Zi
+			/Od
+		)
+		add_link_options(/Debug)
+		add_definitions(-W3)
+	else()
+		add_definitions(-W0)
+	endif()
+else()
+	message(STATUS "Platform : Unix")
+	message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} x64")
+	message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+	set(CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS} -g -ggdb -O0 -Wall")
+	set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3 -W -DNDEBUG -lm")
+endif()
+
 set(TOP_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS "VERSION: ${PROJECT_VERSION}")
