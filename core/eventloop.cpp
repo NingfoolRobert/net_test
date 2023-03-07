@@ -19,7 +19,7 @@ eventloop::eventloop():_running(true)
 	_wake_recv = NULL;
 	_wake_listen = NULL;
 	_wake_send = NULL;
-
+	//
 	WSAData wsd;
 	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
 		return;
@@ -104,9 +104,9 @@ int eventloop::loop(int timeout)
 		handle_read();
 	}
 	//
-	for (auto it = conns.begin(); it != conns.end(); ++it)
+	for (auto i = 0u; i < conns.size(); ++i)
 	{
-		auto pConn = *it;
+		auto pConn = conns[i];
 		if (FD_ISSET(pConn->_fd, &rd_fds))
 			pConn->OnRead();
 		if (FD_ISSET(pConn->_fd, &wt_fds))

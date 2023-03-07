@@ -1,6 +1,6 @@
 #include <stdio.h> 
-#ifndef _WIN32 
 #include <signal.h> 
+#ifndef _WIN32 
 #include <unistd.h>
 #include <stdlib.h> 
 #include "cmdline.h"
@@ -17,6 +17,8 @@ eventloop	g_loop;
 ///////////////////////////////////////
 #ifndef _WIN32 
 void signal_handle(int);
+#else 
+BOOL WINAPI ConsoleHandler(DWORD cEvent);
 #endif 
 bool init();
 void uninit();
@@ -45,7 +47,11 @@ int main(int argc, char* argv[])
 	WSAData wsd;
 	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
 		return -1;
+
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)&ConsoleHandler, TRUE))
+		return -1;
 #endif
+
 
  		trace_print("%s\n", __FUNCTION__);
  		info_print("%s\n", __FUNCTION__);
@@ -53,10 +59,10 @@ int main(int argc, char* argv[])
 
 
  		//
-#ifndef _WIN32 
+ #ifndef _WIN32 
  		signal(SIGPIPE, SIG_IGN);
  		signal(SIGTERM, signal_handle);
-#endif 
+ #endif 
  		//
  		if(!init())
  		{
@@ -65,20 +71,19 @@ int main(int argc, char* argv[])
  		}
  		//
  		ngx_acceptor*  apt = new ngx_acceptor;
-#ifndef _WIN32 
+ #ifndef _WIN32 
  		if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
-#else 
+ #else 
  		if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
-#endif 
+ #endif 
  		{
  			printf("net listen fail. port:%d\n", 2000);
  			return -1;
  		}
+		//
  		g_loop.add(apt);	
-
-
-
- 		while(g_running) g_loop.loop(10);
+ 		while(g_running) 
+			g_loop.loop(10);
  		//
  		uninit();	
  	 	printf("%s stop ...\n", APIGW_VERSION_NAME);
@@ -88,23 +93,23 @@ int main(int argc, char* argv[])
  	return 0;
 }
 
-#ifndef _WIN32 
 void signal_handle(int ret)
 {
-	switch(ret)
-	{
-		case SIGTERM:		//exit 
-			g_running = false;
-			g_loop.wakeup();
-			break;
-		case SIGSEGV:
-			printf("\n %s core dump...\n", APIGW_VERSION_NAME);
-			break;
-		default:
-			break;
-	}
+// 	switch(ret)
+// 	{
+// 		case SIGINT:
+// 		case SIGTERM:		//exit 
+// 			g_running = false;
+// 			g_loop.wakeup();
+// 			break;
+// 		case SIGSEGV:
+// 			printf("\n %s core dump...\n", APIGW_VERSION_NAME);
+// 			break;
+// 		default:
+// 			break;
+// 	}
 }
-#endif 
+
 
 bool init()
 {
@@ -118,21 +123,21 @@ void uninit()
 
 void api_apt_cb(ngx_sock fd)
 {
-// 	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
-// 	if(nullptr == conn)
-// 	{
-// 		printf("memory error.");
-// 		return ;
-// 	}
-// 	//	
-// 	conn->_fd = fd;
-// 	conn->set_nio();
-// 	conn->set_tcp_nodelay();
-// 	conn->set_tcp_linger();
-// 	conn->get_peer_name();
-// 	g_loop.add(conn);
-// 	char ip[16] = { 0 };
-// 	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
+	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
+	if(nullptr == conn)
+	{
+		printf("memory error.");
+		return ;
+	}
+	//	
+	conn->_fd = fd;
+	conn->set_nio();
+	conn->set_tcp_nodelay();
+	conn->set_tcp_linger();
+	conn->get_peer_name();
+	g_loop.add(conn);
+	char ip[16] = { 0 };
+	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
@@ -154,4 +159,29 @@ void api_discon(int err, net_client_base* conn)
 bool api_msg_process(net_client_base* conn, void* data, unsigned int len)
 {
 	return true;
+}
+
+
+BOOL WINAPI ConsoleHandler(DWORD cEvent)
+{
+	switch (cEvent)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+		MessageBox(NULL, L"CTRL+C", L"ÌבÊ¾", MB_OK);
+		g_running = false;
+		g_loop.wakeup();
+		break;
+	case CTRL_CLOSE_EVENT:
+		break;
+	case CTRL_LOGOFF_EVENT:
+		break;
+	case CTRL_SHUTDOWN_EVENT:
+		break;
+	default:
+		break;
+	}
+	
+	info_print("%d\n", cEvent);
+	return TRUE;
 }
