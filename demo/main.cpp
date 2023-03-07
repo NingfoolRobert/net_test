@@ -38,8 +38,8 @@ int main(int argc, char* argv[])
 	a.parse_check(argc, argv);
 	if(a.exist("version"))
 	{
-		printf("%s version :	%s\n", APIGW_VERSION_NAME,  APIGW_VERSION);
-		printf("%s compile timestamp: %s %s\n",APIGW_VERSION_NAME, __DATE__, __TIME__);
+		printf("%s version :	%s\n", APP_NAME,  APP_VERSION);
+		printf("%s compile timestamp: %s %s\n",APP_NAME, __DATE__, __TIME__);
 		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
  		//
  		if(!init())
  		{
- 			printf("%s init fail...\n", APIGW_VERSION_NAME);
+ 			printf("%s init fail...\n", APP_NAME);
  			return -1;
  		}
  		//
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 			g_loop.loop(10);
  		//
  		uninit();	
- 	 	printf("%s stop ...\n", APIGW_VERSION_NAME);
+ 	 	printf("%s stop ...\n", APP_NAME);
 #ifdef _WIN32 
 		WSACleanup();
 #endif 
@@ -158,7 +158,7 @@ void signal_handle(int ret)
 		g_loop.wakeup();
 		break;
 	case SIGSEGV:
-		printf("\n %s core dump...\n", APIGW_VERSION_NAME);
+		printf("\n %s core dump...\n", APP_NAME);
 		break;
 	default:
 		break;
