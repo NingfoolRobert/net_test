@@ -12,10 +12,11 @@
 class spinlock{
 	public:
 		spinlock():flag_(ATOMIC_FLAG_INIT){
-
 		}
 		~spinlock(){}
-		
+		//
+		spinlock(const spinlock&)				= delete;
+		spinlock& operator=(const spinlock&)	= delete;	
 		void lock(){
 			while(flag_.test_and_set(std::memory_order_acquire));	
 		}
