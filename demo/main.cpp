@@ -52,9 +52,9 @@ int main(int argc, char* argv[])
 #endif
 
 
-//  		trace_print("%s\n", __FUNCTION__);
-//  		info_print("%s\n", __FUNCTION__);
-//  		error_print("%s\n", __FUNCTION__);
+	trace_print("%s\n", __FUNCTION__);
+	info_print("%s\n", __FUNCTION__);
+	error_print("%s\n", __FUNCTION__);
 
 
  		//
@@ -70,11 +70,7 @@ int main(int argc, char* argv[])
  		}
  		//
  		ngx_acceptor*  apt = new ngx_acceptor;
- #ifndef _WIN32 
  		if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
- #else 
- 		if (NULL == apt || !apt->init(0, 2000, api_apt_cb))
- #endif 
  		{
  			printf("net listen fail. port:%d\n", 2000);
  			return -1;
