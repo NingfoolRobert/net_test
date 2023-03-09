@@ -24,4 +24,5 @@ target_sources(${TARGET_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_queue.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/tcp_conn.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_acceptor.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/eventthread.cpp 
 	)
