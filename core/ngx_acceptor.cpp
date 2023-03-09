@@ -6,6 +6,7 @@
 #else 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <errno.h>
 #endif 
 
 ngx_acceptor::ngx_acceptor():net_io(NULL, NULL)
