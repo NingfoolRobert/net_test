@@ -1,10 +1,12 @@
 #ifndef _EVENT_LOOP_H_
 #define _EVENT_LOOP_H_
 
-#include "net_client_base.h"
 #include <set>
 #include <list>
-#include <mutex>
+#include <functional>
+
+#include "net_client_base.h"
+#include "spinlock.hpp"
 
 typedef void(*PTIMERCALLBACK)(void*);
 struct timer_data_t {
@@ -33,6 +35,8 @@ public:
 	void	remove_timer(unsigned short timer_id);
 
 	void	wakeup();
+
+	void	add_task(std::function<void()>& task);
 	
 private:
 	void	create_wakeup_fd();
@@ -40,14 +44,20 @@ private:
 	void	handle_read();
 
 	void	process_timer();
+
+	void	process_task();
 	
 	void	remove_all();
 private:
-	std::mutex							_lck;
+	spinlock							_lck;
 	std::set<net_client_base*>			_conns;
 private:
-	std::mutex							_lck_timer;
+	spinlock							_lck_timer;
 	std::list<timer_data_t>				_timers;
+	//
+	spinlock							_lck_task;
+	std::list<std::function<void()> >	_tasks;
+
 private:
 	int		_running;
 	

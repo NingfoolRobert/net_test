@@ -77,7 +77,8 @@ public:
 	void		terminate();
 
 	bool		OnMessage(void* data, unsigned int len);
-	
+
+	void		OnClose();
 public:
 	void		add_ref(){ ++_ref; }
 	void		release(){if(--_ref == 0) delete this;}

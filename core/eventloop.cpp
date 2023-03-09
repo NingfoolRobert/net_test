@@ -1,6 +1,8 @@
 #include "eventloop.h"
 #include "log_def.h"
 #include <vector>
+#include <algorithm>
+#include <mutex>
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -61,6 +63,7 @@ eventloop::~eventloop()
 int eventloop::loop(int timeout)
 {
 	process_timer();
+	process_task();
 	//
 	int max_fd = 0;
 	std::vector<net_client_base*> conns;
@@ -74,7 +77,7 @@ int eventloop::loop(int timeout)
 	max_fd = std::max(_wake_fd, max_fd);
 #endif 
 	{
-		std::unique_lock<std::mutex> _(_lck);
+		std::unique_lock<spinlock> _(_lck);
 		for (auto it = _conns.begin(); it != _conns.end(); ++it)
 		{
 			auto pConn = *it;
@@ -123,7 +126,7 @@ void eventloop::add(net_client_base* conn)
 	if(!_running || nullptr == conn) 
 		return ;
 	{
-		std::unique_lock<std::mutex> _(_lck);
+		std::unique_lock<spinlock> _(_lck);
 		conn->_loop = this;
 		_conns.insert(conn);
 	}
@@ -146,7 +149,7 @@ void eventloop::process_timer()
 	//
 	std::vector<timer_data_t> vecTmp;
 	{
-		std::unique_lock<std::mutex> _(_lck_timer);
+		std::unique_lock<spinlock> _(_lck_timer);
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
@@ -172,15 +175,32 @@ void eventloop::process_timer()
 	}
 }
 
+void eventloop::process_task()
+{
+	std::list<std::function<void()> > tsks;
+	{
+		std::unique_lock<spinlock> _(_lck_task);
+		tsks.swap(_tasks);
+	}
+	//
+	for_each(tsks.begin(), tsks.end(), [](std::function<void()>& tsk) {
+		tsk();
+	});
+}
+
 void eventloop::remove(net_client_base* conn)
 {
 	if(NULL == conn) 
 		return ;
 	{
-		std::unique_lock<std::mutex> _(_lck);
+		std::unique_lock<spinlock> _(_lck);
 		auto it = _conns.find(conn);
 		if (it != _conns.end())
+		{
+			conn->_loop = nullptr;
+			conn->release();
 			_conns.erase(it);
+		}
 	}
 	//
 	wakeup();
@@ -190,11 +210,13 @@ void eventloop::remove_all()
 {
 	//
 	{
-		std::unique_lock<std::mutex> _(_lck);
+		std::unique_lock<spinlock> _(_lck);
 		for(auto it = _conns.begin();  it != _conns.end(); ++it)
 		{
 			auto pConn = *it;
-			pConn->release();		
+			pConn->_loop = nullptr;
+			pConn->OnClose();
+			pConn->release();	
 		}
 		_conns.clear();
 	}
@@ -223,7 +245,7 @@ void eventloop::remove_all()
 
 void eventloop::add_timer(timer_data_t  cb)
 {
-	std::unique_lock<std::mutex> _(_lck_timer);
+	std::unique_lock<spinlock> _(_lck_timer);
 	if (_running) return;
 	unsigned long long	now = 0;
 #if _WIN32
@@ -241,7 +263,7 @@ void eventloop::add_timer(timer_data_t  cb)
 
 void eventloop::remove_timer(unsigned short timer_id)
 {
-	std::unique_lock<std::mutex> _(_lck_timer);
+	std::unique_lock<spinlock> _(_lck_timer);
 	auto it = _timers.begin();
 	while (it != _timers.end())
 	{
@@ -318,4 +340,17 @@ void eventloop::handle_read()
 	if (readed < (int)sizeof(uint64_t))
 #endif
 		printf("%s, recv data < sizeof(uint64_t)\n", __FUNCTION__);
+}
+
+void eventloop::add_task(std::function<void()>& task)
+{
+	if (!_running)
+		return;
+	//
+	{
+		std::unique_lock<spinlock> _(_lck_task);
+		_tasks.push_back(task);
+	}
+	//
+	wakeup();
 }

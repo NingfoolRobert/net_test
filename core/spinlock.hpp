@@ -11,7 +11,8 @@
 #include <atomic> 
 class spinlock{
 	public:
-		spinlock():flag_(ATOMIC_FLAG_INIT){
+		spinlock(){
+			flag_.clear();
 		}
 		~spinlock(){}
 		//

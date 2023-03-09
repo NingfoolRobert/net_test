@@ -17,15 +17,15 @@ class eventthread{
 		eventthread();
 		~eventthread();
 	public:
-		const eventloop&  get_loop() { return loop_; }	
+		const eventloop*  get_loop() { return _loop; }	
 		
 		void	run();
 
 		void	stop();
 	private:
-		eventloop&								_loop;
-		std::unique_ptr<std::thread>			_thr;
+		eventloop*								_loop;
 		size_t									_flag;
+		std::unique_ptr<std::thread>			_thr;
 };
 
 

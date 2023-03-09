@@ -45,6 +45,7 @@ ngx_sock net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= S
 	if (_fd == -1)
 		_errno = errno;
 #endif 
+	_errno = 0;
 	return _fd;
 }
 
@@ -193,10 +194,24 @@ void net_client_base::terminate()
 	{
 		_loop->remove(this);
 		_loop = NULL;
+		OnClose();
 	}
 	//
-	close();
+	if(_brk_tm)  
+		close();
+	//
 	_brk_tm = time(NULL);
+}
+//
+bool net_client_base::OnMessage(void* data, unsigned int len)
+{
+	if (_msg_cb)
+		return (*_msg_cb)(this, data, len);
+	return false;
+}
+//
+void net_client_base::OnClose()
+{
 	//
 	if (_disconn_cb)
 	{
@@ -205,14 +220,6 @@ void net_client_base::terminate()
 	}
 }
 
-bool net_client_base::OnMessage(void* data, unsigned int len)
-{
-	if (_msg_cb)
-		return (*_msg_cb)(this, data, len);
-	return false;
-}
-
-	
 void net_client_base::get_sock_name()
 {
 	struct sockaddr_in laddr;
