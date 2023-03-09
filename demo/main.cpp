@@ -12,7 +12,6 @@
 #include "log_def.h"
 
 ////////////////////////////////////////
-bool		g_running = true;
 eventloop	g_loop;
 ///////////////////////////////////////
 #ifndef _WIN32 
@@ -153,8 +152,7 @@ void signal_handle(int ret)
 	{
 	case SIGINT:
 	case SIGTERM:		//exit 
-		g_running = false;
-		g_loop.wakeup();
+		g_loop.stop();
 		break;
 	case SIGSEGV:
 		printf("\n %s core dump...\n", APP_NAME);
