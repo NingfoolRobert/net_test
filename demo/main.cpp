@@ -3,13 +3,14 @@
 #ifndef _WIN32 
 #include <unistd.h>
 #include <stdlib.h> 
-#include "cmdline.h"
+
 #endif 
 #include "global_var.h"
 #include "version.h"
 #include "ngx_acceptor.h"
 #include "tcp_conn.h"
 #include "log_def.h"
+#include "cmdline.h"
 
 ////////////////////////////////////////
 eventloop	g_loop;
@@ -28,7 +29,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len);
 ///////////////////////////////////////
 int main(int argc, char* argv[])
 {
-#ifndef _WIN32 
+
 	cmdline::parser a;
 	a.add<std::string>("config", 'c', "configure file full name [Y]", false, "./gateway.cfg");
 	a.add<int>("port", 'p', "port number", false, 2000, cmdline::range(1024, 65535));
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
 		trace_print("%s\n", __FUNCTION__);
 		return 0;
 	}
-#else 
+#ifdef _WIN32 
 	WSAData wsd;
 	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
 		return -1;
@@ -165,7 +166,6 @@ BOOL WINAPI ConsoleHandler(DWORD cEvent)
 	case CTRL_C_EVENT:
 	case CTRL_BREAK_EVENT:
 		MessageBox(NULL, L"CTRL+C", L"ÌבÊ¾", MB_OK);
-		g_running = false;
 		g_loop.wakeup();
 		break;
 	case CTRL_CLOSE_EVENT:
