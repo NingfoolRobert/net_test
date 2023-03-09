@@ -24,7 +24,6 @@ class eventthread{
 		void	stop();
 	private:
 		eventloop*								_loop;
-		size_t									_flag;
 		std::unique_ptr<std::thread>			_thr;
 };
 
