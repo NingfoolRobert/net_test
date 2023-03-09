@@ -13,7 +13,7 @@
 
 struct CBizUser::Impl {
 	ngx_core_t				core;
-	net_client_base			*conn;			//
+	net_io			*conn;			//
 	void					*biz;
 	unsigned int			logoned;		//
 	
@@ -35,9 +35,9 @@ struct CBizUser::Impl {
 
 	bool	logon();
 
-	void	async(net_client_base* conn);
+	void	async(net_io* conn);
 
-	void	unasync(net_client_base* conn);
+	void	unasync(net_io* conn);
 
 	
 };

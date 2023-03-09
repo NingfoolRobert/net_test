@@ -1,4 +1,4 @@
-#include "net_client_base.h"
+#include "net_io.h"
 #include "eventloop.h"
 
 #include <string.h>
@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 #endif 
 
-net_client_base::net_client_base(PNETMSGCALLBACK fnc, PDISCONNCALLBACK disconn_cb):
+net_io::net_io(PNETMSGCALLBACK fnc, PDISCONNCALLBACK disconn_cb):
 	_brk_tm(0),
 	_errno(0),
 	_loop(NULL),
@@ -30,12 +30,12 @@ net_client_base::net_client_base(PNETMSGCALLBACK fnc, PDISCONNCALLBACK disconn_c
 	_ref = 1;
 }
 
-net_client_base::~net_client_base()
+net_io::~net_io()
 {
 	terminate();
 }
 
-ngx_sock net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
+ngx_sock net_io::create(int domain /*= AF_INET*/, int socket_type /*= SOCK_STREAM*/, int protocol_type /*= IPPROTO_IP*/)
 {
 	_fd = ::socket(domain, socket_type, protocol_type);
 #ifdef _WIN32
@@ -49,7 +49,7 @@ ngx_sock net_client_base::create(int domain /*= AF_INET*/, int socket_type /*= S
 	return _fd;
 }
 
-bool net_client_base::connect(unsigned int host_ip, unsigned short port)
+bool net_io::connect(unsigned int host_ip, unsigned short port)
 {
 	_ip = host_ip;
 	_port = port;
@@ -77,7 +77,7 @@ bool net_client_base::connect(unsigned int host_ip, unsigned short port)
 	return true;
 }
 
-bool net_client_base::bind(unsigned int host_ip, unsigned short port)
+bool net_io::bind(unsigned int host_ip, unsigned short port)
 {
 	_ip = host_ip;
 	_port = port;
@@ -100,7 +100,7 @@ bool net_client_base::bind(unsigned int host_ip, unsigned short port)
 	return ret == 0;
 }
 
-bool net_client_base::listen(int backlog /*= 10*/)
+bool net_io::listen(int backlog /*= 10*/)
 {
 	int ret = ::listen(_fd, backlog);
 	if (ret == -1)
@@ -112,17 +112,17 @@ bool net_client_base::listen(int backlog /*= 10*/)
 	return ret == 0;
 }
 	
-int net_client_base::send(const char* data, unsigned int len)
+int net_io::send(const char* data, unsigned int len)
 {
 	return ::send(_fd, data, len, 0);
 }
 
-int net_client_base::recv(char* data, unsigned int len)
+int net_io::recv(char* data, unsigned int len)
 {
 	return ::recv(_fd, data, len, 0);
 }
 
-bool net_client_base::set_tcp_linger()
+bool net_io::set_tcp_linger()
 {
 	struct linger so_linger;
 	so_linger.l_onoff = 1;
@@ -134,13 +134,13 @@ bool net_client_base::set_tcp_linger()
 #endif 
 }
 
-bool net_client_base::set_tcp_nodelay()
+bool net_io::set_tcp_nodelay()
 {
 	int enable = 1;
 	return setsockopt(_fd, IPPROTO_IP, TCP_NODELAY, (char*)&enable, sizeof(enable)) == 0;
 }
 
-bool net_client_base::set_nio(int mode /*= 1*/)
+bool net_io::set_nio(int mode /*= 1*/)
 {
 #ifdef _WIN32
 	::ioctlsocket(_fd, FIONBIO, (u_long*)&mode);
@@ -152,7 +152,7 @@ bool net_client_base::set_nio(int mode /*= 1*/)
 }
 
 
-bool net_client_base::set_reuse_addr(bool flag /*= 1*/)
+bool net_io::set_reuse_addr(bool flag /*= 1*/)
 {
 	int opt = flag ? 1 : 0;
 #ifdef _WIN32 
@@ -163,7 +163,7 @@ bool net_client_base::set_reuse_addr(bool flag /*= 1*/)
 	return true;
 }
 
-bool net_client_base::set_reuse_port(bool flag /*= 1*/)
+bool net_io::set_reuse_port(bool flag /*= 1*/)
 {
 #ifndef _WIN32 
 	int opt = flag ? 1 : 0;
@@ -173,7 +173,7 @@ bool net_client_base::set_reuse_port(bool flag /*= 1*/)
 #endif 
 }
 
-void net_client_base::close()
+void net_io::close()
 {
 #ifdef _WIN32
 	if(_fd != INVALID_SOCKET){
@@ -187,12 +187,12 @@ void net_client_base::close()
 	}
 }
 
-void net_client_base::terminate()
+void net_io::terminate()
 {
 	//
 	if (_loop)
 	{
-		_loop->remove(this);
+		_loop->remove_net(this);
 		_loop = NULL;
 		OnClose();
 	}
@@ -203,14 +203,14 @@ void net_client_base::terminate()
 	_brk_tm = time(NULL);
 }
 //
-bool net_client_base::OnMessage(void* data, unsigned int len)
+bool net_io::OnMessage(void* data, unsigned int len)
 {
 	if (_msg_cb)
 		return (*_msg_cb)(this, data, len);
 	return false;
 }
 //
-void net_client_base::OnClose()
+void net_io::OnClose()
 {
 	//
 	if (_disconn_cb)
@@ -220,7 +220,7 @@ void net_client_base::OnClose()
 	}
 }
 
-void net_client_base::get_sock_name()
+void net_io::get_sock_name()
 {
 	struct sockaddr_in laddr;
 	socklen_t slen = sizeof(laddr);
@@ -230,7 +230,7 @@ void net_client_base::get_sock_name()
 	_port = ntohs(laddr.sin_port);
 }
 	
-void net_client_base::get_peer_name()
+void net_io::get_peer_name()
 {
 	struct sockaddr_in paddr;
 	socklen_t slen = sizeof(paddr);
@@ -239,7 +239,7 @@ void net_client_base::get_peer_name()
 	_port = ntohs(paddr.sin_port);
 }
 	
-char* net_client_base::get_ip(char*  ip)
+char* net_io::get_ip(char*  ip)
 {
 	struct in_addr in;
 	in.s_addr = htonl(_ip);

@@ -14,7 +14,7 @@ size_t msg_head_parse(void* data, size_t nLen)
 	return 0;
 }
 ///////////////////////////////////////
-void  OnNetDisConn(int err, net_client_base* conn) {
+void  OnNetDisConn(int err, net_io* conn) {
 
 	CBizUser* pUser = (CBizUser*)(g_core->biz);
 	ngx_log_warn(g_core->log, "disconnect server,err:%d, ip:port=%s:%d", g_core->host_ip[g_core->ip_idx],err, g_core->port[g_core->ip_idx]);
@@ -24,7 +24,7 @@ void  OnNetDisConn(int err, net_client_base* conn) {
 	//
 }
 ///////////////////////////////////////
-bool OnNetMsg(net_client_base* conn, void* data, unsigned int len)
+bool OnNetMsg(net_io* conn, void* data, unsigned int len)
 {
 	CBizUser* pUser = (CBizUser*)(g_core->biz);
 	//log on msg 

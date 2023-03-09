@@ -21,19 +21,19 @@
 #endif 
 
 class eventloop;
-class net_client_base;
+class net_io;
 //
 typedef  size_t(*PMSGLENPARSEFUNC)(void*, size_t);
 //connection break;
-typedef  void(*PDISCONNCALLBACK)(int, net_client_base*);
+typedef  void(*PDISCONNCALLBACK)(int, net_io*);
 //message arrive
-typedef  bool(*PNETMSGCALLBACK)(net_client_base*, void* , unsigned int);
+typedef  bool(*PNETMSGCALLBACK)(net_io*, void* , unsigned int);
 
-class net_client_base
+class net_io
 {
 public:
-	net_client_base(PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb);
-	virtual ~net_client_base();
+	net_io(PNETMSGCALLBACK fnc, PDISCONNCALLBACK dis_conn_cb);
+	virtual ~net_io();
 
 public:
 	virtual  void   OnRead() {}

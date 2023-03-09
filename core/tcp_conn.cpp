@@ -1,17 +1,14 @@
 #include "tcp_conn.h"
-#include "net_client_base.h"
 #include <string.h>
-
+#include <errno.h>
+//
 #ifdef _WIN32
 #include <ws2tcpip.h>
 #include <winerror.h>
-#include <errno.h>
-#else 
-#include <errno.h>
 #endif 
 
 tcp_conn::tcp_conn(unsigned int nHeadLen, PMSGLENPARSEFUNC msg_head_fnc, PNETMSGCALLBACK pfnc, PDISCONNCALLBACK disconn_cb) :
-	net_client_base(pfnc, disconn_cb),
+	net_io(pfnc, disconn_cb),
 	_msg_head_fnc(msg_head_fnc),
 	_head_len(nHeadLen), 
 	_expected_len(nHeadLen), 
@@ -41,7 +38,7 @@ void tcp_conn::OnRead()
 			return;
 	}
 	//
-	int recv_len = net_client_base::recv((char*)_rcv_buf + _rcv_buf->len, (unsigned int)(_expected_len - _rcv_buf->len));
+	int recv_len = net_io::recv((char*)_rcv_buf + _rcv_buf->len, (unsigned int)(_expected_len - _rcv_buf->len));
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
@@ -101,7 +98,7 @@ void tcp_conn::OnSend()
 	if (NULL == _snd_buf || _snd_buf->len <= _snd_len)
 		return;
 	//
-	int send_len = net_client_base::send((char*)(_snd_buf->data) + _snd_len, (unsigned int)(_snd_buf->len - _snd_len));
+	int send_len = net_io::send((char*)(_snd_buf->data) + _snd_len, (unsigned int)(_snd_buf->len - _snd_len));
 	if (send_len < 0)
 	{
 #ifdef _WIN32
@@ -151,7 +148,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		return -1;
 	}
 	//
-	int snd_len = net_client_base::send(pData, nMsgLen);
+	int snd_len = net_io::send(pData, nMsgLen);
 	if (snd_len < 0)
 	{
 #ifdef _WIN32

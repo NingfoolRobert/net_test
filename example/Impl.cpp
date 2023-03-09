@@ -106,18 +106,18 @@ bool CBizUser::Impl::logon()
 	return true;
 }
 
-void CBizUser::Impl::async(net_client_base* conn)
+void CBizUser::Impl::async(net_io* conn)
 {
 	if (NULL == conn)
 		return;
 	conn->set_nio();
 	conn->set_tcp_nodelay();
-	core.loop->add(conn);
+	core.loop->add_net(conn);
 }
 
-void CBizUser::Impl::unasync(net_client_base* conn)
+void CBizUser::Impl::unasync(net_io* conn)
 {
-	core.loop->remove(conn);
+	core.loop->remove_net(conn);
 	conn->set_nio(0);
 }
 

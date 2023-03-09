@@ -1,5 +1,4 @@
 #include "ngx_acceptor.h"
-#include "net_client_base.h"
 #include <cstdio>
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -9,7 +8,7 @@
 #include <sys/socket.h>
 #endif 
 
-ngx_acceptor::ngx_acceptor():net_client_base(NULL, NULL)
+ngx_acceptor::ngx_acceptor():net_io(NULL, NULL)
 {
 	_cb = NULL;
 }
@@ -51,13 +50,13 @@ bool ngx_acceptor::init(unsigned int host_ip, unsigned short port, PACCEPTCALLBA
 		return false;
 	}
 	//
-	if (!net_client_base::bind(host_ip, port))
+	if (!net_io::bind(host_ip, port))
 	{
 		printf("bind fail, port:%d\n", port);
 		return false;
 	}
 	//
-	if (!net_client_base::listen())
+	if (!net_io::listen())
 	{
 		printf("listen fail. port:%d\n", port);
 		return false;

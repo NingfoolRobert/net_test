@@ -5,7 +5,7 @@
 #include <list>
 #include <functional>
 
-#include "net_client_base.h"
+#include "net_io.h"
 #include "spinlock.hpp"
 
 typedef void(*PTIMERCALLBACK)(void*);
@@ -26,9 +26,9 @@ public:
 public:
 	int		loop(int timeout);
 
-	void	add(net_client_base*  conn);
+	void	add_net(net_io*  conn);
 
-	void	remove(net_client_base* conn);
+	void	remove_net(net_io* conn);
 	
 	void	add_timer(timer_data_t  cb);
 
@@ -38,6 +38,7 @@ public:
 
 	void	add_task(std::function<void()>& task);
 	
+	void	stop();
 private:
 	void	create_wakeup_fd();
 
@@ -50,7 +51,7 @@ private:
 	void	remove_all();
 private:
 	spinlock							_lck;
-	std::set<net_client_base*>			_conns;
+	std::set<net_io*>					_conns;
 private:
 	spinlock							_lck_timer;
 	std::list<timer_data_t>				_timers;
@@ -62,9 +63,9 @@ private:
 	int		_running;
 	
 #ifdef _WIN32
-	net_client_base*					_wake_listen;
-	net_client_base*					_wake_send;
-	net_client_base*					_wake_recv;
+	net_io*								_wake_listen;
+	net_io*								_wake_send;
+	net_io*								_wake_recv;
 #else 
 	int									_wake_fd;
 #endif 

@@ -1,7 +1,7 @@
 #ifndef _TCP_CONN_H_
 #define _TCP_CONN_H_
 
-#include "net_client_base.h"
+#include "net_io.h"
 #include "ngx_pool.h"
 #include "ngx_queue.h"
 #include "ngx_buf.h"
@@ -9,7 +9,7 @@
 
 
 class tcp_conn :
-	public net_client_base
+	public net_io
 {
 public:
 	tcp_conn(unsigned int nHeadLen, PMSGLENPARSEFUNC pfnc, PNETMSGCALLBACK msg_fnc, PDISCONNCALLBACK disconn_cb);

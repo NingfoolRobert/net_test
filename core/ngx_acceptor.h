@@ -8,13 +8,13 @@
 #ifndef _ACCEPTOR_H_
 #define _ACCEPTOR_H_ 
 
-#include "net_client_base.h"
+#include "net_io.h"
 
 typedef  void(*PACCEPTCALLBACK)(ngx_sock fd);
 
 
 class ngx_acceptor:
-	public net_client_base
+	public net_io
 {
 	public:
 		ngx_acceptor();

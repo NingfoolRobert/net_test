@@ -62,66 +62,72 @@ eventloop::~eventloop()
 
 int eventloop::loop(int timeout)
 {
-	process_timer();
-	process_task();
 	//
 	int max_fd = 0;
-	std::vector<net_client_base*> conns;
+	std::vector<net_io*> conns;
 	fd_set  rd_fds, wt_fds;
-	FD_ZERO(&rd_fds);
-	FD_ZERO(&wt_fds);
-#ifdef _WIN32 
-	FD_SET(_wake_recv->_fd, &rd_fds);
-#else
-	FD_SET(_wake_fd, &rd_fds);
-	max_fd = std::max(_wake_fd, max_fd);
-#endif 
-	{
-		std::unique_lock<spinlock> _(_lck);
-		for (auto it = _conns.begin(); it != _conns.end(); ++it)
-		{
-			auto pConn = *it;
-			conns.push_back(pConn); pConn->add_ref();
-			FD_SET(pConn->_fd, &rd_fds);
-#ifndef _WIN32 
-			max_fd = std::max(pConn->_fd, max_fd);
-#endif 
-			if (pConn->wait_sndmsg_size())
-				FD_SET(pConn->_fd, &wt_fds);
-		}
-	}
 	//
-	struct timeval tv;
-	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = (timeout % 1000) * 1000;
-	int nret = select(max_fd + 1, &rd_fds, &wt_fds, nullptr, &tv);
-	if (nret <= 0)
-		return 0;
+	struct timeval tv {0,0};
 	//
-#ifdef _WIN32 
-	if (FD_ISSET(_wake_recv->_fd, &rd_fds))
-#else 
-	if (FD_ISSET(_wake_fd, &rd_fds))
-#endif 
-	{
-		handle_read();
-	}
-	//
-	for (auto i = 0u; i < conns.size(); ++i)
-	{
-		auto pConn = conns[i];
-		if (FD_ISSET(pConn->_fd, &rd_fds))
-			pConn->OnRead();
-		if (FD_ISSET(pConn->_fd, &wt_fds))
-			pConn->OnSend();
-		//
-		pConn->release();
-	}
+	while (_running) {
 
-	return nret; 
+		process_timer();
+		process_task();
+		
+		FD_ZERO(&rd_fds);
+		FD_ZERO(&wt_fds);
+#ifdef _WIN32 
+		FD_SET(_wake_recv->_fd, &rd_fds);
+#else
+		FD_SET(_wake_fd, &rd_fds);
+		max_fd = std::max(_wake_fd, max_fd);
+#endif 
+		{
+			std::unique_lock<spinlock> _(_lck);
+			for (auto it = _conns.begin(); it != _conns.end(); ++it)
+			{
+				auto pConn = *it;
+				conns.push_back(pConn); pConn->add_ref();
+				FD_SET(pConn->_fd, &rd_fds);
+#ifndef _WIN32 
+				max_fd = std::max(pConn->_fd, max_fd);
+#endif 
+				if (pConn->wait_sndmsg_size())
+					FD_SET(pConn->_fd, &wt_fds);
+			}
+		}
+		
+		tv.tv_sec = timeout / 1000;
+		tv.tv_usec = (timeout % 1000) * 1000;
+		int nret = select(max_fd + 1, &rd_fds, &wt_fds, nullptr, &tv);
+		if (nret <= 0)
+			return -1;
+		//
+#ifdef _WIN32 
+		if (FD_ISSET(_wake_recv->_fd, &rd_fds))
+#else 
+		if (FD_ISSET(_wake_fd, &rd_fds))
+#endif 
+		{
+			handle_read();
+		}
+		//
+		for (auto i = 0u; i < conns.size(); ++i)
+		{
+			auto pConn = conns[i];
+			if (FD_ISSET(pConn->_fd, &rd_fds))
+				pConn->OnRead();
+			if (FD_ISSET(pConn->_fd, &wt_fds))
+				pConn->OnSend();
+			//
+			pConn->release();
+		}
+
+	}
+	return 0; 
 }
 
-void eventloop::add(net_client_base* conn)
+void eventloop::add_net(net_io* conn)
 {
 	if(!_running || nullptr == conn) 
 		return ;
@@ -188,7 +194,7 @@ void eventloop::process_task()
 	});
 }
 
-void eventloop::remove(net_client_base* conn)
+void eventloop::remove_net(net_io* conn)
 {
 	if(NULL == conn) 
 		return ;
@@ -294,7 +300,7 @@ void eventloop::wakeup()
 void eventloop::create_wakeup_fd()
 {
 #ifdef _WIN32 
-	_wake_listen = new net_client_base(NULL, NULL);
+	_wake_listen = new net_io(NULL, NULL);
 	_wake_listen->_loop = this;
 	_wake_listen->create();
 	_wake_listen->set_reuse_addr();
@@ -313,13 +319,13 @@ void eventloop::create_wakeup_fd()
 	//
 	int port = ntohs(svr_addr.sin_port);
 	
-	_wake_send = new net_client_base(NULL, NULL);
+	_wake_send = new net_io(NULL, NULL);
 	_wake_send->create();
 	_wake_send->connect(host_ip, port);
 	
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
-	_wake_recv = new net_client_base(NULL, NULL);
+	_wake_recv = new net_io(NULL, NULL);
 	_wake_recv->_fd = ::accept(_wake_listen->_fd, (struct sockaddr*)&client_addr, &client_addr_len);
 	
 	_wake_recv->set_nio();
@@ -352,5 +358,11 @@ void eventloop::add_task(std::function<void()>& task)
 		_tasks.push_back(task);
 	}
 	//
+	wakeup();
+}
+
+void eventloop::stop()
+{
+	_running = false;
 	wakeup();
 }

@@ -24,8 +24,8 @@ bool init();
 void uninit();
 void api_apt_cb(ngx_sock fd);
 size_t msg_head_parse(void* data, size_t len);
-void api_discon(int err, net_client_base* conn);
-bool api_msg_process(net_client_base* conn, void* data, unsigned int len);
+void api_discon(int err, net_io* conn);
+bool api_msg_process(net_io* conn, void* data, unsigned int len);
 ///////////////////////////////////////
 int main(int argc, char* argv[])
 {
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
  			return -1;
  		}
 		//
- 		g_loop.add(apt);	
+ 		g_loop.add_net(apt);	
  		while(g_running) 
 			g_loop.loop(10);
  		//
@@ -120,7 +120,7 @@ void api_apt_cb(ngx_sock fd)
 	conn->set_tcp_nodelay();
 	conn->set_tcp_linger();
 	conn->get_peer_name();
-	g_loop.add(conn);
+	g_loop.add_net(conn);
 	char ip[16] = { 0 };
 	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
 }
@@ -132,7 +132,7 @@ size_t msg_head_parse(void* data, size_t len)
 	return len;
 }
 //
-void api_discon(int err, net_client_base* conn)
+void api_discon(int err, net_io* conn)
 {
 	if(nullptr == conn)
 		return ;
@@ -141,7 +141,7 @@ void api_discon(int err, net_client_base* conn)
 	printf("disconnect  ip:port=%s:%d, err:%d\n", conn->get_ip(ip), conn->_port, err);
 }
 
-bool api_msg_process(net_client_base* conn, void* data, unsigned int len)
+bool api_msg_process(net_io* conn, void* data, unsigned int len)
 {
 	return true;
 }
