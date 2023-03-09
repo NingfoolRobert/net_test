@@ -21,16 +21,16 @@ ngx_acceptor::~ngx_acceptor()
 void ngx_acceptor::OnRead()
 {
 	struct sockaddr_in  caddr; 
-	socklen_t slen = 0; 
-
+	socklen_t slen = sizeof(caddr);
+	ngx_sock cli = ::accept(_fd, (struct sockaddr*)&caddr, &slen);
 #ifdef _WIN32 
-	SOCKET cli = ::accept(_fd, (struct sockaddr*)&caddr, &slen);
+	if(cli == INVALID_SOCKET){
+		_errno = GetLastError();
 #else 
-	int cli = ::accept(_fd, (struct sockaddr*)&caddr, &slen);	
+	if(cli == -1) {
+		_errno = errno;
 #endif 
-	if(cli < 0)
-	{
-		printf("accept  client fail. ");
+		printf("accept  client fail. err:%d ", _errno);
 		return ;
 	}
 	// 

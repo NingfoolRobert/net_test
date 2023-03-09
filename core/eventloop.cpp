@@ -100,29 +100,29 @@ int eventloop::loop(int timeout)
 		tv.tv_sec = timeout / 1000;
 		tv.tv_usec = (timeout % 1000) * 1000;
 		int nret = select(max_fd + 1, &rd_fds, &wt_fds, nullptr, &tv);
-		if (nret <= 0)
-			return -1;
-		//
+		if(nret > 0)
+		{
 #ifdef _WIN32 
-		if (FD_ISSET(_wake_recv->_fd, &rd_fds))
+			if (FD_ISSET(_wake_recv->_fd, &rd_fds)){
 #else 
-		if (FD_ISSET(_wake_fd, &rd_fds))
+			if (FD_ISSET(_wake_fd, &rd_fds)){
 #endif 
-		{
-			handle_read();
+				handle_read();
+			}
+			//
+			for (auto i = 0u; i < conns.size(); ++i)
+			{
+				auto pConn = conns[i];
+				if (FD_ISSET(pConn->_fd, &rd_fds))
+					pConn->OnRead();
+				if (FD_ISSET(pConn->_fd, &wt_fds))
+					pConn->OnSend();
+				//
+				pConn->release();
+			}
 		}
 		//
-		for (auto i = 0u; i < conns.size(); ++i)
-		{
-			auto pConn = conns[i];
-			if (FD_ISSET(pConn->_fd, &rd_fds))
-				pConn->OnRead();
-			if (FD_ISSET(pConn->_fd, &wt_fds))
-				pConn->OnSend();
-			//
-			pConn->release();
-		}
-
+		conns.clear();
 	}
 	return 0; 
 }

@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
 #endif
 
 
- 		trace_print("%s\n", __FUNCTION__);
- 		info_print("%s\n", __FUNCTION__);
- 		error_print("%s\n", __FUNCTION__);
+//  		trace_print("%s\n", __FUNCTION__);
+//  		info_print("%s\n", __FUNCTION__);
+//  		error_print("%s\n", __FUNCTION__);
 
 
  		//
@@ -119,7 +119,9 @@ void api_apt_cb(ngx_sock fd)
 	conn->get_peer_name();
 	g_loop.add_net(conn);
 	char ip[16] = { 0 };
-	printf("clit, ip:port=%s:%d\n", conn->get_ip(ip), conn->_port);
+	conn->get_ip(ip);
+
+	printf("clit, ip:port=%s:%d\n", ip, conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
