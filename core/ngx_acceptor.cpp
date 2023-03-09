@@ -45,21 +45,25 @@ bool ngx_acceptor::init(unsigned int host_ip, unsigned short port, PACCEPTCALLBA
 	_port = port;
 	_cb = cb;
 	_fd = create();
-	if(_fd < 0)
-	{
-		printf("create socket fail.\n");
+#ifdef _WIN32 
+	if(_fd == INVALID_SOCKET) {
+#else 
+	if(_fd < 0){
+#endif 
+	
+		printf("create socket fail, err:%d.\n", _errno);
 		return false;
 	}
 	//
 	if (!net_io::bind(host_ip, port))
 	{
-		printf("bind fail, port:%d\n", port);
+		printf("bind fail, err:%d, port:%d.\n", _errno, port);
 		return false;
 	}
 	//
 	if (!net_io::listen())
 	{
-		printf("listen fail. port:%d\n", port);
+		printf("listen fail, err:%d, port:%d.\n", _errno, port);
 		return false;
 	}
 	//
