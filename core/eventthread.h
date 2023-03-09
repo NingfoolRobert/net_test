@@ -19,7 +19,7 @@ class eventthread{
 	public:
 		const eventloop*  get_loop() { return _loop; }	
 		
-		void	run();
+		void	run(size_t  timeout = 10);
 
 		void	stop();
 	private:

@@ -82,8 +82,7 @@ int main(int argc, char* argv[])
  		}
 		//
  		g_loop.add_net(apt);	
- 		while(g_running) 
-			g_loop.loop(10);
+		g_loop.loop(10);
  		//
  		uninit();	
  	 	printf("%s stop ...\n", APP_NAME);
@@ -92,8 +91,6 @@ int main(int argc, char* argv[])
 #endif 
  	return 0;
 }
-
-
 
 
 bool init()

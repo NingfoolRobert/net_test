@@ -12,14 +12,13 @@ eventthread::~eventthread()
 {
 }
 
-		
-void eventthread::run()
+void eventthread::run(size_t timeout /*= 10*/)
 {
-	_thr.reset(new std::thread([this]() {
+	_thr.reset(new std::thread([this, timeout]() {
 		_flag = true;
-		eventloop loop;
-		_loop = &loop;
-		while (_flag) _loop->loop(10);
+		eventloop lp;
+		_loop = &lp;
+		_loop->loop(timeout);
 		_loop = nullptr;
 	}));
 }
@@ -29,8 +28,7 @@ void eventthread::stop()
 	if (nullptr == _loop)
 		return;
 	//
-	_flag = false;	
-	_loop->wakeup();
+	_loop->stop();
 	//
 	if(_thr->joinable())
 		_thr->join();
