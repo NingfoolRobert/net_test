@@ -60,6 +60,7 @@ eventloop::~eventloop()
 #endif 
 }
 
+#if !defined(_BUSY_LOOP_) && !defined(_NIO_EPOLL_)
 int eventloop::loop(int timeout)
 {
 	//
@@ -126,6 +127,7 @@ int eventloop::loop(int timeout)
 	}
 	return 0; 
 }
+#endif //
 
 void eventloop::add_net(net_io* conn)
 {

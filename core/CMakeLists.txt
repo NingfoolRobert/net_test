@@ -17,6 +17,7 @@ target_sources(${TARGET_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_pool.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_log.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/eventloop.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/eventloop_busy.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/net_io.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_buf.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_core.cpp 
