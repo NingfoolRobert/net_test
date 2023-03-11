@@ -71,7 +71,7 @@ int eventloop::loop(int timeout)
 	struct timeval tv {0,0};
 	//
 	while (_running) {
-
+		max_fd = 0;
 		process_timer();
 		process_task();
 		
@@ -111,16 +111,17 @@ int eventloop::loop(int timeout)
 				handle_read();
 			}
 			//
-			for (auto i = 0u; i < conns.size(); ++i)
-			{
-				auto pConn = conns[i];
-				if (FD_ISSET(pConn->_fd, &rd_fds))
-					pConn->OnRead();
-				if (FD_ISSET(pConn->_fd, &wt_fds))
-					pConn->OnSend();
-				//
-				pConn->release();
-			}
+		}
+
+		for (auto i = 0u; i < conns.size(); ++i)
+		{
+			auto pConn = conns[i];
+			if (FD_ISSET(pConn->_fd, &rd_fds))
+				pConn->OnRead();
+			if (FD_ISSET(pConn->_fd, &wt_fds))
+				pConn->OnSend();
+			//
+			pConn->release();
 		}
 		//
 		conns.clear();

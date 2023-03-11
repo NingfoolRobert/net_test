@@ -241,8 +241,6 @@ void net_io::get_peer_name()
 	
 char* net_io::get_ip(char*  ip)
 {
-	unsigned int net_ip = htonl(_ip);
-	unsigned char* bytes = (unsigned char*)&net_ip;
-	sprintf(ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+	sprintf(ip, "%d.%d.%d.%d", _ip >> 24, (_ip >> 16) & 0xFF, (_ip >> 8) & 0xFF, _ip & 0xFF);
 	return ip;
 }
