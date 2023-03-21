@@ -12,7 +12,7 @@
 class spinlock{
 	public:
 		spinlock(){
-			flag_.clear();
+			flag_ = ATOMIC_FLAG_INIT;
 		}
 		~spinlock(){}
 		//
