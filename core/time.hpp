@@ -12,18 +12,41 @@
 #include <cstdint>
 
 namespace detail{
-class time 
-{
-	public:
-	private:
-		time();
-		static time&  get_instance();
-	public:
-		static int64_t 	now();
-	private:
-		int64_t	start_time_since_epoch_;
-		int64_t	start_time_steady_;
-};
+	class time_unit{
+		public:
+			static const int64_t	MILLISECONDS_PER_SECOND			= 1000;
+			static const int64_t	MICROSECONDS_PER_MILLISECOND	= 1000;
+			static const int64_t	NANOSECONDS_PER_MICROSECOND		= 1000;
+		
+			static const int64_t	MICROSECONDS_PER_SECOND			= MILLISECONDS_PER_SECOND * MICROSECONDS_PER_MILLISECOND;	
+			static const int64_t	NANOSECONDS_PER_MILLISECOND		= NANOSECONDS_PER_MILLISECOND * MICROSECONDS_PER_MILLISECOND;
+			static const int64_t	NANOSECONDS_PER_SECOND			= NANOSECONDS_PER_MICROSECOND * MICROSECONDS_PER_SECOND; 
+			
+			static const int64_t	SECONDS_PER_MINUTE				= 60;
+			static const int64_t	MINUTES_PER_HOUR				= 60;
+			static const int64_t	HOURS_PER_DAY					= 24;
+			static const int64_t	SECONDS_PER_HOUR				= SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+			
+			static const int64_t	MILLISECONDS_PER_MINUTE			= MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE;
+			static const int64_t	NANOSECONDS_PER_MINUTE			= NANOSECONDS_PER_SECOND  * SECONDS_PER_MINUTE;
+			static const int64_t	NANOSECONDS_PER_HOUR			= NANOSECONDS_PER_MINUTE  * MINUTES_PER_HOUR;
+			static const int64_t	NANOSECONDS_PER_DAY				= NANOSECONDS_PER_HOUR	  * HOURS_PER_DAY;
+	};
+
+	class time 
+	{
+		private:
+			time();
+			static time&  get_instance();
+		public:
+			/**
+			 * @reture current nano time int int64_t(unix-timestamp * 1e-9 + nano-part)
+			 */
+			static int64_t 	now();
+		private:
+			int64_t	start_time_since_epoch_;
+			int64_t	start_time_steady_;
+	};
 
 }
 
