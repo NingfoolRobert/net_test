@@ -43,6 +43,8 @@ namespace detail{
 			 * @reture current nano time int int64_t(unix-timestamp * 1e-9 + nano-part)
 			 */
 			static int64_t 	now();
+			
+			static  void	reset();
 		private:
 			int64_t	start_time_since_epoch_;
 			int64_t	start_time_steady_;
