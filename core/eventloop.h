@@ -10,7 +10,7 @@
 #include "spinlock.hpp"
 
 typedef void(*PTIMERCALLBACK)(void*);
-struct timer_t {
+struct timer_info_t {
 	int32_t					tid;
 	int32_t					count;				//-1: unlimit
 	uint32_t				gap;				//ms 
@@ -32,7 +32,7 @@ public:
 
 	void	remove_net(net_io* conn);
 	
-	void	add_timer(timer_t  cb);
+	void	add_timer(timer_info_t  cb);
 
 	void	remove_timer(unsigned short timer_id);
 
@@ -62,7 +62,7 @@ private:
 #endif 
 private:
 	spinlock							_lck_timer;
-	std::list<timer_t>				_timers;
+	std::list<timer_info_t>				_timers;
 	//
 	spinlock							_lck_task;
 	std::list<std::function<void()> >	_tasks;

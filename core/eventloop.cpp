@@ -161,13 +161,13 @@ void eventloop::process_timer()
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	//
-	std::vector<timer_t> vecTmp;
+	std::vector<timer_info_t> vecTmp;
 	{
 		std::unique_lock<spinlock> _(_lck_timer);
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
-			timer_t& t = *it;
+			timer_info_t& t = *it;
 			if (t.timestamp > now)
 				continue;
 			//
@@ -185,7 +185,7 @@ void eventloop::process_timer()
 	//
 	for(auto i = 0u; i < vecTmp.size(); i++)
 	{
-		timer_t& timer = vecTmp[i];
+		timer_info_t& timer = vecTmp[i];
 		timer.cb(timer.param);
 	}
 }
@@ -258,7 +258,7 @@ void eventloop::remove_all()
 }
 
 
-void eventloop::add_timer(timer_t  cb)
+void eventloop::add_timer(timer_info_t  cb)
 {
 	std::unique_lock<spinlock> _(_lck_timer);
 	if (_running) return;

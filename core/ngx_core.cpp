@@ -214,7 +214,7 @@ bool ngx_core_init(ngx_core_t *core)
 		std::thread thr(&active_loop_thread, core);
 		thr.detach();
 		//
-		timer_t tb;
+		timer_info_t tb;
 		tb.cb = write_log_timer;
 		tb.count = 0;
 		tb.gap = 10;
