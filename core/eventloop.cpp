@@ -161,13 +161,13 @@ void eventloop::process_timer()
 	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
 	//
-	std::vector<timer_data_t> vecTmp;
+	std::vector<timer_t> vecTmp;
 	{
 		std::unique_lock<spinlock> _(_lck_timer);
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
-			timer_data_t& t = *it;
+			timer_t& t = *it;
 			if (t.timestamp > now)
 				continue;
 			//
@@ -178,14 +178,14 @@ void eventloop::process_timer()
 			if (t.count == 0) 
 				_timers.erase(it);
 			else 
-				t.timestamp += t.time_gap;
+				t.timestamp += t.gap;
 			
 		}
 	}
 	//
 	for(auto i = 0u; i < vecTmp.size(); i++)
 	{
-		timer_data_t& timer = vecTmp[i];
+		timer_t& timer = vecTmp[i];
 		timer.cb(timer.param);
 	}
 }
@@ -258,7 +258,7 @@ void eventloop::remove_all()
 }
 
 
-void eventloop::add_timer(timer_data_t  cb)
+void eventloop::add_timer(timer_t  cb)
 {
 	std::unique_lock<spinlock> _(_lck_timer);
 	if (_running) return;
@@ -282,7 +282,7 @@ void eventloop::remove_timer(unsigned short timer_id)
 	auto it = _timers.begin();
 	while (it != _timers.end())
 	{
-		if (it->timer_id == timer_id)
+		if (it->tid == timer_id)
 			it = _timers.erase(it);
 		else
 			++it;

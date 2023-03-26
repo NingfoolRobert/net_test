@@ -10,13 +10,14 @@
 #include "spinlock.hpp"
 
 typedef void(*PTIMERCALLBACK)(void*);
-struct timer_data_t {
-	unsigned short			timer_id;
-	short					count;				//-1: 
-	unsigned int			time_gap;			//ms 
-	unsigned long long		timestamp;			//ms
-	void*					param;				//callback param 
+struct timer_t {
+	int32_t					tid;
+	int32_t					count;				//-1: unlimit
+	uint32_t				gap;				//ms 
+	uint32_t				owner;
+	int64_t					timestamp;			//ms
 	PTIMERCALLBACK			cb;
+	void					*param;				//callback param 
 };
 
 class eventloop
@@ -31,7 +32,7 @@ public:
 
 	void	remove_net(net_io* conn);
 	
-	void	add_timer(timer_data_t  cb);
+	void	add_timer(timer_t  cb);
 
 	void	remove_timer(unsigned short timer_id);
 
@@ -61,7 +62,7 @@ private:
 #endif 
 private:
 	spinlock							_lck_timer;
-	std::list<timer_data_t>				_timers;
+	std::list<timer_t>				_timers;
 	//
 	spinlock							_lck_task;
 	std::list<std::function<void()> >	_tasks;
