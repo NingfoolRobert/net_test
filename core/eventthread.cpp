@@ -2,6 +2,7 @@
 #include <thread>
 
 
+
 eventthread::eventthread():_loop(nullptr){
 }
 eventthread::~eventthread()
@@ -11,6 +12,7 @@ eventthread::~eventthread()
 void eventthread::run(size_t timeout /*= 10*/)
 {
 	_thr.reset(new std::thread([this, timeout]() {
+		_tid = std::this_thread::get_id();
 		eventloop lp;
 		_loop = &lp;
 		_loop->loop(timeout);
@@ -27,4 +29,8 @@ void eventthread::stop()
 	//
 	if(_thr->joinable())
 		_thr->join();
+}
+
+int eventthread::get_tid(){
+	return ((_Thrd_t*)&_tid)->_Id;
 }

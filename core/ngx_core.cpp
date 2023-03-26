@@ -1,5 +1,6 @@
 #include "ngx_core.h"
 #include "eventloop.h"
+#include "time.hpp"
 
 #include <ctime>
 #include <vector>
@@ -214,10 +215,10 @@ bool ngx_core_init(ngx_core_t *core)
 		std::thread thr(&active_loop_thread, core);
 		thr.detach();
 		//
-		timer_data_t tb;
+		timer_info_t tb;
 		tb.cb = write_log_timer;
 		tb.count = 0;
-		tb.time_gap = 10;
+		tb.gap = 10 * detail::time_unit::NANOSECONDS_PER_SECOND;
 		tb.param = core;
 		core->loop->add_timer(tb);
 	}

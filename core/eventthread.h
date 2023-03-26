@@ -17,14 +17,17 @@ class eventthread{
 		eventthread();
 		~eventthread();
 	public:
-		const eventloop*  get_loop() { return _loop; }	
+		const eventloop*  loop() { return _loop; }	
 		
 		void	run(size_t  timeout = 10);
 
 		void	stop();
+
+		int		get_tid();
 	private:
 		eventloop*								_loop;
 		std::unique_ptr<std::thread>			_thr;
+		std::thread::id							_tid;
 };
 
 

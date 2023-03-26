@@ -19,7 +19,7 @@ namespace detail{
 			static const int64_t	NANOSECONDS_PER_MICROSECOND		= 1000;
 		
 			static const int64_t	MICROSECONDS_PER_SECOND			= MILLISECONDS_PER_SECOND * MICROSECONDS_PER_MILLISECOND;	
-			static const int64_t	NANOSECONDS_PER_MILLISECOND		= NANOSECONDS_PER_MILLISECOND * MICROSECONDS_PER_MILLISECOND;
+			static const int64_t	NANOSECONDS_PER_MILLISECOND		= NANOSECONDS_PER_MICROSECOND * MICROSECONDS_PER_MILLISECOND;
 			static const int64_t	NANOSECONDS_PER_SECOND			= NANOSECONDS_PER_MICROSECOND * MICROSECONDS_PER_SECOND; 
 			
 			static const int64_t	SECONDS_PER_MINUTE				= 60;
@@ -43,6 +43,8 @@ namespace detail{
 			 * @reture current nano time int int64_t(unix-timestamp * 1e-9 + nano-part)
 			 */
 			static int64_t 	now();
+			
+			static  void	reset();
 		private:
 			int64_t	start_time_since_epoch_;
 			int64_t	start_time_steady_;

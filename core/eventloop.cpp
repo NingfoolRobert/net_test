@@ -1,8 +1,13 @@
 #include "eventloop.h"
 #include "log_def.h"
+#include "net_io.h"
+#include <cstdlib>
+#include <exception>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include "time.hpp"
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -64,6 +69,7 @@ eventloop::~eventloop()
 int eventloop::loop(int timeout)
 {
 	//
+	_tid = std::this_thread::get_id();
 	int max_fd = 0;
 	std::vector<net_io*> conns;
 	fd_set  rd_fds, wt_fds;
@@ -145,41 +151,33 @@ void eventloop::add_net(net_io* conn)
 
 void eventloop::process_timer()
 {
-	unsigned long long	now = 0;
-#if _WIN32
-	timeb tbnow;
-	ftime(&tbnow);
-	now = tbnow.time * 1000 + tbnow.millitm;
-#else 
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-#endif
+	int64_t	now = detail::time::now();
 	//
-	std::vector<timer_data_t> vecTmp;
+	std::vector<timer_info_t> vecTmp;
 	{
 		std::unique_lock<spinlock> _(_lck_timer);
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
-			timer_data_t t = *it;
-			if (t.timestamp >= now)
-			{
-				vecTmp.push_back(t);
-				if (t.count > 0)
-					t.count--;
-				//
-				if (t.count == 0) 
-					_timers.erase(it);
-				else 
-					t.timestamp += t.time_gap;
-			}
+			timer_info_t& t = *it;
+			if (t.expire > now)
+				continue;
+			//
+			vecTmp.push_back(t);
+			if (t.count > 0)
+				t.count--;
+			//
+			if (t.count == 0) 
+				_timers.erase(it);
+			else 
+				t.expire += t.gap;
+			
 		}
 	}
 	//
 	for(auto i = 0u; i < vecTmp.size(); i++)
 	{
-		timer_data_t& timer = vecTmp[i];
+		timer_info_t& timer = vecTmp[i];
 		timer.cb(timer.param);
 	}
 }
@@ -252,21 +250,10 @@ void eventloop::remove_all()
 }
 
 
-void eventloop::add_timer(timer_data_t  cb)
+void eventloop::add_timer(timer_info_t&  cb)
 {
 	std::unique_lock<spinlock> _(_lck_timer);
-	if (_running) return;
-	unsigned long long	now = 0;
-#if _WIN32
-	timeb tbnow;
-	ftime(&tbnow);
-	now = tbnow.time * 1000 + tbnow.millitm;
-#else 
-	timeval tv;
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-#endif
-	cb.timestamp = now;
+	cb.expire = detail::time::now() + cb.gap;
 	_timers.push_back(cb);
 }
 
@@ -276,7 +263,7 @@ void eventloop::remove_timer(unsigned short timer_id)
 	auto it = _timers.begin();
 	while (it != _timers.end())
 	{
-		if (it->timer_id == timer_id)
+		if (it->tid == timer_id)
 			it = _timers.erase(it);
 		else
 			++it;
@@ -368,4 +355,8 @@ void eventloop::stop()
 {
 	_running = false;
 	wakeup();
+}
+	
+bool eventloop::queue_in_loop(){
+	return _tid == std::this_thread::get_id();
 }

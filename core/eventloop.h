@@ -4,18 +4,19 @@
 #include <set>
 #include <list>
 #include <functional>
+#include <thread>
 
 #include "net_io.h"
 #include "spinlock.hpp"
 
 typedef void(*PTIMERCALLBACK)(void*);
-struct timer_data_t {
-	unsigned short			timer_id;
-	short					count;				//-1: 
-	unsigned int			time_gap;			//ms 
-	unsigned long long		timestamp;			//ms
-	void*					param;				//callback param 
-	PTIMERCALLBACK			cb;
+struct timer_info_t {
+	int32_t					tid;
+	int32_t					count;				//-1: unlimit
+	int64_t					gap;				//gap time(nanosecond)
+	int64_t					expire;				//expire time (nanosecond)
+	PTIMERCALLBACK			cb;					//callback function
+	void					*param;				//callback param 
 };
 
 class eventloop
@@ -30,13 +31,15 @@ public:
 
 	void	remove_net(net_io* conn);
 	
-	void	add_timer(timer_data_t  cb);
+	void	add_timer(timer_info_t&  cb);
 
 	void	remove_timer(unsigned short timer_id);
 
 	void	wakeup();
 
 	void	add_task(std::function<void()>& task);
+
+	bool	queue_in_loop();
 	
 	void	stop();
 private:
@@ -52,16 +55,20 @@ private:
 private:
 	spinlock							_lck;
 	std::set<net_io*>					_conns;
+#ifdef _NIO_EPOLL_ 
+	int									_ep;
+	std::unordered_map<int, net_io*>	_ep_conn;
+#endif 
 private:
 	spinlock							_lck_timer;
-	std::list<timer_data_t>				_timers;
+	std::list<timer_info_t>				_timers;
 	//
 	spinlock							_lck_task;
 	std::list<std::function<void()> >	_tasks;
 
 private:
-	int		_running;
-	
+	std::thread::id		_tid;		
+	int					_running;
 #ifdef _WIN32
 	net_io*								_wake_listen;
 	net_io*								_wake_send;
