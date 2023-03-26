@@ -32,7 +32,7 @@ public:
 
 	void	remove_net(net_io* conn);
 	
-	void	add_timer(timer_info_t  cb);
+	void	add_timer(timer_info_t&  cb);
 
 	void	remove_timer(unsigned short timer_id);
 

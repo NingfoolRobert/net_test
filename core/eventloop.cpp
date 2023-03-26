@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include "time.hpp"
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -150,16 +151,7 @@ void eventloop::add_net(net_io* conn)
 
 void eventloop::process_timer()
 {
-	unsigned long long	now = 0;
-#if _WIN32
-	timeb tbnow;
-	ftime(&tbnow);
-	now = tbnow.time * 1000 + tbnow.millitm;
-#else 
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-#endif
+	int64_t	now = detail::time::now();
 	//
 	std::vector<timer_info_t> vecTmp;
 	{
@@ -258,21 +250,11 @@ void eventloop::remove_all()
 }
 
 
-void eventloop::add_timer(timer_info_t  cb)
+void eventloop::add_timer(timer_info_t&  cb)
 {
 	std::unique_lock<spinlock> _(_lck_timer);
 	if (_running) return;
-	unsigned long long	now = 0;
-#if _WIN32
-	timeb tbnow;
-	ftime(&tbnow);
-	now = tbnow.time * 1000 + tbnow.millitm;
-#else 
-	timeval tv;
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-#endif
-	cb.timestamp = now;
+	cb.timestamp = detail::time::now();
 	_timers.push_back(cb);
 }
 
