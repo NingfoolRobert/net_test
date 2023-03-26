@@ -167,18 +167,19 @@ void eventloop::process_timer()
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
-			timer_data_t t = *it;
-			if (t.timestamp >= now)
-			{
-				vecTmp.push_back(t);
-				if (t.count > 0)
-					t.count--;
-				//
-				if (t.count == 0) 
-					_timers.erase(it);
-				else 
-					t.timestamp += t.time_gap;
-			}
+			timer_data_t& t = *it;
+			if (t.timestamp > now)
+				continue;
+			//
+			vecTmp.push_back(t);
+			if (t.count > 0)
+				t.count--;
+			//
+			if (t.count == 0) 
+				_timers.erase(it);
+			else 
+				t.timestamp += t.time_gap;
+			
 		}
 	}
 	//
