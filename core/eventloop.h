@@ -37,6 +37,8 @@ public:
 	void	wakeup();
 
 	void	add_task(std::function<void()>& task);
+
+	bool	queue_in_loop();
 	
 	void	stop();
 private:
@@ -52,6 +54,10 @@ private:
 private:
 	spinlock							_lck;
 	std::set<net_io*>					_conns;
+#ifdef _NIO_EPOLL_ 
+	int									_ep;
+	std::unordered_map<int, net_io*>	_ep_conn;
+#endif 
 private:
 	spinlock							_lck_timer;
 	std::list<timer_data_t>				_timers;
@@ -61,7 +67,7 @@ private:
 
 private:
 	int		_running;
-	
+	int		_tid;		
 #ifdef _WIN32
 	net_io*								_wake_listen;
 	net_io*								_wake_send;
