@@ -1,11 +1,12 @@
 #include "eventloop.h"
 #include "log_def.h"
 #include "net_io.h"
+#include <cstdlib>
 #include <exception>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
-#include <thread>
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -67,7 +68,7 @@ eventloop::~eventloop()
 int eventloop::loop(int timeout)
 {
 	//
-	_tid = static_cast<int>(std::this_thread::get_id());
+	_tid = std::this_thread::get_id();
 	int max_fd = 0;
 	std::vector<net_io*> conns;
 	fd_set  rd_fds, wt_fds;
@@ -375,5 +376,5 @@ void eventloop::stop()
 }
 	
 bool eventloop::queue_in_loop(){
-	return static_cast<int>(std::this_thread::get_id()) == _tid;
+	return _tid == std::this_thread::get_id();
 }

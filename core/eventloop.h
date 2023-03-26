@@ -4,6 +4,7 @@
 #include <set>
 #include <list>
 #include <functional>
+#include <thread>
 
 #include "net_io.h"
 #include "spinlock.hpp"
@@ -66,8 +67,8 @@ private:
 	std::list<std::function<void()> >	_tasks;
 
 private:
-	int		_running;
-	int		_tid;		
+	std::thread::id		_tid;		
+	int					_running;
 #ifdef _WIN32
 	net_io*								_wake_listen;
 	net_io*								_wake_send;

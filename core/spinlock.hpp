@@ -9,10 +9,10 @@
 #define _SPIN_LOCK_HPP_ 
 
 #include <atomic> 
+#include <exception>
 class spinlock{
 	public:
 		spinlock(){
-			flag_ = ATOMIC_FLAG_INIT;
 		}
 		~spinlock(){}
 		//
@@ -26,7 +26,7 @@ class spinlock{
 			flag_.clear(std::memory_order_release);
 		}
 	private:
-		std::atomic_flag			flag_;
+		std::atomic_flag			flag_ = ATOMIC_FLAG_INIT;
 };
 
 
