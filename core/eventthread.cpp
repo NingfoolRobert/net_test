@@ -1,5 +1,6 @@
 #include "eventthread.h"
 #include <thread>
+#include <sstream>
 
 
 
@@ -32,5 +33,8 @@ void eventthread::stop()
 }
 
 int eventthread::get_tid(){
-	return ((_Thrd_t*)&_tid)->_Id;
+	std::stringstream ss;
+	ss << _tid;
+	std::string s = ss.str();
+	return atoi(s.c_str());
 }
