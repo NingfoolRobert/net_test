@@ -13,10 +13,9 @@ typedef void(*PTIMERCALLBACK)(void*);
 struct timer_info_t {
 	int32_t					tid;
 	int32_t					count;				//-1: unlimit
-	uint32_t				gap;				//ms 
-	uint32_t				owner;
-	int64_t					timestamp;			//ms
-	PTIMERCALLBACK			cb;
+	int64_t					gap;				//nanosecond 
+	int64_t					timestamp;			//nanosecond
+	PTIMERCALLBACK			cb;					//callback function
 	void					*param;				//callback param 
 };
 
