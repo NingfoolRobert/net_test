@@ -2,6 +2,7 @@
 #include <thread>
 
 
+
 eventthread::eventthread():_loop(nullptr){
 }
 eventthread::~eventthread()
@@ -31,5 +32,5 @@ void eventthread::stop()
 }
 
 int eventthread::get_tid(){
-	return static_cast<int>(_tid);
+	return ((_Thrd_t*)&_tid)->_Id;
 }
