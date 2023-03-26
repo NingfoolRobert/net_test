@@ -160,7 +160,7 @@ void eventloop::process_timer()
 		while (it != _timers.end())
 		{
 			timer_info_t& t = *it;
-			if (t.timestamp > now)
+			if (t.expire > now)
 				continue;
 			//
 			vecTmp.push_back(t);
@@ -170,7 +170,7 @@ void eventloop::process_timer()
 			if (t.count == 0) 
 				_timers.erase(it);
 			else 
-				t.timestamp += t.gap;
+				t.expire += t.gap;
 			
 		}
 	}
@@ -253,8 +253,7 @@ void eventloop::remove_all()
 void eventloop::add_timer(timer_info_t&  cb)
 {
 	std::unique_lock<spinlock> _(_lck_timer);
-	if (_running) return;
-	cb.timestamp = detail::time::now();
+	cb.expire = detail::time::now() + cb.gap;
 	_timers.push_back(cb);
 }
 

@@ -13,8 +13,8 @@ typedef void(*PTIMERCALLBACK)(void*);
 struct timer_info_t {
 	int32_t					tid;
 	int32_t					count;				//-1: unlimit
-	int64_t					gap;				//nanosecond 
-	int64_t					timestamp;			//nanosecond
+	int64_t					gap;				//gap time(nanosecond)
+	int64_t					expire;				//expire time (nanosecond)
 	PTIMERCALLBACK			cb;					//callback function
 	void					*param;				//callback param 
 };
