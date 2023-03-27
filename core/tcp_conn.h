@@ -15,7 +15,7 @@ public:
 	tcp_conn(unsigned int nHeadLen, PMSGLENPARSEFUNC pfnc, PNETMSGCALLBACK msg_fnc, PDISCONNCALLBACK disconn_cb);
 	virtual ~tcp_conn();
 public:
-	virtual void   OnRead();
+	virtual void   OnRecv();
 
 	virtual void   OnSend();
 	

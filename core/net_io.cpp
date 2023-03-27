@@ -16,6 +16,7 @@
 net_io::net_io(PNETMSGCALLBACK fnc, PDISCONNCALLBACK disconn_cb):
 	_brk_tm(0),
 	_errno(0),
+	_ev(EV_NULL),
 	_loop(NULL),
 	_ip(0),
 	_port(0),
@@ -189,18 +190,18 @@ void net_io::close()
 
 void net_io::terminate()
 {
-	//
-	if (_loop)
-	{
-		_loop->remove_net(this);
-		_loop = NULL;
-		OnClose();
-	}
-	//
-	if(_brk_tm)  
-		close();
-	//
+	if (_brk_tm) return;
 	_brk_tm = time(NULL);
+	close();	
+	//
+	if (_loop && _ev != EV_DELETED)
+	{
+		update(EV_DELETED);
+		_loop->add_task(std::bind([this]() {
+			OnClose();
+			release();
+		}));
+	}
 }
 //
 bool net_io::OnMessage(void* data, unsigned int len)
@@ -218,6 +219,30 @@ void net_io::OnClose()
 		(*_disconn_cb)(_errno, this);
 		_disconn_cb = NULL;
 	}
+}
+
+void net_io::update(int ev)
+{
+	if (_loop) {
+		add_ref();
+		_loop->update(this, ev);
+	}
+}
+
+unsigned int net_io::string2hostip(const char* ip)
+{
+	unsigned int hostip = 0;
+	char* end;
+	const char* ptr = ip;
+	while (*ptr) {
+		int val = strtol(ptr, &end, 10);
+		hostip <<= 8;
+		hostip += val;
+		if (*end == 0)
+			break;
+		ptr = end + 1;
+	}
+	return hostip;
 }
 
 void net_io::get_sock_name()

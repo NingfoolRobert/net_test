@@ -1,4 +1,5 @@
 #include "ngx_buf.h"
+#include <windows.h>
 #include <string.h>
 
 
@@ -15,7 +16,7 @@ ngx_buf_t * ngx_create_buf(ngx_pool_t *pool, size_t cap)
 	buf->cap = size - sizeof(ngx_buf_t);
 	buf->ref = 1;
 	buf->len = 0;
-	buf->data = buf + 1;
+	//buf->data = buf + 1;
 	return buf;
 }
 
@@ -69,4 +70,25 @@ void ngx_buf_free(ngx_pool_t *pool, ngx_buf_t* buf)
 	//
 	if (--buf->ref == 0)
 		ngx_free(pool, buf);
+}
+
+void ngx_buf_add_ref(ngx_buf_t* buf)
+{
+#ifndef _WIN32 
+	buf->ref++;
+#else 
+	InterlockedIncrement(&buf->ref);
+#endif 
+}
+
+void ngx_buf_release(ngx_pool_t* pool, ngx_buf_t* buf)
+{
+#ifndef _WIN32 
+	buf->ref--;
+#else 
+	InterlockedDecrement(&buf->ref);
+#endif 
+	if (buf->ref == 0) {
+		ngx_buf_free(pool, buf);
+	}
 }

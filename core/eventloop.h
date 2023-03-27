@@ -9,6 +9,8 @@
 #include "net_io.h"
 #include "spinlock.hpp"
 
+
+
 typedef void(*PTIMERCALLBACK)(void*);
 struct timer_info_t {
 	int32_t					tid;
@@ -35,14 +37,17 @@ public:
 
 	void	remove_timer(unsigned short timer_id);
 
-	void	wakeup();
-
-	void	add_task(std::function<void()>& task);
+	void	add_task(std::function<void()> task);
 
 	bool	queue_in_loop();
 	
 	void	stop();
+
+	void	update(net_io* conn, int event);
 private:
+
+	void	wakeup();
+
 	void	create_wakeup_fd();
 
 	void	handle_read();
@@ -55,7 +60,10 @@ private:
 private:
 	spinlock							_lck;
 	std::set<net_io*>					_conns;
-#ifdef _NIO_EPOLL_ 
+#if defined(_WIN32) || !defined(_NIO_EPOLL_)
+	fd_set								_rd_fds;
+	fd_set								_wt_fds;
+#else if definded(_NIO_EPOLL_) 
 	int									_ep;
 	std::unordered_map<int, net_io*>	_ep_conn;
 #endif 

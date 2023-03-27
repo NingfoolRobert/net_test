@@ -166,7 +166,7 @@ BOOL WINAPI ConsoleHandler(DWORD cEvent)
 	case CTRL_C_EVENT:
 	case CTRL_BREAK_EVENT:
 		MessageBox(NULL, L"CTRL+C", L"ÌבÊ¾", MB_OK);
-		g_loop.wakeup();
+		g_loop.stop();
 		break;
 	case CTRL_CLOSE_EVENT:
 		break;

@@ -29,7 +29,7 @@ tcp_conn::~tcp_conn()
 	ngx_free(_pool, _wait_snds);
 }
 
-void tcp_conn::OnRead()
+void tcp_conn::OnRecv()
 {
 	if (_rcv_buf == nullptr)
 	{
@@ -90,8 +90,10 @@ void tcp_conn::OnSend()
 	std::unique_lock<std::mutex> _(_lck);
 	if (NULL == _snd_buf )
 	{
-		if (!ngx_queue_empty(_wait_snds))
+		if (ngx_queue_empty(_wait_snds)) {
+			update(EV_READ);
 			return;
+		}
 		_snd_buf = (ngx_buf_t*)ngx_queue_get(_wait_snds);
 	}
 	//

@@ -22,6 +22,11 @@
 #define  ngx_sock		int
 #endif 
 
+#define EV_NULL			0x0000
+#define EV_WRITE		0x0010
+#define EV_READ			0x0001
+#define EV_DELETED		0x1000
+
 class eventloop;
 class net_io;
 //
@@ -38,7 +43,7 @@ public:
 	virtual ~net_io();
 
 public:
-	virtual  void   OnRead() {}
+	virtual  void   OnRecv() {}
 
 	virtual  void	OnSend() {}
 
@@ -81,6 +86,11 @@ public:
 	bool		OnMessage(void* data, unsigned int len);
 
 	void		OnClose();
+
+	void		update(int ev);
+
+public:
+	static  unsigned int  string2hostip(const char* ip);
 public:
 	void		add_ref(){ ++_ref; }
 	void		release(){if(--_ref == 0) delete this;}
@@ -88,7 +98,8 @@ public:
 	ngx_sock					_fd;
 	//
 	time_t						_brk_tm;	//break timestamp
-	int							_errno;
+	uint16_t					_errno;
+	uint16_t					_ev;
 	eventloop*					_loop;
 	//
 	unsigned int				_ip;		//host ip 

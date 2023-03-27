@@ -123,7 +123,7 @@ int eventloop::loop(int timeout)
 		{
 			auto pConn = conns[i];
 			if (FD_ISSET(pConn->_fd, &rd_fds))
-				pConn->OnRead();
+				pConn->OnRecv();
 			if (FD_ISSET(pConn->_fd, &wt_fds))
 				pConn->OnSend();
 			//
@@ -338,7 +338,7 @@ void eventloop::handle_read()
 		printf("%s, recv data < sizeof(uint64_t)\n", __FUNCTION__);
 }
 
-void eventloop::add_task(std::function<void()>& task)
+void eventloop::add_task(std::function<void()> task)
 {
 	if (!_running)
 		return;
