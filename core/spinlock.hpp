@@ -20,10 +20,14 @@ class spinlock{
 		spinlock& operator=(const spinlock&)	= delete;	
 		//
 		void lock(){
+#ifndef _NULLLOCK_
 			while(flag_.test_and_set(std::memory_order_acquire));	
+#endif //_NULLLOCK_ 
 		}
 		void unlock(){
+#ifndef _NULLLOCK_
 			flag_.clear(std::memory_order_release);
+#endif //_NULLLOCK_
 		}
 	private:
 		std::atomic_flag			flag_ = ATOMIC_FLAG_INIT;
