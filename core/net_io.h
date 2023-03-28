@@ -102,7 +102,7 @@ public:
 	ngx_sock					_fd;
 	//
 	time_t						_brk_tm;	//break timestamp
-	uint16_t					_errno;
+	int16_t						_errno;
 	uint16_t					_ev;
 	eventloop*					_loop;
 	//
