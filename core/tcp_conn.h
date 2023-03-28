@@ -5,7 +5,7 @@
 #include "ngx_pool.h"
 #include "ngx_queue.h"
 #include "ngx_buf.h"
-#include <mutex>
+#include "spinlock.hpp"
 
 
 class tcp_conn :
@@ -30,7 +30,7 @@ private:
 	size_t				_expected_len;
 	ngx_buf_t*			_rcv_buf;
 	
-	std::mutex			_lck;
+	spinlock			_lck;
 	size_t				_snd_len;
 	ngx_buf_t*			_snd_buf;
 	ngx_queue_t*		_wait_snds;

@@ -112,12 +112,12 @@ void CBizUser::Impl::async(net_io* conn)
 		return;
 	conn->set_nio();
 	conn->set_tcp_nodelay();
-	core.loop->add_net(conn);
+	core.loop->update_event(conn, EV_READ);
 }
 
 void CBizUser::Impl::unasync(net_io* conn)
 {
-	core.loop->remove_net(conn);
+	core.loop->update_event(conn, EV_DELETED);
 	conn->set_nio(0);
 }
 

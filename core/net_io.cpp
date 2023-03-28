@@ -5,7 +5,7 @@
 #ifdef _WIN32
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
-#pragma  comment(lib, "ws2_32.lib")
+
 #else 
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -191,12 +191,14 @@ void net_io::close()
 void net_io::terminate()
 {
 	if (_brk_tm) return;
+	//
 	_brk_tm = time(NULL);
 	close();	
 	//
 	if (_loop && _ev != EV_DELETED)
 	{
-		update(EV_DELETED);
+		update_event(EV_DELETED);
+		add_ref();
 		_loop->add_task(std::bind([this]() {
 			OnClose();
 			release();
@@ -221,12 +223,10 @@ void net_io::OnClose()
 	}
 }
 
-void net_io::update(int ev)
+void net_io::update_event(int ev)
 {
-	if (_loop) {
-		add_ref();
-		_loop->update(this, ev);
-	}
+	if (_loop)
+		_loop->update_event(this, ev);
 }
 
 unsigned int net_io::string2hostip(const char* ip)

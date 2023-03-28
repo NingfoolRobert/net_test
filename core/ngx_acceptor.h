@@ -20,7 +20,7 @@ class ngx_acceptor:
 		ngx_acceptor();
 		virtual ~ngx_acceptor();
 	public:	
-		virtual void  OnRead();
+		virtual void  OnRecv();
 	public:
 		bool  init(unsigned int host_ip, unsigned short port, PACCEPTCALLBACK cb);
 		

@@ -1,6 +1,7 @@
 #include "tcp_conn.h"
 #include <string.h>
 #include <errno.h>
+#include <mutex>
 //
 #ifdef _WIN32
 #include <ws2tcpip.h>
@@ -87,11 +88,11 @@ void tcp_conn::OnRecv()
 
 void tcp_conn::OnSend()
 {
-	std::unique_lock<std::mutex> _(_lck);
+	std::unique_lock<spinlock> _(_lck);
 	if (NULL == _snd_buf )
 	{
 		if (ngx_queue_empty(_wait_snds)) {
-			update(EV_READ);
+			update_event(EV_READ);
 			return;
 		}
 		_snd_buf = (ngx_buf_t*)ngx_queue_get(_wait_snds);
@@ -135,7 +136,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	if (_brk_tm)
 		return -1;
 	//
-	std::unique_lock<std::mutex> _(_lck);
+	std::unique_lock<spinlock> _(_lck);
 	if (_snd_buf || !ngx_queue_empty(_wait_snds))
 	{
 		ngx_buf_t* buf = ngx_create_buf(_pool, nMsgLen);
@@ -145,8 +146,10 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 		}
 		memcpy(buf->data, pData, nMsgLen);
 		buf->len = nMsgLen;
-		if (ngx_queue_push(_wait_snds, &buf))
+		if (ngx_queue_push(_wait_snds, &buf)) {
+			update_event(EV_READ | EV_WRITE);
 			return 0;
+		}
 		return -1;
 	}
 	//
@@ -172,8 +175,10 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 
 		memcpy(buf->data, pData, nMsgLen);
 		buf->len = nMsgLen;
-		if (ngx_queue_push(_wait_snds, &buf))
+		if (ngx_queue_push(_wait_snds, &buf)) {
+			update_event(EV_READ | EV_WRITE);
 			return 0;
+		}
 		return -1;
 	}
 	else if (snd_len == 0)
@@ -190,12 +195,13 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	_snd_buf = ngx_create_buf(_pool, nMsgLen);
 	memcpy(_snd_buf->data, pData, nMsgLen);
 	_snd_buf->len = nMsgLen;
+	update_event(EV_READ | EV_WRITE);
 	return 0;
 }
 
 size_t tcp_conn::wait_sndmsg_size()
 {
-	std::unique_lock<std::mutex> _(_lck);
+	std::unique_lock<spinlock> _(_lck);
 	return ngx_queue_size(_wait_snds);
 }
 

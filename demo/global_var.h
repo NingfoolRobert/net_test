@@ -11,8 +11,8 @@
 
 #include "eventloop.h"
 
-extern eventloop		g_loop;
-extern bool				g_running;
+// extern eventloop		g_loop;
+// extern bool				g_running;
 
 
 

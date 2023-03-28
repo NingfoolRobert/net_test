@@ -19,7 +19,7 @@ ngx_acceptor::~ngx_acceptor()
 
 }
 
-void ngx_acceptor::OnRead()
+void ngx_acceptor::OnRecv()
 {
 	struct sockaddr_in  caddr; 
 	socklen_t slen = sizeof(caddr);

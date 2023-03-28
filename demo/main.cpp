@@ -5,15 +5,16 @@
 #include <stdlib.h> 
 
 #endif 
-#include "global_var.h"
+//#include "global_var.h"
 #include "version.h"
 #include "ngx_acceptor.h"
 #include "tcp_conn.h"
 #include "log_def.h"
 #include "cmdline.h"
+#include "eventloop.h"
 
 ////////////////////////////////////////
-eventloop	g_loop;
+eventloop*	g_loop = nullptr;
 ///////////////////////////////////////
 #ifndef _WIN32 
 void signal_handle(int);
@@ -29,7 +30,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len);
 ///////////////////////////////////////
 int main(int argc, char* argv[])
 {
-
+	g_loop = new eventloop;
 	cmdline::parser a;
 	a.add<std::string>("config", 'c', "configure file full name [Y]", false, "./gateway.cfg");
 	a.add<int>("port", 'p', "port number", false, 2000, cmdline::range(1024, 65535));
@@ -77,8 +78,9 @@ int main(int argc, char* argv[])
  			return -1;
  		}
 		//
- 		g_loop.add_net(apt);	
-		g_loop.loop(10);
+		g_loop->update_event(apt, EV_READ);
+		apt->release();
+		g_loop->loop(10);
  		//
  		uninit();	
  	 	printf("%s stop ...\n", APP_NAME);
@@ -113,7 +115,8 @@ void api_apt_cb(ngx_sock fd)
 	conn->set_tcp_nodelay();
 	conn->set_tcp_linger();
 	conn->get_peer_name();
-	g_loop.add_net(conn);
+	g_loop->update_event(conn, EV_READ);
+	conn->release();
 	char ip[16] = { 0 };
 	conn->get_ip(ip);
 
@@ -166,7 +169,7 @@ BOOL WINAPI ConsoleHandler(DWORD cEvent)
 	case CTRL_C_EVENT:
 	case CTRL_BREAK_EVENT:
 		MessageBox(NULL, L"CTRL+C", L"ÌבÊ¾", MB_OK);
-		g_loop.stop();
+		g_loop->stop();
 		break;
 	case CTRL_CLOSE_EVENT:
 		break;

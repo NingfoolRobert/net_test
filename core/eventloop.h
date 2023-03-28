@@ -20,7 +20,7 @@ struct timer_info_t {
 	PTIMERCALLBACK			cb;					//callback function
 	void					*param;				//callback param 
 };
-
+typedef std::function<void()> task;
 class eventloop
 {
 public:
@@ -29,22 +29,19 @@ public:
 public:
 	int		loop(int timeout);
 
-	void	add_net(net_io*  conn);
-
-	void	remove_net(net_io* conn);
-	
 	void	add_timer(timer_info_t&  cb);
 
 	void	remove_timer(unsigned short timer_id);
 
-	void	add_task(std::function<void()> task);
+	void	add_task(task tsk);
 
-	bool	queue_in_loop();
-	
 	void	stop();
 
-	void	update(net_io* conn, int event);
+	void	update_event(net_io* conn, int event);
+
+	size_t  net_io_size() { return _conns.size(); }
 private:
+	bool	queue_in_loop();
 
 	void	wakeup();
 
@@ -55,24 +52,19 @@ private:
 	void	process_timer();
 
 	void	process_task();
-	
-	void	remove_all();
 private:
 	spinlock							_lck;
 	std::set<net_io*>					_conns;
-#if defined(_WIN32) || !defined(_NIO_EPOLL_)
-	fd_set								_rd_fds;
-	fd_set								_wt_fds;
-#else if definded(_NIO_EPOLL_) 
+
+#ifdef _EPOLL_
 	int									_ep;
-	std::unordered_map<int, net_io*>	_ep_conn;
 #endif 
 private:
 	spinlock							_lck_timer;
 	std::list<timer_info_t>				_timers;
 	//
 	spinlock							_lck_task;
-	std::list<std::function<void()> >	_tasks;
+	std::list<task>						_tasks;
 
 private:
 	std::thread::id		_tid;		

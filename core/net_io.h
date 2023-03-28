@@ -5,10 +5,11 @@
 #include <stdlib.h>
 #include <atomic>
 #ifdef _WIN32 
-#define WIN32_LEAN_AND_MEAN
-#define  FD_SETSIZE	1024
+//#define WIN32_LEAN_AND_MEAN
+#define  FD_SETSIZE		1024
 #include <WinSock2.h>
 #include <windows.h>
+#pragma comment(lib,"WS2_32.lib") 
 #define  ngx_sock		SOCKET 
 #else 
 #include <sys/socket.h>
@@ -87,13 +88,16 @@ public:
 
 	void		OnClose();
 
-	void		update(int ev);
-
 public:
 	static  unsigned int  string2hostip(const char* ip);
+	
+	static  const char* hostip2string();
 public:
 	void		add_ref(){ ++_ref; }
 	void		release(){if(--_ref == 0) delete this;}
+
+protected:
+	void		update_event(int ev);
 public:
 	ngx_sock					_fd;
 	//
