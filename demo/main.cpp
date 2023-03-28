@@ -152,7 +152,7 @@ void signal_handle(int ret)
 	{
 	case SIGINT:
 	case SIGTERM:		//exit 
-		g_loop.stop();
+		g_loop->stop();
 		break;
 	case SIGSEGV:
 		printf("\n %s core dump...\n", APP_NAME);

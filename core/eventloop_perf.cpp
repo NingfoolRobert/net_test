@@ -12,6 +12,7 @@
 #include "time.hpp"
 #include <mutex>
 #include <functional>
+
 //
 int eventloop::loop(int timeout) {
 	_tid = std::this_thread::get_id();
@@ -41,7 +42,7 @@ int eventloop::loop(int timeout) {
 				if (conn->_ev & EV_WRITE)
 					FD_SET(conn->_fd, &wt_fds);
 #ifndef _WIN32 
-				max_fd = max(max_fd, conn->_fd);
+				max_fd = std::max(max_fd, conn->_fd);
 #endif 
 			}
 		}
@@ -52,7 +53,7 @@ int eventloop::loop(int timeout) {
 		if (ret <= 0)
 			continue;
 #ifndef _WIN32 
-		if (FD_ISSET(_wake_fd, &_rd_fds))
+		if (FD_ISSET(_wake_fd, &rd_fds))
 #else 
 		if (FD_ISSET(_wake_recv->_fd, &rd_fds))
 #endif 
@@ -98,11 +99,6 @@ void eventloop::update_event(net_io* conn, int ev) {
 				conn->set_nio();
 				conn->_loop = this;
 				_conns.insert(conn);
-#ifndef _WIN32
-				_fds.insert(conn->_fd);
-				auto fd_it = _fds.begin();
-				_fds = *fd_it;	
-#endif 
 			}
 			conn->_ev = ev;
 			conn->release();

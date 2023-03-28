@@ -142,10 +142,11 @@ void eventloop::wakeup()
 		int len = _wake_send->send((char*)&one, sizeof(one));
 #else 
 	if(_wake_fd != -1){
-	int len = ::write(_wake_fd, &one, sizeof(one));
+		int len = ::write(_wake_fd, &one, sizeof(one));
 #endif 
-	if (len < (int)sizeof(one))
-		error_print("%s, send data len < sizeof(uint64_t)", __FUNCTION__);
+		if (len < (int)sizeof(one)){
+			error_print("wakeup fail.", __FUNCTION__);
+		}
 	}
 }
 	

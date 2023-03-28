@@ -1,7 +1,9 @@
 #include "ngx_buf.h"
-#include <windows.h>
 #include <string.h>
-
+#ifdef _WIN32 
+#include <windows.h>
+#else
+#endif
 
 ngx_buf_t * ngx_create_buf(ngx_pool_t *pool, size_t cap)
 {
