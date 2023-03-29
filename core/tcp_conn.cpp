@@ -23,11 +23,11 @@ tcp_conn::tcp_conn(unsigned int nHeadLen, PMSGLENPARSEFUNC msg_head_fnc, PNETMSG
 
 tcp_conn::~tcp_conn()
 {
-	ngx_free(_pool, _rcv_buf);
+	ngx_destroy_pool(_pool);
+	_pool = NULL;
 	_rcv_buf = NULL;
-	ngx_free(_pool, _snd_buf);
 	_snd_buf = NULL;
-	ngx_free(_pool, _wait_snds);
+	_wait_snds = NULL;
 }
 
 void tcp_conn::OnRecv()
