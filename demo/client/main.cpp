@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 	g_loop = new eventloop;
 	cmdline::parser a;
 	a.add<std::string>("config", 'c', "configure file full name [Y]", false, "./gateway.cfg");
+	a.add<std::string>("ip", 'i', "remote server ip addr", false, "127.0.0.1");
 	a.add<int>("port", 'p', "port number", false, 2000, cmdline::range(1024, 65535));
 	a.add<std::string>("logdir", 'l', "log output dir", false, "./");
 	a.add("version", 'v', "project version");
@@ -82,7 +83,7 @@ int main(int argc, char* argv[])
 			return -1;
 		}	
 		
-		if(!conn->connect(net_io::string2hostip("127.0.0.1"), a.get<int>("port"))) {
+		if(!conn->connect(net_io::string2hostip(a.get<std::string>("ip").c_str()), a.get<int>("port"))) {
 			return -1;
 		}
 
@@ -100,7 +101,12 @@ int main(int argc, char* argv[])
 		//
 		auto end = std::chrono::steady_clock::now();
 		auto d = std::chrono::duration<double, std::nano>(end - begin).count();
-		info_print("ping-pong success,timeout:%fns, count:%ld.\n", d/count, count);
+		info_print("ping-pong success,timeout:%fns, count:%d.\n", d/count, count);
+		getchar();
+		conn->close();
+		delete conn;
+		return 0;
+		//
 		g_loop->loop(10);
 		printf("test ping-pong\n");
  		//
