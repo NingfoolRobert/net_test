@@ -87,14 +87,17 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 
-		char szTmp[32] = { 0 };
+		char szTmp[256] = { 0 };
+
+		uint32_t* len = (uint32_t*)szTmp;
+		*len = 104;
 		
 		int count = 0;
 		auto begin = std::chrono::steady_clock::now();
 		for (auto i = 0; i < 100000; ++i) {
-			conn->send(szTmp, 24);
-			int ret = conn->recv(szTmp, 24);
-			if (ret == 24) {
+			conn->send(szTmp, 128);
+			int ret = conn->recv(szTmp, 128);
+			if (ret == 128) {
 				count++;
 			}
 		}

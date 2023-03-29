@@ -128,7 +128,7 @@ size_t msg_head_parse(void* data, size_t len)
 {
 	if(len < 24)
 		return 24;
-	uint32_t* body_len = static_cast<uint32_t*>(data);
+	uint32_t* body_len = (uint32_t*)data;
 	return *body_len;
 }
 //
@@ -148,7 +148,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len)
 		return true;
 	//
 	char ip[16] = { 0 };
-	error_print("send msg fail. ip:port=%s:%d\n, ret:%d", conn->get_ip(ip), conn->_port, ret);
+	error_print("send msg fail. ip:port=%s:%d, ret:%d\n", conn->get_ip(ip), conn->_port, ret);
 	return false;
 }
 

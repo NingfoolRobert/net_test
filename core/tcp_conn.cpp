@@ -71,6 +71,7 @@ void tcp_conn::OnRecv()
 			if (NULL == buf)
 				return;
 			memcpy(buf->data, _rcv_buf->data, _rcv_buf->len);
+			buf->len = _rcv_buf->len;
 			ngx_free(_pool, _rcv_buf);
 			_rcv_buf = buf;
 		}
