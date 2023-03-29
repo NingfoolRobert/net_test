@@ -1,9 +1,6 @@
 #ifdef _BUSY_LOOP_
 #include "eventloop.h"
 #include <mutex>
-#include <sys/timeb.h>
-#include <ws2tcpip.h>
-#include <WinSock.h>
 #include <functional>
 
 //
@@ -59,7 +56,7 @@ void eventloop::update_event(net_io* conn, int ev) {
 		add_task(std::bind([this, conn, ev]() {
 			update_event(conn, ev);
 			conn->release();
-		});
+		}));
 		return;
 	}
 

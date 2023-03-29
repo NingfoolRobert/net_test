@@ -203,13 +203,10 @@ void eventloop::handle_read()
 {
 	char szTmp[32] = { 0 };
 #ifdef _WIN32 
-	int readed = _wake_recv->recv(szTmp, 32);
-	if(readed < (int)sizeof(int))
+	_wake_recv->recv(szTmp, 32);
 #else 
-	int readed = ::read(_wake_fd, szTmp, 32);
-	if (readed < (int)sizeof(uint64_t))
+	::read(_wake_fd, szTmp, 32);
 #endif
-		printf("%s, recv data < sizeof(uint64_t)\n", __FUNCTION__);
 }
 
 void eventloop::add_task(std::function<void()> task)

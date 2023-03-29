@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdio.h> 
 #include <signal.h> 
 #ifndef _WIN32 
@@ -127,7 +128,8 @@ size_t msg_head_parse(void* data, size_t len)
 {
 	if(len < 24)
 		return 24;
-	return len;
+	uint32_t* body_len = static_cast<uint32_t*>(data);
+	return *body_len;
 }
 //
 void api_discon(int err, net_io* conn)
@@ -144,8 +146,9 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len)
 	int ret = conn->send_msg((char*)data, len);
 	if(ret >= 0)
 		return true;
+	//
 	char ip[16] = { 0 };
-	error_print("send msg fail. ip:port=%s:%d", conn->get_ip(ip), conn->_port);
+	error_print("send msg fail. ip:port=%s:%d\n, ret:%d", conn->get_ip(ip), conn->_port, ret);
 	return false;
 }
 

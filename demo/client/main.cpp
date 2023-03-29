@@ -100,8 +100,9 @@ int main(int argc, char* argv[])
 		//
 		auto end = std::chrono::steady_clock::now();
 		auto d = std::chrono::duration<double, std::nano>(end - begin).count();
-		info_print("ping-pong success,timeout:%fns, count:%ld.", d/count, count);
+		info_print("ping-pong success,timeout:%fns, count:%ld.\n", d/count, count);
 		g_loop->loop(10);
+		printf("test ping-pong\n");
  		//
  		uninit();	
  	 	printf("%s stop ...\n", APP_NAME);

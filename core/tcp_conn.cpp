@@ -39,14 +39,14 @@ void tcp_conn::OnRecv()
 			return;
 	}
 	//
-	int recv_len = net_io::recv((char*)_rcv_buf + _rcv_buf->len, (unsigned int)(_expected_len - _rcv_buf->len));
+	int recv_len = net_io::recv((char*)_rcv_buf->data + _rcv_buf->len, (unsigned int)(_expected_len - _rcv_buf->len));
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
 		if (GetLastError() != EWOULDBLOCK) {
 			_errno = GetLastError();
 #else 
-		if (errno != EAGAIN || errno != EINTR) {
+		if (errno != EAGAIN && errno != EINTR) {
 			_errno = errno;
 #endif 
 			terminate();
@@ -64,8 +64,8 @@ void tcp_conn::OnRecv()
 	_rcv_buf->len += (unsigned int)recv_len;
 	if (_expected_len == _head_len)
 	{
-		_expected_len = _msg_head_fnc((char*)_rcv_buf->data, _rcv_buf->len);
-		if (_expected_len > _head_len && _expected_len > _rcv_buf->cap)
+		_expected_len += _msg_head_fnc((char*)_rcv_buf->data, _rcv_buf->len);
+		if (_expected_len > _rcv_buf->cap)
 		{
 			ngx_buf_t* buf = ngx_create_buf(_pool, _expected_len);
 			if (NULL == buf)
@@ -76,7 +76,7 @@ void tcp_conn::OnRecv()
 		}
 	}
 	//
-	if (_rcv_buf->len == _expected_len && _rcv_buf->len >= _head_len)
+	if (_rcv_buf->len >= _expected_len)
 	{
 		OnMessage((char*)_rcv_buf->data,  (unsigned int)_expected_len);
 		_expected_len = _head_len;

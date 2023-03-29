@@ -34,6 +34,8 @@ else()
 	set(CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS} -g -ggdb -O0 -Wall")
 	set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3 -W -DNDEBUG -lm")
 endif()
+add_definitions(-DSYS_LOG)
+add_definitions(-D_BUSY_LOOP_)
 set(TOP_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS "VERSION: ${PROJECT_VERSION}")
