@@ -24,15 +24,18 @@ if(MSVC)
 			/Zi
 			/Od
 		)
-		add_link_options(/Debug)
-		add_definitions(-W3)
+	add_definitions(-W3)
+	#编译属性
+	add_link_options("/DEBUG")
 	else()
 		add_definitions(-W0)
 	endif()
+	
 else()
-	#
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-Bsymbolic")
 	set(CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS} -g -ggdb -O0 -Wall")
 	set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3 -W -DNDEBUG -lm")
+	add_compile_options(-Wall -Wextra -Wpedantic -fPIC -fvisibility=hidden)
 endif()
 add_definitions(-DSYS_LOG)
 add_definitions(-D_BUSY_LOOP_)
