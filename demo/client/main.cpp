@@ -12,7 +12,7 @@
 #include "log_def.h"
 #include "cmdline.h"
 #include "eventloop.h"
-#include <chrono>
+#include "time.hpp"
 
 ////////////////////////////////////////
 eventloop*	g_loop = nullptr;
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 	info_print("%s\n", __FUNCTION__);
 	error_print("%s\n", __FUNCTION__);
 
-
+	detail::time::now();
  		//
  #ifndef _WIN32 
  		signal(SIGPIPE, SIG_IGN);
@@ -73,33 +73,30 @@ int main(int argc, char* argv[])
  		}
 		
 		net_io* conn = new net_io(api_msg_process, api_discon);
-
+#ifdef _WIN32
+		if(conn->create() == INVALID_SOCKET)
+#else 
 		if( conn->create() < -1 )
+#endif 
 		{
 			return -1;
 		}	
 		
-		if(!conn->connect(2130706433, a.get<int>("port"))){
+		if(!conn->connect(net_io::string2hostip("127.0.0.1"), a.get<int>("port"))) {
 			return -1;
 		}
 
 		char szTmp[32] = { 0 };
 		
+		auto begin = std::chrono::high_resolution_clock::now();
 		conn->send(szTmp, 24);
 		int ret = conn->recv(szTmp, 24);
 		if(ret == 24) {
-			info_print("ping-pong success.");	
+			auto end = std::chrono::high_resolution_clock::now();
+			auto d = std::chrono::duration<std::chrono::nanoseconds>(end - begin).count();
+			info_print("ping-pong success, timeout:%ldns.", end - begin);
 		}	
- 		//
-// 		ngx_acceptor*  apt = new ngx_acceptor;
-// 		if(NULL == apt || !apt->init(0, a.get<int>("port"), api_apt_cb))
-// 		{
-// 			printf("net listen fail. port:%d\n", 2000);
-// 			return -1;
-// 		}
-//		//
-//		g_loop->update_event(apt, EV_READ);
-//		apt->release();
+
 		g_loop->loop(10);
  		//
  		uninit();	
