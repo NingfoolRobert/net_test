@@ -149,7 +149,7 @@ void eventloop::wakeup()
 		int len = ::write(_wake_fd, &one, sizeof(one));
 #endif 
 		if (len < (int)sizeof(one)){
-			error_print("wakeup fail.", __FUNCTION__);
+			error_print("wakeup fail.");
 		}
 	}
 }
