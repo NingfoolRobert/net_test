@@ -42,6 +42,7 @@ void eventloop::update_event(net_io* conn, int ev) {
 			if (it == _conns.end()) {
 				conn->add_ref();
 				conn->set_nio();
+				conn->_loop = this;
 				_conns.insert(conn);
 				conn->_ev = ev;
 			}

@@ -43,7 +43,7 @@ void tcp_conn::OnRecv()
 	if (recv_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK) {
+		if (GetLastError() != WSAEWOULDBLOCK) {
 			_errno = GetLastError();
 #else 
 		if (errno != EAGAIN && errno != EINTR) {
@@ -105,7 +105,7 @@ void tcp_conn::OnSend()
 	if (send_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK){
+		if (GetLastError() != WSAEWOULDBLOCK){
 			_errno = GetLastError();
 #else 
 		if (errno != EAGAIN && errno != EINTR) {
@@ -157,7 +157,7 @@ int tcp_conn::send_msg(const char* pData, unsigned int nMsgLen)
 	if (snd_len < 0)
 	{
 #ifdef _WIN32
-		if (GetLastError() != EWOULDBLOCK){
+		if (GetLastError() != WSAEWOULDBLOCK){
 			_errno = GetLastError();
 #else 
 		if (errno != EAGAIN && errno != EINTR){

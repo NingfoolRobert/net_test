@@ -1,5 +1,4 @@
 #include "ngx_acceptor.h"
-#include <asm-generic/errno-base.h>
 #include <cstdio>
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -28,7 +27,7 @@ void ngx_acceptor::OnRecv()
 #ifdef _WIN32 
 	if(cli == INVALID_SOCKET){
 		_errno = GetLastError();
-		if(_errno == EWOULDBLOCK)
+		if(_errno == WSAEWOULDBLOCK)
 			return ;
 #else 
 	if(cli == -1) {
@@ -36,7 +35,7 @@ void ngx_acceptor::OnRecv()
 		if(_errno == EAGAIN || _errno == EINTR)
 			return ;
 #endif 
-		printf("accept  client fail. err:%d\n", _errno);
+		printf("accept client fail. error:%d\n", _errno);
 		return ;
 	}
 	// 
