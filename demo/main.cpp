@@ -120,7 +120,7 @@ void api_apt_cb(ngx_sock fd)
 	char ip[16] = { 0 };
 	conn->get_ip(ip);
 
-	printf("clit, ip:port=%s:%d\n", ip, conn->_port);
+	info_print("clit, ip:port=%s:%d\n", ip, conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
@@ -136,12 +136,17 @@ void api_discon(int err, net_io* conn)
 		return ;
 	//
 	char ip[16] = { 0 };
-	printf("disconnect  ip:port=%s:%d, err:%d\n", conn->get_ip(ip), conn->_port, err);
+	info_print("disconnect  ip:port=%s:%d, err:%d\n", conn->get_ip(ip), conn->_port, err);
 }
 
 bool api_msg_process(net_io* conn, void* data, unsigned int len)
 {
-	return true;
+	int ret = conn->send_msg((char*)data, len);
+	if(ret >= 0)
+		return true;
+	char ip[16] = { 0 };
+	error_print("send msg fail. ip:port=%s:%d", conn->get_ip(ip), conn->_port);
+	return false;
 }
 
 

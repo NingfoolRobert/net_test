@@ -8,6 +8,7 @@
 
 #include "net_io.h"
 #include "spinlock.hpp"
+#include "lock_free_queue.hpp"
 
 
 
@@ -63,9 +64,11 @@ private:
 	spinlock							_lck_timer;
 	std::list<timer_info_t>				_timers;
 	//
-	spinlock							_lck_task;
-	std::list<task>						_tasks;
+// 	spinlock							_lck_task;
+// 	std::list<task>						_tasks;
 
+	lock_free_queue<task, 1024 * 128>	_tasks;
+	
 private:
 	std::thread::id		_tid;		
 	int					_running;

@@ -101,15 +101,19 @@ void eventloop::process_timer()
 
 void eventloop::process_task()
 {
-	std::list<std::function<void()> > tsks;
-	{
-		std::unique_lock<spinlock> _(_lck_task);
-		tsks.swap(_tasks);
+	while (!_tasks.empty()) {
+		auto t = _tasks.pop();
+		if (t) t();
 	}
-	//
-	for_each(tsks.begin(), tsks.end(), [](std::function<void()>& tsk) {
-		tsk();
-	});
+// 	std::list<std::function<void()> > tsks;
+// 	{
+// 		std::unique_lock<spinlock> _(_lck_task);
+// 		tsks.swap(_tasks);
+// 	}
+// 	//
+// 	for_each(tsks.begin(), tsks.end(), [](std::function<void()>& tsk) {
+// 		tsk();
+// 	});
 }
 
 void eventloop::add_timer(timer_info_t&  cb)
@@ -212,11 +216,12 @@ void eventloop::add_task(std::function<void()> task)
 {
 	if (!_running)
 		return;
-	//
-	{
-		std::unique_lock<spinlock> _(_lck_task);
-		_tasks.push_back(task);
-	}
+	_tasks.push(task);
+// 	//
+// 	{
+// 		std::unique_lock<spinlock> _(_lck_task);
+// 		_tasks.push_back(task);
+// 	}
 	//
 	wakeup();
 }

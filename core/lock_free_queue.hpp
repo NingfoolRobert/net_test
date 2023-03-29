@@ -9,14 +9,19 @@
 #include <pthread.h>
 #define CAS(ptr, old_val, new_val)  __sync_bool_compare_and_swap(ptr, old_val, new_val)
 #else 
-#define CAS(ptr, old_val, new_val) atomic_compare_exchange_weak(ptr, old_val, new_val)
+#define CAS(ptr, old_val, new_val)  std::atomic_compare_exchange_weak(ptr, &old_val, new_val)
 #endif 
 template<typename  TYPE, size_t Size = 1024>
 class lock_free_queue {
-
+#ifdef __GNUC__
 	size_t  write_index = 0;
 	size_t  read_index = 0;
 	size_t	max_num_read_index = 0;
+#else 
+	std::atomic<size_t>		write_index = 0;
+	std::atomic<size_t>		read_index = 0;
+	std::atomic<size_t>		max_num_read_index = 0;
+#endif 
 	TYPE	queue_[Size];
 public:
 	lock_free_queue() {
