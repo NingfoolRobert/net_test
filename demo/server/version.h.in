@@ -1,0 +1,11 @@
+#ifndef _VERSION_H_
+#define _VERSION_H_ 
+
+#define  APP_NAME					"@TARGET_NAME@"
+#define  APP_VERSION				"@TARGET_VERSION@"
+#define  APP_VERSION_VALUE			 @TARGET_VERSION_VALUE@
+//#define  API_GIT_BRANCH			"@TARGET_GIT_BRANCH@"
+//#define  API_GIT_HASH				"@TARGET_GIT_HASH@"
+
+
+#endif 
