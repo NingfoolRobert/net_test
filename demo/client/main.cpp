@@ -88,15 +88,19 @@ int main(int argc, char* argv[])
 
 		char szTmp[32] = { 0 };
 		
-		auto begin = std::chrono::high_resolution_clock::now();
-		conn->send(szTmp, 24);
-		int ret = conn->recv(szTmp, 24);
-		if(ret == 24) {
-			auto end = std::chrono::high_resolution_clock::now();
-			auto d = std::chrono::duration<std::chrono::nanoseconds>(end - begin).count();
-			info_print("ping-pong success, timeout:%ldns.", end - begin);
-		}	
-
+		int count = 0;
+		auto begin = std::chrono::steady_clock::now();
+		for (auto i = 0; i < 100000; ++i) {
+			conn->send(szTmp, 24);
+			int ret = conn->recv(szTmp, 24);
+			if (ret == 24) {
+				count++;
+			}
+		}
+		//
+		auto end = std::chrono::steady_clock::now();
+		auto d = std::chrono::duration<double, std::nano>(end - begin).count();
+		info_print("ping-pong success,timeout:%fns, count:%ld.", d/count, count);
 		g_loop->loop(10);
  		//
  		uninit();	
