@@ -59,6 +59,8 @@ bool ngx_acceptor::init(unsigned int host_ip, unsigned short port, PACCEPTCALLBA
 		return false;
 	}
 	//
+	set_reuse_addr();
+	set_reuse_port();
 	if (!net_io::bind(host_ip, port))
 	{
 		printf("bind fail, err:%d, port:%d.\n", _errno, port);

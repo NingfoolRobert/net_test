@@ -56,10 +56,6 @@ private:
 private:
 	spinlock							_lck;
 	std::set<net_io*>					_conns;
-
-#ifdef _EPOLL_
-	int									_ep;
-#endif 
 private:
 	spinlock							_lck_timer;
 	std::list<timer_info_t>				_timers;
@@ -78,6 +74,7 @@ private:
 	net_io*								_wake_recv;
 #else 
 	int									_wake_fd;
+	int									_ep;
 #endif 
 };
 

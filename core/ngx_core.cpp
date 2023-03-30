@@ -104,7 +104,7 @@ bool ngx_core_init(ngx_core_t *core)
 			*p = 0;
 			port = std::atoi(p + 1);
 		}
-		for (auto i = 0u; i < ret; ++i)
+		for (auto i = 0; i < ret; ++i)
 			core->port[core->ip_cnt + i] = port;
 		//
 		core->ip_cnt += ret;

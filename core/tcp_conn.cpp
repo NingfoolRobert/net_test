@@ -1,4 +1,5 @@
 #include "tcp_conn.h"
+#include "net_io.h"
 #include <string.h>
 #include <errno.h>
 #include <mutex>
@@ -93,7 +94,8 @@ void tcp_conn::OnSend()
 	if (NULL == _snd_buf )
 	{
 		if (ngx_queue_empty(_wait_snds)) {
-			update_event(EV_READ);
+			if(_ev & EV_WRITE)
+				update_event(EV_READ);
 			return;
 		}
 		_snd_buf = (ngx_buf_t*)ngx_queue_get(_wait_snds);

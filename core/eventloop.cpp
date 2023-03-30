@@ -1,13 +1,11 @@
 #include "eventloop.h"
 #include "log_def.h"
-#include "net_io.h"
-#include <cstdlib>
+#include "time.hpp"
+#include <sys/eventfd.h>
 #include <exception>
 #include <sstream>
-#include <vector>
-#include <algorithm>
 #include <mutex>
-#include "time.hpp"
+#include <vector>
 
 #ifdef  _WIN32
 #include <sys/timeb.h>
@@ -15,9 +13,6 @@
 #pragma  comment(lib, "ws2_32.lib")
 #else
 #include <unistd.h>
-#include <sys/time.h>
-#include <sys/select.h>
-#include <sys/eventfd.h>
 #endif 
 
 
@@ -28,6 +23,7 @@ eventloop::eventloop():_running(true)
 , _wake_send(NULL)
 #else 
 , _wake_fd(-1)
+, _ep(-1)
 #endif 
 {
 #ifdef _WIN32

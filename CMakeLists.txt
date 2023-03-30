@@ -38,7 +38,7 @@ else()
 	#add_compile_options(-Wall -Wextra -Wpedantic -fPIC -fvisibility=hidden)
 endif()
 add_definitions(-DSYS_LOG)
-add_definitions(-D_BUSY_LOOP_)
+add_definitions(-D_EPOLL_)
 set(TOP_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS "VERSION: ${PROJECT_VERSION}")

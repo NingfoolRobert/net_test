@@ -146,8 +146,8 @@ void net_io::terminate()
 	//
 	if (_loop && _ev != EV_DELETED)
 	{
-		update_event(EV_DELETED);
 		add_ref();
+		update_event(EV_DELETED);
 		_loop->add_task(std::bind([this]() {
 			OnClose();
 			release();

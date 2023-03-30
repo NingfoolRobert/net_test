@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 #endif 
 	}
 
-	char url[128] = { "www.baidu.com" };
+	char url[128] = { "10.110.47.89" };
 	
 	ret = net::helper::parse_url(url, ip, 10);
 	for (auto i = 0; i < ret; ++i) {
