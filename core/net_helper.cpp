@@ -145,9 +145,10 @@ namespace net{
 			size_t count = 0;
 			char szTmp[256];
 			struct hostent* hptr;
+			struct sockaddr_in addr;
 			strcpy(szTmp, url);
 			char* pSave = NULL;
-			const char* splite = ";";
+			const char* splite = ":;";
 			char* ptr = ngx_strtok(szTmp, splite, &pSave);
 			while (ptr)
 			{
@@ -162,13 +163,17 @@ namespace net{
 					hptr = gethostbyname(ptr);
 				}
 				//  DNS => ip
-				if (hptr == NULL || hptr->h_addrtype != AF_INET)
-					continue;
-				//
-				for (char** pptr = hptr->h_addr_list; pptr && count < iplen; pptr++)
-				{
-					ip[count++] = ntohl(((struct in_addr*)pptr)->s_addr);
-				}
+				do {
+					if (hptr == NULL || hptr->h_addrtype != AF_INET)
+						break;
+					//
+					int idx = 0;
+					while(hptr->h_addr_list[idx] && count < iplen)
+					{
+						memcpy(&addr.sin_addr.s_addr, hptr->h_addr_list[idx++], hptr->h_length);
+						ip[count++] = ntohl(addr.sin_addr.s_addr);
+					}
+				} while (0);
 
 				ptr = ngx_strtok(NULL, splite, &pSave);
 			}

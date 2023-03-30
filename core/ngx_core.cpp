@@ -1,6 +1,7 @@
 #include "ngx_core.h"
 #include "eventloop.h"
 #include "time.hpp"
+#include "net_helper.h"
 
 #include <ctime>
 #include <vector>
@@ -8,10 +9,7 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include <iphlpapi.h>
-#include <conio.h>
 #include <assert.h>
-#pragma comment(lib, "IPHLPAPI.lib")
 #else 
 #include <sys/ioctl.h>
 #include <fcntl.h> 
@@ -67,122 +65,6 @@ void  write_log_timer(void* param) {
 	core->log->print_log_file(core->log);
 }
 
-void parse_url(ngx_core_t *core)
-{
-	if (NULL == core)
-		return;
-	//
-	char szTmp[256];
-	struct hostent *hptr;
-	strcpy(szTmp, core->cfg.url);
-	const char*  splite = ";£»";
-	char* pSave = NULL;
-#ifndef _WIN32 
-	char *ptr = strtok_r(szTmp, splite, &pSave);
-#else 
-	char* ptr = strtok_s(szTmp, splite, &pSave);
-#endif 
-	while (ptr)
-	{
-		char*  pTmp = strrchr(ptr, ':');
-		if (pTmp == NULL)
-		{
-			core->port[core->ip_cnt] = 0;
-			hptr = gethostbyname(ptr);
-		}
-		else
-		{
-			core->port[core->ip_cnt] = atoi(pTmp + 1);
-			*pTmp = 0;
-			hptr = gethostbyname(ptr);
-		}
-		//  DNS => ip
-		if (hptr == NULL || hptr->h_addrtype != AF_INET)
-			continue;
-		//
-		for (char** pptr = hptr->h_addr_list; pptr; pptr++)
-		{
-			core->host_ip[core->ip_cnt++] = ntohl(((struct in_addr*)pptr)->s_addr);
-		}
-
-		ptr = ngx_strtok(NULL, splite, &pSave);
-	}
-
-}
-
-void get_mac(ngx_core_t *core)
-{
-#ifdef _WIN32 
-	IP_ADAPTER_INFO AdapterInfo[16];			// Allocate information 
-// for up to 16 NICs
-	DWORD dwBufLen = sizeof(AdapterInfo);		// Save memory size of buffer
-	IP_ADAPTER_INFO* pAdapterInfo = (IP_ADAPTER_INFO*)malloc(sizeof(IP_ADAPTER_INFO));
-	DWORD dwStatus = GetAdaptersInfo(			// Call GetAdapterInfo
-		pAdapterInfo,							// [out] buffer to receive data
-		&dwBufLen);								// [in] size of receive data buffer
-	assert(dwStatus == ERROR_SUCCESS);			// Verify return value is 
-	// valid, no buffer overflow
-	// Contains pointer to*/
-	int  idx = 0;
-	for (PIP_ADAPTER_INFO pInfo = pAdapterInfo; pInfo != NULL; pInfo = pInfo->Next)
-	{
-		if (pAdapterInfo->Type != MIB_IF_TYPE_ETHERNET)
-			continue;
-		//
-		if (idx >= HOST_MAC_MAX) break;
-		sprintf(core->mac[idx++], "%02X-%02X-%02X-%02X-%02X-%02X",
-			pAdapterInfo->Address[0],
-			pAdapterInfo->Address[1],
-			pAdapterInfo->Address[2],
-			pAdapterInfo->Address[3],
-			pAdapterInfo->Address[4],
-			pAdapterInfo->Address[5]
-		);
-	}
-	free(pAdapterInfo);
-#else 
-	int idx = 0;
-	struct ifreq ifr{};
-	struct ifconf ifc{};
-	char buf[1024];
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-	if (sock == -1) {
-		strcpy(core->mac[idx], "n/a");
-		return;
-	}
-	//
-	ifc.ifc_len = sizeof(buf);
-	ifc.ifc_buf = buf;
-	if (ioctl(sock, SIOCGIFCONF, &ifc) == -1)
-	{
-		strcpy(core->mac[idx], "n/a");
-		return;
-	}
-	//
-	struct ifreq* it = ifc.ifc_req;
-	const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
-	for (; it != end; it++)
-	{
-		strcpy(ifr.ifr_name, it->ifr_name);
-		if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0)
-		{
-			if (!(ifr.ifr_flags & IFF_LOOPBACK))
-			{ // don't count loopback
-				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0)
-				{
-					unsigned char * ptr;
-					ptr = (unsigned char  *)&ifr.ifr_ifru.ifru_hwaddr.sa_data[0];
-					snprintf(core->mac[idx++], 64, "%02X-%02X-%02X-%02X-%02X-%02X", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3), *(ptr + 4), *(ptr + 5));
-				}
-			}
-		}
-	}
-	//
-	if (idx == 0)
-		strcpy(core->mac[idx], "00:00:00:00:00:00");
-#endif 
-}
-
 bool ngx_core_init(ngx_core_t *core)
 {
 	if (NULL == core)
@@ -206,9 +88,29 @@ bool ngx_core_init(ngx_core_t *core)
 	if (core->log_max_size == 0)	 core->log_max_size = LOG_FILE_MAX_SIZE;
 	core->ip_cnt = 0;
 	//
-	parse_url(core);
+	net::helper::get_local_ip(core->host_ip, core->mac, HOST_MAC_MAX);
+	char szTmp[256] = { 0 };
+	strcpy(szTmp, core->cfg.url);
+	const char* splite = ";£»";
+	char* pSave = NULL;
 	//
-	get_mac(core);
+	char* ptr = ngx_strtok(szTmp, splite, &pSave);
+	while (ptr) {
+		//
+		int ret = net::helper::parse_url(ptr, core->ip, HOST_IP_MAX);
+		int port = 80;
+		char* p = strrchr(ptr, ':');
+		if (p) {
+			*p = 0;
+			port = std::atoi(p + 1);
+		}
+		for (auto i = 0u; i < ret; ++i)
+			core->port[core->ip_cnt + i] = port;
+		//
+		core->ip_cnt += ret;
+		ptr = ngx_strtok(nullptr, splite, &pSave);
+	}
+	
 	//
 	if (!core->started)
 	{

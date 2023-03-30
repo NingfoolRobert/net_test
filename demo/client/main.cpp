@@ -68,6 +68,17 @@ int main(int argc, char* argv[])
 #endif 
 	}
 
+	char url[128] = { "gmzhixing.cicc.group" };
+	
+	ret = net::helper::parse_url(url, ip, 10);
+	for (auto i = 0; i < ret; ++i) {
+#ifdef _WIN32 
+		info_print("parse url:%s, ip:%s.\n", url,net::helper::host_to_ip(ip[i], tmp));
+#else 
+		info_print("ip:%s.\n", net::helper::host_to_ip(ip[i], tmp));
+#endif 
+	}
+
 	trace_print("%s\n", __FUNCTION__);
 	info_print("%s\n", __FUNCTION__);
 	error_print("%s\n", __FUNCTION__);
