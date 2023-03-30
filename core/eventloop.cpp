@@ -60,6 +60,11 @@ eventloop::~eventloop()
 		close(_wake_fd);
 		_wake_fd = -1;
 	}
+	//
+	if(_ep != -1){
+		close(_ep);
+		_ep = -1;
+	}
 #endif 
 }
 
