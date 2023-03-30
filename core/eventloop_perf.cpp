@@ -1,5 +1,4 @@
-#if !defined(_EPOLL_) && !defined(_BUSY_LOOP_)
-
+#if ((defined(__GNUC__) && !defined(_EPOLL_)) || (defined(_WIN32))) && !defined(_BUSY_LOOP_)
 #ifdef _WIN32 
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
