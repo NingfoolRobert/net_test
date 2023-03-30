@@ -2,7 +2,6 @@
 #ifdef _WIN32 
 #include <sys/timeb.h>
 #include <ws2tcpip.h>
-#pragma  comment(lib, "ws2_32.lib")
 #else 
 #include <unistd.h>
 #include <sys/select.h>

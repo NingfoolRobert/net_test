@@ -9,7 +9,6 @@
 #define  FD_SETSIZE		1024
 #include <WinSock2.h>
 #include <windows.h>
-#pragma comment(lib,"WS2_32.lib") 
 #define  ngx_sock		SOCKET 
 #else 
 #include <sys/socket.h>

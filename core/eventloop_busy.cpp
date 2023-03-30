@@ -2,7 +2,6 @@
 #include "eventloop.h"
 #include <mutex>
 #include <functional>
-
 //
 int eventloop::loop(int timeout) {
 	_tid = std::this_thread::get_id();
