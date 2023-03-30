@@ -13,6 +13,7 @@
 #include "cmdline.h"
 #include "eventloop.h"
 #include "time.hpp"
+#include "net_helper.h"
 
 ////////////////////////////////////////
 eventloop*	g_loop = nullptr;
@@ -55,6 +56,13 @@ int main(int argc, char* argv[])
 		return -1;
 #endif
 
+	uint32_t ip[10];
+	uint64_t mac[10];
+	int ret = net::helper::get_local_ip(ip, mac, 10);
+	char tmp[16] = { 0 };
+	for (auto i = 0; i < ret; ++i) {
+		info_print("ip:%s, mac:%012llX\n", net::helper::host_to_ip(ip[i], tmp), mac[i]);
+	}
 
 	trace_print("%s\n", __FUNCTION__);
 	info_print("%s\n", __FUNCTION__);
@@ -83,7 +91,7 @@ int main(int argc, char* argv[])
 			return -1;
 		}	
 		
-		if(!conn->connect(net_io::ip_to_host(a.get<std::string>("ip").c_str()), a.get<int>("port"))) {
+		if(!conn->connect(net::helper::ip_to_host(a.get<std::string>("ip").c_str()), a.get<int>("port"))) {
 			return -1;
 		}
 
@@ -150,7 +158,7 @@ void api_apt_cb(ngx_sock fd)
 	conn->release();
 	char ip[16] = { 0 };
 
-	info_print("clit, ip:port=%s:%d\n", net_io::host_to_ip(conn->_ip, ip), conn->_port);
+	info_print("clit, ip:port=%s:%d\n", net::helper::host_to_ip(conn->_ip, ip), conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
@@ -166,7 +174,7 @@ void api_discon(int err, net_io* conn)
 		return ;
 	//
 	char ip[16] = { 0 };
-	info_print("disconnect  ip:port=%s:%d, err:%d\n", net_io::host_to_ip(conn->_ip, ip), conn->_port, err);
+	info_print("disconnect  ip:port=%s:%d, err:%d\n", net::helper::host_to_ip(conn->_ip, ip), conn->_port, err);
 }
 
 bool api_msg_process(net_io* conn, void* data, unsigned int len)
@@ -175,7 +183,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len)
 	if(ret >= 0)
 		return true;
 	char ip[16] = { 0 };
-	error_print("send msg fail. ip:port=%s:%d",net_io::host_to_ip(conn->_ip,ip), conn->_port);
+	error_print("send msg fail. ip:port=%s:%d", net::helper::host_to_ip(conn->_ip,ip), conn->_port);
 	return false;
 }
 

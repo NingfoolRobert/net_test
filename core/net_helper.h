@@ -11,14 +11,19 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 namespace net{
 	//
 	namespace helper{
 		//
-		int get_local_ip(uint32_t* ip,  uint64_t* mac,  size_t& size);
+		int get_local_ip(uint32_t* ip,  uint64_t* mac,  size_t size);
 		//
-		int parse_url(const char* url,  uint32_t* ip, size_t& iplen);
+		int parse_url(const char* url,  uint32_t* ip, size_t iplen);
+		
+		uint32_t	ip_to_host(const char* ip);
+
+		const char* host_to_ip(const uint32_t hostip, char* ip);
 	}
 }
 

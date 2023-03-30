@@ -223,28 +223,6 @@ void net_io::update_event(int ev)
 		_loop->update_event(this, ev);
 }
 
-unsigned int net_io::ip_to_host(const char* ip)
-{
-	unsigned int hostip = 0;
-	char* end;
-	const char* ptr = ip;
-	while (*ptr) {
-		int val = strtol(ptr, &end, 10);
-		hostip <<= 8;
-		hostip += val;
-		if (*end == 0)
-			break;
-		ptr = end + 1;
-	}
-	return hostip;
-}
-
-const char* net_io::host_to_ip(const uint32_t hostip, char* ip)
-{
-	sprintf(ip, "%d.%d.%d.%d", hostip >> 24, (hostip >> 16) & 0xFF, (hostip >> 8) & 0xFF, hostip & 0xFF);
-	return ip;
-}
-
 void net_io::get_sock_name()
 {
 	struct sockaddr_in laddr;

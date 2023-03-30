@@ -84,10 +84,6 @@ public:
 
 	bool		get_sock_opt(int level, int optname, void* optval, int* optlen);
 public:
-	static  unsigned int	ip_to_host(const char* ip);
-	
-	static  const char*		host_to_ip(const uint32_t hostip, char* ip);
-public:
 	void		add_ref(){ ++_ref; }
 	void		release(){if(--_ref == 0) delete this;}
 
