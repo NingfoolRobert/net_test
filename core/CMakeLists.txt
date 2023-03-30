@@ -21,6 +21,7 @@ target_sources(${TARGET_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/eventloop_perf.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/eventloop_epoll.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/net_io.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/net_helper.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_buf.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_core.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_list.cpp 
