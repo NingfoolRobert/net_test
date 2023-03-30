@@ -1,7 +1,7 @@
 #include "eventloop.h"
 #include "log_def.h"
 #include "time.hpp"
-#include <sys/eventfd.h>
+
 #include <exception>
 #include <sstream>
 #include <mutex>
@@ -13,6 +13,7 @@
 #pragma  comment(lib, "ws2_32.lib")
 #else
 #include <unistd.h>
+#include <sys/eventfd.h>
 #endif 
 
 
