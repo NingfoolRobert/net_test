@@ -13,7 +13,7 @@
 
 struct CBizUser::Impl {
 	ngx_core_t				core;
-	net_io			*conn;			//
+	net_io					*conn;			//
 	void					*biz;
 	unsigned int			logoned;		//
 	

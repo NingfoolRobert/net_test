@@ -1,0 +1,20 @@
+
+# this is .gitignore file.
+# 以下是忽略的文件
+
+# Compiled source
+*.dll
+*.exe 
+*.class
+
+# project files
+.idea/
+.vscode/
+
+# OS generated files 
+**/CMakeFiles/*
+**/CMakeCache.txt
+
+#other 
+*.un~
+*.o

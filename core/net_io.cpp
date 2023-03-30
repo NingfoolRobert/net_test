@@ -213,7 +213,7 @@ bool net_io::get_sock_opt(int level, int optname, void* optval, int* optlen)
 #ifdef _WIN32 
 	return getsockopt(_fd, level, optname, (char*)optval, optlen) == 0;
 #else 
-	return getsockopt(_fd, level, optname, optval, static_cast<socklen_t*> optlen) == 0;
+	return getsockopt(_fd, level, optname, optval, reinterpret_cast<socklen_t*>(optlen)) == 0;
 #endif 
 }
 

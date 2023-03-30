@@ -111,7 +111,6 @@ void CBizUser::Impl::async(net_io* conn)
 	if (NULL == conn)
 		return;
 	conn->set_nio();
-	conn->set_tcp_nodelay();
 	core.loop->update_event(conn, EV_READ);
 }
 

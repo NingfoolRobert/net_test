@@ -101,8 +101,6 @@ bool CBizUser::start(const COMMONCFG& cfg)
 	ngx_log_info(_impl->get_log(), "connect server success, ip:port=%s", _impl->core.cfg.url);
 	OnConnect();
 	//
-	_impl->conn->set_nio();
-	_impl->conn->set_tcp_nodelay();
 	_impl->async(_impl->conn);
 	//
 	if(!_impl->logon())
