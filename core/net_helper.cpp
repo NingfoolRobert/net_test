@@ -1,6 +1,7 @@
 #include "net_helper.h"
 #ifndef _WIN32 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/types.h>
 #include <sys/socket.h> 
 #include <sys/ioctl.h> 
@@ -11,6 +12,7 @@
 #include <fcntl.h> 
 #include <errno.h> 
 #include <netdb.h> 
+#include <sys/stat.h>
 #else 
 #include <conio.h>
 #include <assert.h>
@@ -144,12 +146,13 @@ namespace net{
 			//
 			size_t count = 0;
 			char szTmp[256];
-			struct hostent* hptr;
-			struct sockaddr_in addr;
 			strcpy(szTmp, url);
 			char* pSave = NULL;
 			const char* splite = ":;";
 			char* ptr = ngx_strtok(szTmp, splite, &pSave);
+#ifdef _WIN32 
+			struct hostent* hptr;
+			struct sockaddr_in addr;
 			while (ptr)
 			{
 				char* pTmp = strrchr(ptr, ':');
@@ -177,6 +180,26 @@ namespace net{
 
 				ptr = ngx_strtok(NULL, splite, &pSave);
 			}
+#else 
+			struct addrinfo hints;
+			struct addrinfo *res; 
+			memset(&hints, 0, sizeof(struct addrinfo));
+			hints.ai_family = AF_INET;
+			hints.ai_flags = AI_PASSIVE;
+			hints.ai_protocol = 0;
+			hints.ai_socktype = SOCK_STREAM;
+			
+			while(ptr){
+				int ret = getaddrinfo(ptr, NULL, &hints, &res);
+				if(ret == -1)
+					return 0;
+				for(auto  cur = res; cur; cur = cur->ai_next){
+					struct sockaddr_in* addr = (struct sockaddr_in*)cur->ai_addr;
+					ip[count++] = ntohl(addr->sin_addr.s_addr);
+				}
+				ptr = ngx_strtok(nullptr, splite, &pSave);
+			}
+#endif 
 			return count;
 		}
 
