@@ -123,22 +123,36 @@ int net_io::recv(char* data, unsigned int len)
 	return ::recv(_fd, data, len, 0);
 }
 
-bool net_io::set_tcp_linger()
+void net_io::close()
 {
-	struct linger so_linger;
-	so_linger.l_onoff = 1;
-	so_linger.l_linger = 30;
-#ifdef _WIN32 
-	return setsockopt(_fd, SOL_SOCKET, SO_LINGER, (char*)&so_linger, sizeof(so_linger)) == 0;
+#ifdef _WIN32
+	if (_fd != INVALID_SOCKET) {
+		::closesocket(_fd);
+		_fd = INVALID_SOCKET;
 #else 
-	return setsockopt(_fd, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger)) == 0;
+	if (_fd < 0) {
+		::close(_fd);
+		_fd = -1;
 #endif 
-}
+	}
+	}
 
-bool net_io::set_tcp_nodelay()
+void net_io::terminate()
 {
-	int enable = 1;
-	return setsockopt(_fd, IPPROTO_IP, TCP_NODELAY, (char*)&enable, sizeof(enable)) == 0;
+	if (_brk_tm) return;
+	//
+	_brk_tm = time(NULL);
+	close();
+	//
+	if (_loop && _ev != EV_DELETED)
+	{
+		update_event(EV_DELETED);
+		add_ref();
+		_loop->add_task(std::bind([this]() {
+			OnClose();
+			release();
+		}));
+	}
 }
 
 bool net_io::set_nio(int mode /*= 1*/)
@@ -152,16 +166,10 @@ bool net_io::set_nio(int mode /*= 1*/)
 	return true;
 }
 
-
 bool net_io::set_reuse_addr(bool flag /*= 1*/)
 {
 	int opt = flag ? 1 : 0;
-#ifdef _WIN32 
-	::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
-#else 
-	::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, static_cast<socklen_t>(sizeof(opt)));
-#endif 
-	return true;
+	return  set_sock_opt(SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 }
 
 bool net_io::set_reuse_port(bool flag /*= 1*/)
@@ -172,38 +180,6 @@ bool net_io::set_reuse_port(bool flag /*= 1*/)
 #else
 	return true;
 #endif 
-}
-
-void net_io::close()
-{
-#ifdef _WIN32
-	if(_fd != INVALID_SOCKET){
-	::closesocket(_fd);
-	_fd = INVALID_SOCKET;
-#else 
-	if(_fd < 0){
-	::close(_fd);
-	_fd = -1;
-#endif 
-	}
-}
-
-void net_io::terminate()
-{
-	if (_brk_tm) return;
-	//
-	_brk_tm = time(NULL);
-	close();	
-	//
-	if (_loop && _ev != EV_DELETED)
-	{
-		update_event(EV_DELETED);
-		add_ref();
-		_loop->add_task(std::bind([this]() {
-			OnClose();
-			release();
-		}));
-	}
 }
 //
 bool net_io::OnMessage(void* data, unsigned int len)
@@ -223,13 +199,31 @@ void net_io::OnClose()
 	}
 }
 
+bool net_io::set_sock_opt(int level, int optname, void* optval, int optlen)
+{
+#ifdef _WIN32 
+	return setsockopt(_fd, level, optname, (const char*)optval, optlen) == 0;
+#else 
+	return setsockopt(_fd, level, optname, optval, static_cast<socklen_t>(optlen)) == 0;
+#endif 
+}
+
+bool net_io::get_sock_opt(int level, int optname, void* optval, int* optlen)
+{
+#ifdef _WIN32 
+	return getsockopt(_fd, level, optname, (char*)optval, optlen) == 0;
+#else 
+	return getsockopt(_fd, level, optname, optval, static_cast<socklen_t*> optlen) == 0;
+#endif 
+}
+
 void net_io::update_event(int ev)
 {
 	if (_loop)
 		_loop->update_event(this, ev);
 }
 
-unsigned int net_io::string2hostip(const char* ip)
+unsigned int net_io::ip_to_host(const char* ip)
 {
 	unsigned int hostip = 0;
 	char* end;
@@ -243,6 +237,12 @@ unsigned int net_io::string2hostip(const char* ip)
 		ptr = end + 1;
 	}
 	return hostip;
+}
+
+const char* net_io::host_to_ip(const uint32_t hostip, char* ip)
+{
+	sprintf(ip, "%d.%d.%d.%d", hostip >> 24, (hostip >> 16) & 0xFF, (hostip >> 8) & 0xFF, hostip & 0xFF);
+	return ip;
 }
 
 void net_io::get_sock_name()
@@ -262,10 +262,4 @@ void net_io::get_peer_name()
 	getpeername(_fd, (struct sockaddr*)&paddr, &slen);
 	_ip = ntohl(paddr.sin_addr.s_addr);
 	_port = ntohs(paddr.sin_port);
-}
-	
-char* net_io::get_ip(char*  ip)
-{
-	sprintf(ip, "%d.%d.%d.%d", _ip >> 24, (_ip >> 16) & 0xFF, (_ip >> 8) & 0xFF, _ip & 0xFF);
-	return ip;
 }

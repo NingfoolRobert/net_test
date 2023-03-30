@@ -40,7 +40,7 @@ void ngx_acceptor::OnRecv()
 	}
 	// 
 	if(_cb)
-		_cb(cli);	
+		_cb(cli, caddr);	
 }
 		
 bool ngx_acceptor::init(unsigned int host_ip, unsigned short port, PACCEPTCALLBACK cb)

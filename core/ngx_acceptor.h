@@ -10,7 +10,7 @@
 
 #include "net_io.h"
 
-typedef  void(*PACCEPTCALLBACK)(ngx_sock fd);
+typedef  void(*PACCEPTCALLBACK)(ngx_sock, struct sockaddr_in&);
 
 
 class ngx_acceptor:

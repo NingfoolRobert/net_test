@@ -1,11 +1,11 @@
-#ifndef _NET_CLINET_BASE_H_
-#define _NET_CLINET_BASE_H_
+#ifndef _NET_IO_H_
+#define _NET_IO_H_
 
 #include <stdio.h> 
 #include <stdlib.h>
 #include <atomic>
 #ifdef _WIN32 
-//#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #define  FD_SETSIZE		1024
 #include <WinSock2.h>
 #include <windows.h>
@@ -48,8 +48,6 @@ public:
 
 	virtual  void	OnSend() {}
 
-	virtual  size_t wait_sndmsg_size() { return 0; }
-
 	virtual int 	send_msg(const char* pData, unsigned int nMsgLen) { return 0; }
 public:
 	ngx_sock	create(int domain = AF_INET, int socket_type = SOCK_STREAM, int protocol_type = IPPROTO_IP);
@@ -64,10 +62,10 @@ public:
 	//
 	int			recv(char* data, unsigned int len);
 
-	bool		set_tcp_linger();
+	void		close();
 
-	bool		set_tcp_nodelay();
-
+	void		terminate();
+public:
 	bool		set_nio(int mode = 1);
 
 	bool		set_reuse_addr(bool flag = 1);
@@ -77,21 +75,18 @@ public:
 	void		get_sock_name();
 	
 	void		get_peer_name();
-	
-	char*		get_ip(char*  ip);
-	
-	void		close();
-	
-	void		terminate();
 
 	bool		OnMessage(void* data, unsigned int len);
 
 	void		OnClose();
 
+	bool		set_sock_opt(int level, int optname, void* optval, int optlen);
+
+	bool		get_sock_opt(int level, int optname, void* optval, int* optlen);
 public:
-	static  unsigned int  string2hostip(const char* ip);
+	static  unsigned int	ip_to_host(const char* ip);
 	
-	static  const char* hostip2string();
+	static  const char*		host_to_ip(const uint32_t hostip, char* ip);
 public:
 	void		add_ref(){ ++_ref; }
 	void		release(){if(--_ref == 0) delete this;}
@@ -116,5 +111,5 @@ private:
 };
 
 
-#endif
+#endif //_NET_IO_H_
 

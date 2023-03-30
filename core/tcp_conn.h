@@ -22,6 +22,10 @@ public:
 	virtual int	   send_msg(const char* pData, unsigned int nMsgLen);
 
 	virtual size_t  wait_sndmsg_size();
+public:
+	bool		set_tcp_linger();
+
+	bool		set_tcp_nodelay(int enable = 1);
 private:
 	PMSGLENPARSEFUNC		_msg_head_fnc;
 	size_t					_head_len;

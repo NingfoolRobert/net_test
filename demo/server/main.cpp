@@ -24,7 +24,7 @@ BOOL WINAPI ConsoleHandler(DWORD cEvent);
 #endif 
 bool init();
 void uninit();
-void api_apt_cb(ngx_sock fd);
+void api_apt_cb(ngx_sock fd, struct sockaddr_in& addr);
 size_t msg_head_parse(void* data, size_t len);
 void api_discon(int err, net_io* conn);
 bool api_msg_process(net_io* conn, void* data, unsigned int len);
@@ -91,7 +91,6 @@ int main(int argc, char* argv[])
  	return 0;
 }
 
-
 bool init()
 {
 	return true;
@@ -102,7 +101,7 @@ void uninit()
 
 }
 
-void api_apt_cb(ngx_sock fd)
+void api_apt_cb(ngx_sock fd, struct sockaddr_in& addr)
 {
 	tcp_conn* conn = new tcp_conn(24,msg_head_parse, api_msg_process, api_discon);	
 	if(nullptr == conn)
@@ -112,16 +111,13 @@ void api_apt_cb(ngx_sock fd)
 	}
 	//	
 	conn->_fd = fd;
-	conn->set_nio();
 	conn->set_tcp_nodelay();
 	conn->set_tcp_linger();
 	conn->get_peer_name();
 	g_loop->update_event(conn, EV_READ);
 	conn->release();
 	char ip[16] = { 0 };
-	conn->get_ip(ip);
-
-	info_print("clit, ip:port=%s:%d\n", ip, conn->_port);
+	info_print("clit, ip:port=%s:%d\n", net_io::host_to_ip(conn->_ip, ip), conn->_port);
 }
 //
 size_t msg_head_parse(void* data, size_t len)
@@ -138,7 +134,7 @@ void api_discon(int err, net_io* conn)
 		return ;
 	//
 	char ip[16] = { 0 };
-	info_print("disconnect  ip:port=%s:%d, err:%d\n", conn->get_ip(ip), conn->_port, err);
+	info_print("disconnect  ip:port=%s:%d, err:%d\n",net_io::host_to_ip(conn->_ip, ip), conn->_port, err);
 }
 
 bool api_msg_process(net_io* conn, void* data, unsigned int len)
@@ -148,7 +144,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len)
 		return true;
 	//
 	char ip[16] = { 0 };
-	error_print("send msg fail. ip:port=%s:%d, ret:%d\n", conn->get_ip(ip), conn->_port, ret);
+	error_print("send msg fail. ip:port=%s:%d, ret:%d\n", net_io::host_to_ip(conn->_ip, ip), conn->_port, ret);
 	return false;
 }
 

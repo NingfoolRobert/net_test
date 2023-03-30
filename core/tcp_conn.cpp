@@ -206,5 +206,15 @@ size_t tcp_conn::wait_sndmsg_size()
 	return ngx_queue_size(_wait_snds);
 }
 
+bool tcp_conn::set_tcp_linger()
+{
+	struct linger so_linger;
+	so_linger.l_onoff = 1;
+	so_linger.l_linger = 30;
+	return set_sock_opt(SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
+}
 
-
+bool tcp_conn::set_tcp_nodelay(int enable /*= 1*/)
+{
+	return set_sock_opt(IPPROTO_IP, TCP_NODELAY, (char*)&enable, sizeof(enable));
+}
