@@ -61,7 +61,11 @@ int main(int argc, char* argv[])
 	int ret = net::helper::get_local_ip(ip, mac, 10);
 	char tmp[16] = { 0 };
 	for (auto i = 0; i < ret; ++i) {
+#ifdef _WIN32 
 		info_print("ip:%s, mac:%012llX\n", net::helper::host_to_ip(ip[i], tmp), mac[i]);
+#else 
+		info_print("ip:%s, mac:%012lX\n", net::helper::host_to_ip(ip[i], tmp), mac[i]);
+#endif 
 	}
 
 	trace_print("%s\n", __FUNCTION__);
