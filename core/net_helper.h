@@ -23,7 +23,7 @@ namespace net{
 		
 		uint32_t	ip_to_host(const char* ip);
 
-		const char* host_to_ip(const uint32_t hostip, char* ip);
+		const char* host_to_ip(const uint32_t host, char* ip);
 	}
 }
 

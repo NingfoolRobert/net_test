@@ -76,19 +76,32 @@ void ngx_buf_free(ngx_pool_t *pool, ngx_buf_t* buf)
 
 void ngx_buf_add_ref(ngx_buf_t* buf)
 {
-#ifndef _WIN32 
-	buf->ref++;
-#else 
+#ifdef _WIN32 
 	InterlockedIncrement(&buf->ref);
+#else 
+	__asm__ __volatile__ (
+#ifdef __x86_64_
+			"lock; addq $1, %0 \n"
+#else 
+			"lock; addl $1, %0 \n"
+#endif 
+			:"=m"(buf->ref)
+			);
 #endif 
 }
 
 void ngx_buf_release(ngx_pool_t* pool, ngx_buf_t* buf)
 {
-#ifndef _WIN32 
-	buf->ref--;
-#else 
+#ifdef _WIN32 
 	InterlockedDecrement(&buf->ref);
+#else 
+			
+	size_t old;
+	__asm__ __volatile__ (
+			"lock; xadd  %2, %0	\n"
+			: "=m"(buf->ref), "=r"(old)
+			: "1"(-1L) : "memory"																		
+			);	
 #endif 
 	if (buf->ref == 0) {
 		ngx_buf_free(pool, buf);
