@@ -30,4 +30,5 @@ target_sources(${TARGET_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/ngx_acceptor.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/eventthread.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/time.cpp 
+	${CMAKE_CURRENT_SOURCE_DIR}/simple_token.cpp 
 	)
