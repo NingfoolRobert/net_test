@@ -6,6 +6,7 @@
 simple_token::simple_token(uint32_t rate)
 {
 	_rate = detail::time_unit::NANOSECONDS_PER_SECOND / rate;
+	_time_point = 0;
 }
 
 simple_token::~simple_token()
