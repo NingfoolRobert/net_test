@@ -45,6 +45,14 @@ namespace detail{
 			static int64_t 	now();
 			
 			static  void	reset();
+			
+#ifndef _WIN32 
+			static	inline  uint64_t  rdtsc(void){
+				uint64_t hi, lo;
+				__asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+				return  lo | (hi << 32);
+			}
+#endif 
 		private:
 			int64_t	start_time_since_epoch_;
 			int64_t	start_time_steady_;
