@@ -3,7 +3,7 @@
 #include <chrono>
 
 
-simple_token::simple_token(uint32_t rate)
+simple_token::simple_token(uint64_t rate)
 {
 	_rate = detail::time_unit::NANOSECONDS_PER_SECOND / rate;
 	_time_point = 0;

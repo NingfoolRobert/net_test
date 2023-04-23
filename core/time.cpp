@@ -18,9 +18,5 @@ namespace detail{
 		return get_instance().start_time_since_epoch_ + d;	
 	}
 	
-	void time::reset(){
-		auto now = std::chrono::system_clock::now();
-		get_instance().start_time_steady_ = std::chrono::steady_clock::now().time_since_epoch().count();
-		get_instance().start_time_since_epoch_ = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-	}
+	
 }

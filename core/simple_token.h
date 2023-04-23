@@ -9,13 +9,13 @@
 class simple_token
 {
 public:
-	explicit simple_token(uint32_t rate);
+	explicit simple_token(uint64_t rate);
 	~simple_token();
 	
 	void wait();
 
 private:
-	uint32_t		_rate;
+	uint64_t		_rate;
 	uint64_t		_time_point;
 };
 
