@@ -32,6 +32,7 @@ bool api_msg_process(net_io* conn, void* data, unsigned int len);
 ///////////////////////////////////////
 int main(int argc, char* argv[])
 {
+	auto t = detail::time::rdtsc();
 	g_loop = new eventloop;
 	cmdline::parser a;
 	a.add<std::string>("config", 'c', "configure file full name [Y]", false, "./gateway.cfg");

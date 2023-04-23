@@ -127,7 +127,7 @@ void net_io::close()
 {
 #ifdef _WIN32
 	if (_fd != INVALID_SOCKET) {
-		shutdown(_fd, SD_BOTH);
+		::shutdown(_fd, SD_BOTH);
 		::closesocket(_fd);
 		_fd = INVALID_SOCKET;
 #else 
