@@ -1,5 +1,5 @@
 /**
- * @file	spinlock.hpp
+ * @file	spinlock.h
  * @brief
  * @author	ningbf
  * @version 1.0.0
@@ -11,6 +11,7 @@
 #include <atomic>
 #include <exception>
 #include <sched.h>
+#include <immintrin.h>
 
 class nulllock {
     nulllock() = default;

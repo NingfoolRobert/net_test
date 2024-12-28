@@ -7,7 +7,7 @@
 #include <thread>
 
 #include "net_io.h"
-#include "spinlock.hpp"
+#include "spinlock.h"
 
 typedef void(*PTIMERCALLBACK)(void*);
 struct timer_info_t {
