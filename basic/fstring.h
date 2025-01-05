@@ -1,6 +1,6 @@
 /**
  * @file fstring.h
- * @brief  string of fixed length 
+ * @brief  string of fixed length
  * @author bfning
  * @version 0.1
  * @date 2025-01-01
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -16,45 +17,45 @@
 namespace detail {
 
 template <size_t N>
-class fstring_t {
+class fstring {
 public:
-    fstring_t() {
+    fstring() {
         memset(data_, 0, N);
     }
 
-    fstring_t(const char *other) {
+    fstring(const char *other) {
         if (other) {
             strncpy(data_, other, N - 1);
         }
         data_[N - 1] = 0;
     }
 
-    fstring_t(const std::string &other) {
+    fstring(const std::string &other) {
         strncpy(data_, other.c_str(), N - 1);
         data_[N - 1] = 0;
     }
 
-    fstring_t(const std::string_view &other) {
+    fstring(const std::string_view &other) {
         strncpy(data_, other.data(), N - 1);
         data_[N - 1] = 0;
     }
 
-    fstring_t(const char ch, size_t n) {
+    fstring(const char ch, size_t n) {
         for (auto i = 0u; i < n && i < N; ++i) {
             data_[i] = ch;
         }
         data_[N - 1] = 0;
     }
 
-    fstring_t(const fstring_t &rhs) {
+    fstring(const fstring &rhs) {
         memcpy(data_, rhs.data_, N);
     }
     //
-    fstring_t(fstring_t &&rhs) {
+    fstring(fstring &&rhs) {
         memmove(data_, rhs.data_, N);
     }
 
-    fstring_t &operator=(const char *other) {
+    fstring &operator=(const char *other) {
         if (other) {
             strncpy(data_, other, N - 1);
         }
@@ -82,15 +83,15 @@ public:
         return strcmp(data_, other) > 0;
     }
 
-    bool operator==(const fstring_t &rhs) {
+    bool operator==(const fstring &rhs) {
         return memcmp(data_, rhs.data_, N) == 0;
     }
 
-    bool operator<(const fstring_t &rhs) {
+    bool operator<(const fstring &rhs) {
         return memcmp(data_, rhs.data_, N) < 0;
     }
 
-    bool operator>(const fstring_t &rhs) {
+    bool operator>(const fstring &rhs) {
         return memcmp(data_, rhs.data_, N);
     }
 
@@ -110,6 +111,9 @@ public:
     }
 
     char &operator[](size_t idx) {
+        if (idx >= N) {
+            throw std::runtime_error("fstring::operator[] idx invalid(exceed capibility)");
+        }
         return data_[idx];
     }
 
@@ -137,7 +141,7 @@ public:
         return data_;
     }
 
-    fstring_t &append(const void *data, size_t size) {
+    fstring &append(const void *data, size_t size) {
         if (data && N) {
             size_t len = length();
             memcpy(data_ + len, data, size <= N - len ? size : N - len);
@@ -147,14 +151,14 @@ public:
 
     char at(size_t idx) {
         if (idx >= N) {
-            return {};
+            throw std::runtime_error("fstring::at, idx invalid: exceed  size");
         }
         return data_[idx];
     }
 
     std::string substr(size_t idx, size_t n) {
         if (idx > N) {
-            return {};
+            throw std::runtime_error("fstring::substr, idx invalid(exceed size)");
         }
         return std::string(data_ + idx, idx + n - 1 <= N ? n : N - idx);
     }
@@ -164,8 +168,8 @@ private:
 };
 
 //
-template<size_t N>
-std::ostream &operator<<(std::ostream &out, fstring_t<N> &rhs) {
+template <size_t N>
+std::ostream &operator<<(std::ostream &out, fstring<N> &rhs) {
     out << rhs.to_string();
     return out;
 }

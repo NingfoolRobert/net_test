@@ -10,8 +10,8 @@
 
 #include <atomic>
 #include <exception>
-#include <sched.h>
 #include <immintrin.h>
+#include <sched.h>
 
 class nulllock {
     nulllock() = default;
@@ -39,8 +39,7 @@ public:
     spinlock &operator=(const spinlock &) = delete;
     //
     void lock() {
-        while (flag_.test_and_set(std::memory_order_acquire))
-        {
+        while (flag_.test_and_set(std::memory_order_acquire)) {
             sched_yield();
         }
     }

@@ -3,12 +3,12 @@
 #include <assert.h>
 
 struct person_t  {
-  detail::fstring_t<16>     name;
+  detail::fstring<16>     name;
   int       age;
 };
 
 int main() {
-    detail::fstring_t<1024> data;
+    detail::fstring<1024> data;
 
     data.append("testdata", 10);
 
@@ -28,5 +28,7 @@ int main() {
     std::cout << data.c_str() << std::endl;
     
     std::cout << data << std::endl;
+    
+    char ch = data[1024];
     return 0;
 }
