@@ -117,11 +117,18 @@ public:
         return data_[idx];
     }
 
-    std::string to_string() {
-        return data_;
+    const char &operator[](size_t idx) const {
+        if (idx >= N) {
+            throw std::runtime_error("fstring::operator[] idx invalid(exceed capibility)");
+        }
+        return data_[idx];
     }
 
-    size_t cap() {
+    std::string to_string() {
+        return std::string(data_, N);
+    }
+
+    size_t capability() {
         return N;
     }
     //
@@ -149,7 +156,14 @@ public:
         return *this;
     }
 
-    char at(size_t idx) {
+    char &at(size_t idx) {
+        if (idx >= N) {
+            throw std::runtime_error("fstring::at, idx invalid: exceed  size");
+        }
+        return data_[idx];
+    }
+
+    const char &at(size_t idx) const {
         if (idx >= N) {
             throw std::runtime_error("fstring::at, idx invalid: exceed  size");
         }
@@ -163,6 +177,22 @@ public:
         return std::string(data_ + idx, idx + n - 1 <= N ? n : N - idx);
     }
 
+    bool empty() const {
+        return data_[0] == 0;
+    }
+
+    void swap(fstring &rhs) {
+        int64_t *lhs_data = data_;
+        int64_t *rhs_data = rhs.data_;
+        for (auto i = 0; i < N / 8; ++i) {
+            swap(lhs_data[i], rhs_data[i]);
+        }
+        //
+        for (auto i = N / 8 * 8; i < N; ++i) {
+            swap(data_[i], rhs.data_[i]);
+        }
+    }
+
 private:
     char data_[N];
 };
@@ -173,4 +203,5 @@ std::ostream &operator<<(std::ostream &out, fstring<N> &rhs) {
     out << rhs.to_string();
     return out;
 }
+
 }  // namespace detail
