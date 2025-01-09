@@ -124,7 +124,7 @@ public:
         return data_[idx];
     }
 
-    std::string to_string() {
+    std::string str() {
         return std::string(data_, N);
     }
 
