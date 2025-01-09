@@ -20,7 +20,8 @@ template <size_t N>
 class fstring {
 public:
     fstring() {
-        memset(data_, 0, N);
+      data_[0] = 0;
+      data_[N - 1] = 0;
     }
 
     fstring(const char *other) {
@@ -44,7 +45,7 @@ public:
         for (auto i = 0u; i < n && i < N; ++i) {
             data_[i] = ch;
         }
-        data_[N - 1] = 0;
+        data_[n == 0 ? N - 1 : n - 1] = 0;
     }
 
     fstring(const fstring &rhs) {
@@ -125,10 +126,10 @@ public:
     }
 
     std::string str() {
-        return std::string(data_, N);
+      return data_;
     }
 
-    size_t capability() {
+    size_t capacity() {
         return N;
     }
     //
@@ -153,6 +154,8 @@ public:
             size_t len = length();
             memcpy(data_ + len, data, size <= N - len ? size : N - len);
         }
+        
+        
         return *this;
     }
 
@@ -200,8 +203,23 @@ private:
 //
 template <size_t N>
 std::ostream &operator<<(std::ostream &out, fstring<N> &rhs) {
-    out << rhs.to_string();
+    out << rhs.str();
     return out;
+}
+
+template <size_t N1, size_t N2>
+bool operator==(const fstring<N1> &lhs, const fstring<N2> &rhs){ 
+    return lhs.length() == rhs.length() && strcmp(lhs.data(), rhs.data()) == 0;
+}
+
+template <size_t N>
+bool operator==(const std::string &lhs, const fstring<N> &rhs) {
+    return lhs.length() == rhs.length() && strcmp(lhs.data(), rhs.data()) == 0;
+}
+
+template <size_t N>
+bool operator==(const char *lhs, const fstring<N> &rhs){
+    return strcmp(lhs, rhs.c_str()) == 0;
 }
 
 }  // namespace detail
