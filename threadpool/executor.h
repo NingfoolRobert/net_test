@@ -13,6 +13,7 @@
 #include <functional>
 #include <vector>
 
+namespace detail {
 using task_t = std::function<void()>;
 
 class executor;
@@ -46,27 +47,33 @@ public:
     //
     bool loop(int timeout);
     //
+    void stop();
+
 private:
     void process_task();
 
     void process_add(task_context_t *context);
 
     void process_rmv(task_context_t *context);
-
+    //
     void process_clr();
+    //
     static int64_t fetch_id() {
         return ++task_id_;
     }
 
 public:
-    static std::atomic_int64_t  task_id_;
+    static std::atomic_int64_t task_id_;
+
 private:
     spinlock lck_;
     std::vector<task_context_t *> tasks_;
     std::vector<task_operator_t> task_ops_;
     size_t cap_;
     size_t task_size_;
+    bool running_{true};
 
 private:
     BatchSynchronizer<bool> syncer_;
 };
+}  // namespace detail

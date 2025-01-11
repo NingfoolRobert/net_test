@@ -2,17 +2,21 @@
 #include <mutex>
 #include <unistd.h>
 
+namespace detail {
 std::atomic_int64_t executor::task_id_ = 0;
 executor::executor() : cap_(256), task_size_(0) {
     tasks_.resize(cap_);
 }
 executor::~executor() {
+    process_clr();
 }
 
 bool executor::loop(int timeout) {
-    process_task();
-    if(timeout){
-      usleep(timeout);
+    while (running_) {
+        process_task();
+        if (timeout) {
+            usleep(timeout);
+        }
     }
     return true;
 }
@@ -102,6 +106,18 @@ void executor::process_rmv(task_context_t *context) {
         }
     }
 }
-
+//
 void executor::process_clr() {
+    std::unique_lock<spinlock> _(lck_);
+    for (auto i = 0u; i < task_size_; ++i) {
+        auto id = tasks_[i]->id;
+        delete tasks_[i];
+        tasks_[i] = nullptr;
+        syncer_.notify(id, true);
+    }
 }
+//
+void executor::stop() {
+    running_ = false;
+}
+}  // namespace detail
