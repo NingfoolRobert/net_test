@@ -14,18 +14,16 @@ namespace detail {
 template <typename T, typename C = std::less<T>>
 class bheap {
 public:
-    struct bheap_context {
+    struct bheap_context{
         size_t idx;
         T val;
     };
 
-public:
-    bheap() {
-    }
+    bheap() = default;
     //
     ~bheap() {
-        while (empty()) {
-            auto t = pop();
+        while (!empty()) {
+            pop();
         }
     }
     //

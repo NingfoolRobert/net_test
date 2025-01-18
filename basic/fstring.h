@@ -20,8 +20,8 @@ template <size_t N>
 class fstring {
 public:
     fstring() {
-      data_[0] = 0;
-      data_[N - 1] = 0;
+        data_[0] = 0;
+        data_[N - 1] = 0;
     }
 
     fstring(const char *other) {
@@ -126,7 +126,7 @@ public:
     }
 
     std::string str() {
-      return data_;
+        return data_;
     }
 
     size_t capacity() {
@@ -154,8 +154,7 @@ public:
             size_t len = length();
             memcpy(data_ + len, data, size <= N - len ? size : N - len);
         }
-        
-        
+
         return *this;
     }
 
@@ -178,6 +177,26 @@ public:
             throw std::runtime_error("fstring::substr, idx invalid(exceed size)");
         }
         return std::string(data_ + idx, idx + n - 1 <= N ? n : N - idx);
+    }
+    //
+    static constexpr auto npos{static_cast<size_t>(-1)};
+
+    size_t find_first_of(const char ch, size_t off = 0) {
+        for (auto i = off; i < N; ++i) {
+            if (data_[off] == ch) {
+                return off;
+            }
+        }
+        return npos;
+    }
+    
+    size_t  find_first_not_of(const char ch, size_t off = 0) {
+      for(auto i = off; i < N; ++i) {
+        if(data_[off] != ch) {
+          return off;
+        }
+      }
+      return npos;
     }
 
     bool empty() const {
@@ -208,7 +227,7 @@ std::ostream &operator<<(std::ostream &out, fstring<N> &rhs) {
 }
 
 template <size_t N1, size_t N2>
-bool operator==(const fstring<N1> &lhs, const fstring<N2> &rhs){ 
+bool operator==(const fstring<N1> &lhs, const fstring<N2> &rhs) {
     return lhs.length() == rhs.length() && strcmp(lhs.data(), rhs.data()) == 0;
 }
 
@@ -218,7 +237,7 @@ bool operator==(const std::string &lhs, const fstring<N> &rhs) {
 }
 
 template <size_t N>
-bool operator==(const char *lhs, const fstring<N> &rhs){
+bool operator==(const char *lhs, const fstring<N> &rhs) {
     return strcmp(lhs, rhs.c_str()) == 0;
 }
 

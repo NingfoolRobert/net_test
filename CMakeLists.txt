@@ -59,3 +59,8 @@ add_subdirectory(example)
 add_subdirectory(test)
 add_subdirectory(third_party)
 add_subdirectory(demo)
+add_subdirectory(basic)
+
+
+enable_testing()
+
