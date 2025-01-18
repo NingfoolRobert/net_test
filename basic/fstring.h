@@ -189,14 +189,14 @@ public:
         }
         return npos;
     }
-    
-    size_t  find_first_not_of(const char ch, size_t off = 0) {
-      for(auto i = off; i < N; ++i) {
-        if(data_[off] != ch) {
-          return off;
+
+    size_t find_first_not_of(const char ch, size_t off = 0) {
+        for (auto i = off; i < N; ++i) {
+            if (data_[off] != ch) {
+                return off;
+            }
         }
-      }
-      return npos;
+        return npos;
     }
 
     bool empty() const {
@@ -213,6 +213,10 @@ public:
         for (auto i = N / 8 * 8; i < N; ++i) {
             swap(data_[i], rhs.data_[i]);
         }
+    }
+
+    operator bool() const {
+        return !empty();
     }
 
 private:
