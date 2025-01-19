@@ -18,13 +18,12 @@ public:
         data_[0] = 0;
     }
     ~FixedBuffer() = default;
-    
-    FixedBuffer(const FixedBuffer& rhs) {
-      head_ = rhs.head_;
-      tail_ = rhs.tail_;
-      memcpy(data_, rhs.data_, N);
+
+    FixedBuffer(const FixedBuffer &rhs) {
+        head_ = rhs.head_;
+        tail_ = rhs.tail_;
+        memcpy(data_, rhs.data_, N);
     }
-    
 
     size_t capacity() {
         return N;
@@ -43,7 +42,11 @@ public:
     }
 
     char *peek(size_t off) {
-        return data_ + head_ + off;
+        if (head_ + off > tail_) {
+            return nullptr;
+        }
+        head_ += off;
+        return data_ + head_;
     }
 
     void shrink_to_fit() {
@@ -70,17 +73,8 @@ public:
         return true;
     }
 
-    //
-    void produce(size_t len) {
+    void add_data_len(size_t len) {
         tail_ += len;
-    }
-
-    void consume(size_t len) {
-        if (head_ + len > tail_) {
-            return;
-        }
-        //
-        head_ += len;
     }
 
 private:
