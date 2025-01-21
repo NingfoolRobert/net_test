@@ -16,30 +16,30 @@
 namespace detail {
 using task_t = std::function<void()>;
 
-class executor;
-
-//
-struct task_context_t {
-    int64_t id;
-    task_t task;
-    executor *exec;
-};
-//
-enum OperateTypeEnum : uint8_t
-{
-    ADD,
-    RMV,
-    CLR,
-};
-struct task_operator_t {
-    OperateTypeEnum op;
-    task_context_t *task_context;
-};
-
-class executor {
+class Executor {
 public:
-    executor();
-    ~executor();
+    //
+    struct task_context_t {
+        int64_t id;
+        task_t task;
+        Executor *exec;
+    };
+
+    //
+    enum OperateTypeEnum : uint8_t
+    {
+        ADD,
+        RMV,
+        CLR,
+    };
+    struct task_operator_t {
+        OperateTypeEnum op;
+        task_context_t *task_context;
+    };
+
+public:
+    Executor();
+    ~Executor();
 
     bool add_task(task_context_t *&context, task_t &&task);
     //
@@ -76,4 +76,7 @@ private:
 private:
     BatchSynchronizer<bool> syncer_;
 };
+
+using executor_context_t  = Executor::task_context_t;
+using executor_t = Executor;
 }  // namespace detail

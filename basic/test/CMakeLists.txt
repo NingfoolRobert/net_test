@@ -12,5 +12,4 @@ add_executable(${TARGET_NAME} test_fstring.cpp
 target_link_libraries(${TARGET_NAME} PRIVATE gtest gtest_main)
 
 
-enable_testing()
-add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME}  ${PROJECT_NAME}_test  --gtest_filter=fstring)
+add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})

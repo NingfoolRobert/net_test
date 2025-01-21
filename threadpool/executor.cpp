@@ -3,25 +3,26 @@
 #include <unistd.h>
 
 namespace detail {
-std::atomic_int64_t executor::task_id_ = 0;
-executor::executor() : cap_(256), task_size_(0) {
+std::atomic_int64_t Executor::task_id_ = 0;
+//
+Executor::Executor() : cap_(256), task_size_(0) {
     tasks_.resize(cap_);
 }
-executor::~executor() {
+Executor::~Executor() {
     process_clr();
 }
 
-bool executor::loop(int timeout) {
+bool Executor::loop(int timeout) {
     while (running_) {
         process_task();
-        if (timeout) {
+        if (timeout > 0) {
             usleep(timeout);
         }
     }
     return true;
 }
 
-bool executor::add_task(task_context_t *&cookie, task_t &&task) {
+bool Executor::add_task(task_context_t *&cookie, task_t &&task) {
 
     auto task_context = new task_context_t();
     task_context->exec = this;
@@ -35,7 +36,7 @@ bool executor::add_task(task_context_t *&cookie, task_t &&task) {
     return true;
 }
 
-void executor::rmv_task(task_context_t *context) {
+void Executor::rmv_task(task_context_t *context) {
     if (nullptr == context) {
         return;
     }
@@ -48,7 +49,7 @@ void executor::rmv_task(task_context_t *context) {
     syncer_.wait(context->id);
 }
 
-void executor::process_task() {
+void Executor::process_task() {
 
     std::vector<task_operator_t> task_ops;
     {
@@ -78,7 +79,7 @@ void executor::process_task() {
     }
 }
 
-void executor::process_add(task_context_t *context) {
+void Executor::process_add(task_context_t *context) {
     std::unique_lock<spinlock> _(lck_);
     if (task_size_ < cap_) {
         tasks_[task_size_] = context;
@@ -89,7 +90,7 @@ void executor::process_add(task_context_t *context) {
     task_size_++;
 }
 
-void executor::process_rmv(task_context_t *context) {
+void Executor::process_rmv(task_context_t *context) {
     std::unique_lock<spinlock> _(lck_);
     if (nullptr == context) {
         return;
@@ -107,7 +108,7 @@ void executor::process_rmv(task_context_t *context) {
     }
 }
 //
-void executor::process_clr() {
+void Executor::process_clr() {
     std::unique_lock<spinlock> _(lck_);
     for (auto i = 0u; i < task_size_; ++i) {
         auto id = tasks_[i]->id;
@@ -117,7 +118,7 @@ void executor::process_clr() {
     }
 }
 //
-void executor::stop() {
+void Executor::stop() {
     running_ = false;
 }
 }  // namespace detail

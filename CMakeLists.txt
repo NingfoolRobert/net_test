@@ -35,6 +35,8 @@ else()
 	set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3 -W -DNDEBUG -lm")
 endif()
 set(TOP_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
+enable_testing()
+include(CTest)
 
 message(STATUS "VERSION: ${PROJECT_VERSION}")
 math(EXPR PROJECT_VERSION_VALUE "((${PROJECT_VERSION_MAJOR} << 16) + (${PROJECT_VERSION_MINOR} << 8)) + ${PROJECT_VERSION_PATCH}")
@@ -61,6 +63,4 @@ add_subdirectory(third_party)
 add_subdirectory(demo)
 add_subdirectory(basic)
 
-
-enable_testing()
 
