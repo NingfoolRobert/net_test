@@ -20,8 +20,7 @@ template <size_t N>
 class fstring {
 public:
     fstring() {
-        data_[0] = 0;
-        data_[N - 1] = 0;
+        memset(data_, 0, N);
     }
 
     fstring(const char *other) {
@@ -134,7 +133,17 @@ public:
     }
     //
     size_t length() {
-        return strlen(data_);
+        for (auto i = 0u; i < N; ++i) {
+            if (data_[i] == 0) {
+                return i;
+            }
+        }
+        return N;
+    }
+    
+    size_t size() {
+      auto len = length(); 
+      return len == N? N : len + 1;
     }
 
     char *data() {

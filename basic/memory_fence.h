@@ -31,5 +31,9 @@ public:
         sfence();
         lfence();
     }
+    
+    static void inline fence() {
+      __asm__ __volatile__("" ::: "memory");
+    }
 };
 }  // namespace detail
