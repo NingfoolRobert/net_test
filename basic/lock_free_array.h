@@ -78,7 +78,7 @@ public:
                 return data;
             }
 
-        } while (1);
+        } while (true);
 
         return TYPE{};
     }
