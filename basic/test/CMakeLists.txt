@@ -9,6 +9,7 @@ add_executable(${TARGET_NAME} test_fstring.cpp
   test_bheap.cpp
   test_staging_buffer.cpp
   test_shm.cpp
+  test_fbuffer.cpp
   )
 target_link_libraries(${TARGET_NAME} PRIVATE gtest gtest_main)
 
