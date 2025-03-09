@@ -33,7 +33,7 @@ public:
     }
 
     void set_opt(opt_t opt) {
-        memcpy(opt_, opt, sizeof(opt));
+        opt_ = opt;
     }
 
     opt_t &get_opt() {

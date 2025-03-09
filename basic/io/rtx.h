@@ -1,29 +1,34 @@
 /**
- * @file tx.h
+ * @file rtx.h
  * @brief
  * @author bfning
  * @version 0.1
- * @date 2025-02-24
+ * @date 2025-03-08
  */
 #pragma once
-#include <stdio.h>
-namespace detail {
 
+namespace detail {
 namespace io {
 template <typename drived_t, typename opt_t>
-class tx {
+class rtx {
 public:
+    ~rtx() {
+        close();
+    }
+
     bool open() {
-        return impl()->open();
+        return subtype()->open();
     }
 
     void close() {
-        return impl()->close();
+        subtype()->close();
     }
 
-    int write(const void *data, int len) {
-        return impl()->write(data, len);
+    int read(char *data, size_t len) {
+        return subtype()->read(data, len);
     }
+
+    int write(const void *data, size_t len);
 
     void set_opt(opt_t &opt) {
         opt_ = opt;
@@ -34,7 +39,7 @@ public:
     }
 
 private:
-    drived_t *impl() {
+    drived_t *subtype() {
         return static_cast<drived_t *>(this);
     }
 
