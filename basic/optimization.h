@@ -5,17 +5,23 @@
  * @version
  * @date 2025-03-05
  */
+#ifndef _OPTIMIZATION_H_
+#define _OPTIMIZATION_H_
 #pragma once
 
-#if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#if __GNUC__ > 7
-#define LIKELY(x) [[likely]] (x)
-#define UNLIKELY(x) [[unlikely]] (x)
-#else
-#define LIKELY(x) __builtin_expect((x), true)
-#define UNLIKELY(x) __builtin_expect(!(x), true)
-#endif
+#if __has_builtin(__builtin_expect)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
 #define LIKELY(x) (x)
 #define UNLIKELY(x) (x)
+#endif
+
+
+
+#ifndef ALWAYS_INLINE 
+#define ALWAYS_INLINE  __attribute__((always_inline)) 
+#endif 
+
+
 #endif

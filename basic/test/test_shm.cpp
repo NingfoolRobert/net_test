@@ -18,4 +18,6 @@ TEST(fixed_shm, write_shm){
   auto s = shm.mem(sizeof(detail::fixed_shm::meta_t));
   
   ASSERT_STREQ(s, "hello world");
+  
+  remove("./test.shm");
 }

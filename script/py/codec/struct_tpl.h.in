@@ -1,0 +1,15 @@
+#pragma once 
+
+#include <sstream>
+#include <ostream>
+
+
+#include "{{file_name}}"
+
+{% for item in structs%}
+static std::ostream& operator<<(std::ostream& os, const {{item.name}}& p) {
+ {% for field in item.fields %}
+ os  << " {{field.name}}:" << p.{{field.name}}; {% endfor %}
+ return os; 
+}
+{% endfor %}
