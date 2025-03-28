@@ -62,5 +62,6 @@ add_subdirectory(test)
 add_subdirectory(third_party)
 add_subdirectory(demo)
 add_subdirectory(basic)
+add_subdirectory(network)
 
 

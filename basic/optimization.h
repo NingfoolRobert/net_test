@@ -7,7 +7,6 @@
  */
 #ifndef _OPTIMIZATION_H_
 #define _OPTIMIZATION_H_
-#pragma once
 
 #if __has_builtin(__builtin_expect)
 #define LIKELY(x) __builtin_expect(!!(x), 1)

@@ -24,8 +24,8 @@ public:
         task_t task;
         Executor *exec;
     };
-
     //
+private:
     enum OperateTypeEnum : uint8_t
     {
         ADD,
@@ -45,7 +45,7 @@ public:
     //
     void rmv_task(task_context_t *context);
     //
-    bool loop(int timeout);
+    bool loop(int timeout = 1000);
     //
     void stop();
 
