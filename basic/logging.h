@@ -112,13 +112,13 @@ pid_t gettid() {
 //////////
 #define INIT_LOG(log_level, log_dir)
 //////////
-#define NLOG_TRACE(...) SYS_LOG_PRINT(1, ##__VA_ARGS__)
-#define NLOG_DEBUG(...) SYS_LOG_PRINT(2, ##__VA_ARGS__)
-#define NLOG_NOTICE(...) SYS_LOG_PRINT(3, ##__VA_ARGS__)
-#define NLOG_INFO(...) SYS_LOG_PRINT(4, ##__VA_ARGS__)
-#define NLOG_WARN(fmt, ...) SYS_LOG_PRINTEX(5, fmt, ##__VA_ARGS__)
-#define NLOG_ERROR(...) SYS_LOG_PRINTEX(6, ##__VA_ARGS__)
-#define NLOG_FATAL(...) SYS_LOG_PRINTEX(7, ##__VA_ARGS__)
+#define NLOG_TRACE(...) SYS_LOG_PRINT(1, __VA_ARGS__)
+#define NLOG_DEBUG(...) SYS_LOG_PRINT(2, __VA_ARGS__)
+#define NLOG_NOTICE(...) SYS_LOG_PRINT(3, __VA_ARGS__)
+#define NLOG_INFO(...) SYS_LOG_PRINT(4, __VA_ARGS__)
+#define NLOG_WARN(...) SYS_LOG_PRINTEX(5, __VA_ARGS__)
+#define NLOG_ERROR(...) SYS_LOG_PRINTEX(6, __VA_ARGS__)
+#define NLOG_FATAL(...) SYS_LOG_PRINTEX(7, __VA_ARGS__)
 #else
 #define NLOG_DEBUG(...)
 #define NLOG_TRACE(...)
