@@ -11,9 +11,10 @@
 
 #include "fmt/core.h"
 #include "fmt/format.h"
+#include "nlog.h"
 
-static const char *log_type_flag[] = {"", "TRACE", "DEBUG", "NOTICE", "INFO", "WARN", "ERROR", "FATAL"};
 #ifndef _WIN32
+#include "file_util.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,10 +22,6 @@ static const char *log_type_flag[] = {"", "TRACE", "DEBUG", "NOTICE", "INFO", "W
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-static inline const char *base_file_name(const char *file_full_name) {
-    auto ptr = strrchr(file_full_name, '/');
-    return nullptr == ptr ? ptr : ptr + 1;
-}
 
 pid_t gettid() {
     return syscall(SYS_gettid);
@@ -45,7 +42,7 @@ pid_t gettid() {
                      tmNow.tm_sec,                                                                                     \
                      tv.tv_usec,                                                                                       \
                      gettid(),                                                                                         \
-                     log_type_flag[log_level],                                                                         \
+                     log_level_flag[log_level],                                                                        \
                      ##__VA_ARGS__);                                                                                   \
     } while (false)
 
@@ -64,8 +61,8 @@ pid_t gettid() {
                      tmNow.tm_sec,                                                                                     \
                      tv.tv_usec,                                                                                       \
                      gettid(),                                                                                         \
-                     log_type_flag[log_level],                                                                         \
-                     base_file_name(__FILE__),                                                                         \
+                     log_level_flag[log_level],                                                                        \
+                     detail::path_base_name(__FILE__),                                                                 \
                      __LINE__,                                                                                         \
                      ##__VA_ARGS__);                                                                                   \
     } while (false)
@@ -88,7 +85,7 @@ pid_t gettid() {
                      tmNow.tm_min,                                                                                     \
                      tmNow.tm_sec,                                                                                     \
                      tv.millitm,                                                                                       \
-                     log_type_flag[log_level],                                                                         \
+                     log_level_flag[log_level],                                                                        \
                      ##__VA_ARGS__);                                                                                   \
         printf("\n");                                                                                                  \
     } while (false)
@@ -107,7 +104,7 @@ pid_t gettid() {
                      tmNow.tm_min,                                                                                     \
                      tmNow.tm_sec,                                                                                     \
                      tv.millitm,                                                                                       \
-                     log_type_flag[log_level],                                                                         \
+                     log_level_flag[log_level],                                                                        \
                      __FILE__,                                                                                         \
                      __LINE__,                                                                                         \
                      ##__VA_ARGS__);                                                                                   \
@@ -119,18 +116,67 @@ pid_t gettid() {
 //////////
 #define INIT_FLOG(log_level, log_dir)
 //////////
-#define FLOG_TRACE(...) SYS_FLOG_PRINT(1, __VA_ARGS__)
-#define FLOG_DEBUG(...) SYS_FLOG_PRINT(2, __VA_ARGS__)
-#define FLOG_NOTICE(...) SYS_FLOG_PRINT(3, __VA_ARGS__)
-#define FLOG_INFO(...) SYS_FLOG_PRINT(4, __VA_ARGS__)
-#define FLOG_WARN(...) SYS_FLOG_PRINTEX(5, __VA_ARGS__)
-#define FLOG_ERROR(...) SYS_FLOG_PRINTEX(6, __VA_ARGS__)
-#define FLOG_FATAL(...) SYS_FLOG_PRINTEX(7, __VA_ARGS__)
+#define FLOG_TRACE(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_EVEL_TRACE, __VA_ARGS__)
+#define FLOG_DEBUG(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define FLOG_NOTICE(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_LEVEL_NOTICE, __VA_ARGS__)
+#define FLOG_INFO(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_LEVEL_INFO, __VA_ARGS__)
+#define FLOG_WARN(...) SYS_FLOG_PRINTEX(LogLevelEnum::LOG_LEVEL_WARN, __VA_ARGS__)
+#define FLOG_ERROR(...) SYS_FLOG_PRINTEX(LogLevelEnum::LOG_LEVEL_ERROR, __VA_ARGS__)
+#define FLOG_FATAL(...) SYS_FLOG_PRINTEX(LogLevelEnum::LOG_LEVEL_CRITICAL, __VA_ARGS__)
 #elif defined ENABLE_QUILL_LOG
-#define INIT_FLOG(log_level, log_dir)                                                                                  \
+#include "quill/logdef.h"
+#include "quill/logmacro.h"
+class QuillWrapper {
+public:
+    static QuillWrapper &get_instance() {
+        static QuillWrapper wrapper;
+        return wrapper;
+    }
+
+    ~QuillWrapper() = default;
+
+    void set_logger(quill::Logger *logger) {
+        logger_ = logger;
+    }
+    //
+    quill::Logger *logger() {
+        return logger_;
+    }
+
+private:
+    QuillWrapper() = default;
+    quill::Logger *logger_{nullptr};
+};
+#define INIT_FLOG(log_level, log_dir, file_name)                                                                       \
     do {                                                                                                               \
+        quill::BackendOptions backend_options;                                                                         \
+        quill::Backend::start(backend_options);                                                                        \
+        auto file_sink = quill::Frontend::create_or_get_sink<quill::FileSink>(                                         \
+            file_name,                                                                                                 \
+            []() {                                                                                                     \
+                quill::FileSinkConfig cfg;                                                                             \
+                cfg.set_open_mode('w');                                                                                \
+                cfg.set_filename_append_option(quill : FilenameAppendOption::StartDateTime);                           \
+                return cfg;                                                                                            \
+            }(),                                                                                                       \
+            quill::FileEventNotifier{});                                                                               \
+        quill::Logger *logger = quill::Frontend::create_or_get_logger(                                                 \
+            "",                                                                                                        \
+            std::move(file_sink),                                                                                      \
+            quill::PatterFormatterOptions{                                                                             \
+                "%(time) [%(thread_id)] %(short_source_location:<28) %(log_level:<9) %(message)",                      \
+                "%Y%m%d %H:%M:%S.%Qns",                                                                                \
+                quill::Timezone::GmtTime});                                                                            \
+        QuillWrapper::get_instance().set_logger(logger);                                                               \
     } while (false)
 
+#define FLOG_DEBUG(...) LOG_DEBUG(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_TRACE(...) LOG_TRACE(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_NOTICE(...) LOG_NOTIC(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_INFO(...) LOG_INFO(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_WARN(...) LOG_WARN(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_ERROR(...) LOG_ERROR(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
+#define FLOG_FATAL(...) LOG_CRITICAL(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
 #else
 #define FLOG_DEBUG(...)
 #define FLOG_TRACE(...)
