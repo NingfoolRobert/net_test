@@ -9,12 +9,12 @@
 #define _FLOGGING_H_
 #pragma once
 
-#include "fmt/core.h"
-#include "fmt/format.h"
 #include "nlog.h"
 
 #ifndef _WIN32
 #include "file_util.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -124,8 +124,12 @@ pid_t gettid() {
 #define FLOG_ERROR(...) SYS_FLOG_PRINTEX(LogLevelEnum::LOG_LEVEL_ERROR, __VA_ARGS__)
 #define FLOG_FATAL(...) SYS_FLOG_PRINTEX(LogLevelEnum::LOG_LEVEL_CRITICAL, __VA_ARGS__)
 #elif defined ENABLE_QUILL_LOG
-#include "quill/logdef.h"
-#include "quill/logmacro.h"
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/sinks/FileSink.h"
+
 class QuillWrapper {
 public:
     static QuillWrapper &get_instance() {
@@ -143,31 +147,44 @@ public:
         return logger_;
     }
 
+    void set_log_level(LogLevelEnum log_level) {
+        static std::map<LogLevelEnum, quill::LogLevel> log_level_mapping = {
+            {LogLevelEnum::LOG_LEVEL_DEBUG, quill::LogLevel::Debug},
+            {LogLevelEnum::LOG_LEVEL_INFO, quill::LogLevel::Info},
+            {LogLevelEnum::LOG_LEVEL_WARN, quill::LogLevel::Warning},
+            {LogLevelEnum::LOG_LEVEL_ERROR, quill::LogLevel::Error},
+            {LogLevelEnum::LOG_LEVEL_CRITICAL, quill::LogLevel::Critical},
+        };
+        logger_->set_log_level(log_level_mapping[log_level]);
+    }
+
 private:
     QuillWrapper() = default;
     quill::Logger *logger_{nullptr};
 };
-#define INIT_FLOG(log_level, log_dir, file_name)                                                                       \
+
+#define INIT_FLOG(log_level, log_dir, app_name)                                                                        \
     do {                                                                                                               \
         quill::BackendOptions backend_options;                                                                         \
         quill::Backend::start(backend_options);                                                                        \
         auto file_sink = quill::Frontend::create_or_get_sink<quill::FileSink>(                                         \
-            file_name,                                                                                                 \
+            app_name,                                                                                                  \
             []() {                                                                                                     \
                 quill::FileSinkConfig cfg;                                                                             \
                 cfg.set_open_mode('w');                                                                                \
-                cfg.set_filename_append_option(quill : FilenameAppendOption::StartDateTime);                           \
+                cfg.set_filename_append_option(quill::FilenameAppendOption::StartDateTime);                            \
                 return cfg;                                                                                            \
             }(),                                                                                                       \
             quill::FileEventNotifier{});                                                                               \
         quill::Logger *logger = quill::Frontend::create_or_get_logger(                                                 \
-            "",                                                                                                        \
+            "root",                                                                                                    \
             std::move(file_sink),                                                                                      \
-            quill::PatterFormatterOptions{                                                                             \
+            quill::PatternFormatterOptions{                                                                            \
                 "%(time) [%(thread_id)] %(short_source_location:<28) %(log_level:<9) %(message)",                      \
                 "%Y%m%d %H:%M:%S.%Qns",                                                                                \
                 quill::Timezone::GmtTime});                                                                            \
         QuillWrapper::get_instance().set_logger(logger);                                                               \
+        QuillWrapper::get_instance().set_log_level(log_level);                                                         \
     } while (false)
 
 #define FLOG_DEBUG(...) LOG_DEBUG(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
@@ -178,6 +195,8 @@ private:
 #define FLOG_ERROR(...) LOG_ERROR(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
 #define FLOG_FATAL(...) LOG_CRITICAL(QuillWrapper::get_instance().logger(), ##__VA_ARGS__)
 #else
+#define INIT_FLOG(log_level, log_dir, app_name)
+
 #define FLOG_DEBUG(...)
 #define FLOG_TRACE(...)
 #define FLOG_NOTICE(...)
