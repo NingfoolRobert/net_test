@@ -14,7 +14,7 @@
 #define assert_nullptr(cond, ret)                                                                                      \
     do {                                                                                                               \
         if (UNLIKELY(cond == nullptr)) {                                                                               \
-            NLOG_WARN("CHECK FAIL: nullptr == "#cond);                                                                   \
+            NLOG_WARN("CHECK FAIL: nullptr == " #cond);                                                                \
             return ret;                                                                                                \
         }                                                                                                              \
     } while (false)
@@ -22,7 +22,7 @@
 #define assert_nullptr2(cond)                                                                                          \
     do {                                                                                                               \
         if (UNLIKELY(cond == nullptr)) {                                                                               \
-            NLOG_WARN("CHECK FAIL: nullptr == "#cond);                                                                   \
+            NLOG_WARN("CHECK FAIL: nullptr == " #cond);                                                                \
             return;                                                                                                    \
         }                                                                                                              \
     } while (false)
@@ -30,7 +30,7 @@
 #define assert_true(cond, ret)                                                                                         \
     do {                                                                                                               \
         if (UNLIKELY(!cond)) {                                                                                         \
-            NLOG_WARN("CHECK FAIL: false == "#cond);                                                                   \
+            NLOG_WARN("CHECK FAIL: false == " #cond);                                                                  \
             return ret;                                                                                                \
         }                                                                                                              \
     } while (false)
@@ -38,7 +38,7 @@
 #define assert_true2(cond)                                                                                             \
     do {                                                                                                               \
         if (UNLIKELY(!(cond))) {                                                                                       \
-            NLOG_WARN("CHECK FAIL: false == "#cond);                                                                   \
+            NLOG_WARN("CHECK FAIL: false == " #cond);                                                                  \
             return;                                                                                                    \
         }                                                                                                              \
     } while (false)

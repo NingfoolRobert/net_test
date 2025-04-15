@@ -114,7 +114,7 @@ pid_t gettid() {
 
 #ifdef SYS_FLOG
 //////////
-#define INIT_FLOG(log_level, log_dir)
+#define INIT_FLOG(log_level, log_dir, app_name)
 //////////
 #define FLOG_TRACE(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_EVEL_TRACE, __VA_ARGS__)
 #define FLOG_DEBUG(...) SYS_FLOG_PRINT(LogLevelEnum::LOG_LEVEL_DEBUG, __VA_ARGS__)
@@ -167,8 +167,11 @@ private:
     do {                                                                                                               \
         quill::BackendOptions backend_options;                                                                         \
         quill::Backend::start(backend_options);                                                                        \
+        std::string log_file_name(log_dir);                                                                            \
+        log_file_name += "/";                                                                                          \
+        log_file_name += app_name;                                                                                     \
         auto file_sink = quill::Frontend::create_or_get_sink<quill::FileSink>(                                         \
-            app_name,                                                                                                  \
+            log_file_name.c_str(),                                                                                                  \
             []() {                                                                                                     \
                 quill::FileSinkConfig cfg;                                                                             \
                 cfg.set_open_mode('w');                                                                                \

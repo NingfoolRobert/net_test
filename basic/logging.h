@@ -7,6 +7,7 @@
  */
 #ifndef _LOGGING_H_
 #define _LOGGING_H_
+#include <stdint.h>
 
 static const char *log_type_str[] = {"", "TRACE", "DEBUG", "NOTICE", "INFO", "WARN", "ERROR", "FATAL"};
 #ifndef _WIN32
@@ -128,4 +129,5 @@ pid_t gettid() {
 #define NLOG_ERROR(...)
 #define NLOG_FATAL(...)
 #endif
+
 #endif
