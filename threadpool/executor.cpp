@@ -22,17 +22,24 @@ bool Executor::loop(int timeout) {
     return true;
 }
 
-bool Executor::add_task(task_context_t *&cookie, task_t &&task) {
+bool Executor::add_task(task_context_t *&cookie, task_t &&task, bool async /* = true*/) {
 
     auto task_context = new task_context_t();
     task_context->exec = this;
     task_context->task = std::move(task);
-    task_context->id = fetch_id();
+    task_context->id = syncer_.fetch_id();
     cookie = task_context;
     {
         std::unique_lock<spinlock> _(lck_);
         task_ops_.push_back({ADD, task_context});
     }
+
+    // blocking mode
+    if (!async && !syncer_.wait(task_context->id)) {
+        printf("wait task execute fail. id:%ld", task_context->id);
+        return false;
+    }
+
     return true;
 }
 
@@ -66,7 +73,7 @@ void Executor::process_task() {
                 process_rmv(task_ops[i].task_context);
                 break;
             case OperateTypeEnum::CLR:
-                process_clr();
+                process_clr(task_ops[i].task_context);
                 break;
             default:
                 break;
@@ -89,6 +96,7 @@ void Executor::process_add(task_context_t *context) {
         tasks_.push_back(context);
     }
     task_size_++;
+    syncer_.notify(context->id, true);
 }
 
 void Executor::process_rmv(task_context_t *context) {
@@ -109,7 +117,7 @@ void Executor::process_rmv(task_context_t *context) {
     }
 }
 //
-void Executor::process_clr() {
+void Executor::process_clr(task_context_t *context) {
     std::unique_lock<spinlock> _(lck_);
     for (auto i = 0u; i < task_size_; ++i) {
         auto id = tasks_[i]->id;
@@ -117,9 +125,20 @@ void Executor::process_clr() {
         tasks_[i] = nullptr;
         syncer_.notify(id, true);
     }
+
+    syncer_.notify(context->id, true);
 }
 //
 void Executor::stop() {
+    // blocking  stop
+    auto task_context = new task_context_t();
+    task_context->id = syncer_.fetch_id();
+    task_context->exec = this;
+    {
+        std::unique_lock<spinlock> _(lck_);
+        task_ops_.push_back({CLR, task_context});
+    }
     running_ = false;
+    syncer_.wait(task_context->id);
 }
 }  // namespace detail

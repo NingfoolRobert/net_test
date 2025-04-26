@@ -41,7 +41,7 @@ public:
     Executor();
     ~Executor();
 
-    bool add_task(task_context_t *&context, task_t &&task);
+    bool add_task(task_context_t *&context, task_t &&task, bool async = true);
     //
     void rmv_task(task_context_t *context);
     //
@@ -56,14 +56,11 @@ private:
 
     void process_rmv(task_context_t *context);
     //
-    void process_clr();
+    void process_clr(task_context_t *context);
     //
-    static int64_t fetch_id() {
-        return ++task_id_;
+    inline int64_t fetch_id() {
+        return syncer_.fetch_id();
     }
-
-public:
-    static std::atomic_int64_t task_id_;
 
 private:
     spinlock lck_;
@@ -75,6 +72,7 @@ private:
 
 private:
     BatchSynchronizer<bool> syncer_;
+    int64_t     stop_id_;
 };
 
 using executor_context_t  = Executor::task_context_t;
