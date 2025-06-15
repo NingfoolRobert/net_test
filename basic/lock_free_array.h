@@ -1,6 +1,6 @@
 /**
  * @file lock_free_array.h
- * @brief 
+ * @brief
  * @author bfning
  * @version 0.1
  * @date 2025-01-05
@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <stdio.h>
+#include <immintrin.h>
 
 #ifdef __GNUC__
 #include <pthread.h>
@@ -61,26 +62,45 @@ public:
         return true;
     }
 
-    TYPE pop() {
+    //    TYPE pop() {
+    //        size_t current_read_index = 0;
+    //        size_t current_max_num_read_index = 0;
+    //        TYPE data;
+    //        do {
+    //            current_read_index = read_index;
+    //            current_max_num_read_index = max_num_read_index;
+    //
+    //            if (index(current_read_index) == index(current_max_num_read_index))
+    //                return TYPE{};
+    //
+    //            data = queue_[index(current_read_index)];
+    //
+    //            if (CAS(&read_index, current_read_index, current_read_index + 1)) {
+    //                return data;
+    //            }
+    //
+    //        } while (true);
+    //
+    //        return TYPE{};
+    //    }
+
+    bool pop(TYPE &data) {
+        while (!try_pop(data)) {
+            _mm_pause();
+        }
+        return true;
+    }
+
+    bool try_pop(TYPE &data) {
+
+        if (empty()) {
+            return false;
+        }
+        //
         size_t current_read_index = 0;
-        size_t current_max_num_read_index = 0;
-        TYPE data;
-        do {
-            current_read_index = read_index;
-            current_max_num_read_index = max_num_read_index;
-
-            if (index(current_read_index) == index(current_max_num_read_index))
-                return TYPE{};
-
-            data = queue_[index(current_read_index)];
-
-            if (CAS(&read_index, current_read_index, current_read_index + 1)) {
-                return data;
-            }
-
-        } while (true);
-
-        return TYPE{};
+        current_read_index = read_index;
+        data = queue_[index(current_read_index)];
+        return CAS(&read_index, current_read_index, current_read_index + 1);
     }
 
     bool empty() {

@@ -27,10 +27,11 @@ static constexpr tick_t TICKS_PER_MINUTE = 60ULL * TICKS_PER_SECOND;
 static constexpr tick_t TICKS_PER_HOUR = 60ULL * TICKS_PER_MINUTE;
 static constexpr tick_t TICKS_PER_DAY = 24ULL * TICKS_PER_HOUR;
 
+
 static FORCE_INLINE tick_t now() {
     struct timespec tp;
     clock_gettime(CLOCK_REALTIME, &tp);
-    return tp.tv_sec * TICKS_PER_SECOND + tp.tv_nsec;
+    return tp.tv_sec * TICKS_PER_SECOND + tp.tv_nsec ;
 }
 
 static inline tick_t utc_to_tick(time_t ts) {
@@ -38,7 +39,6 @@ static inline tick_t utc_to_tick(time_t ts) {
 }
 
 static inline tick_t timestamp_to_tick(int year, int month, int mday, int hour, int minute, int sec, int milli) {
-
     struct tm tp;  // = {.year = year, .month = mon - 1, .day=mday, }
 
     return 0;

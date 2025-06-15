@@ -67,7 +67,7 @@ public:
         if (nullptr == meta_) {
             return nullptr;
         }
-        return reinterpret_cast<char *>(meta_) + offset;
+        return reinterpret_cast<char *>(meta_ + 1) + offset;
     }
 
     void close() {
@@ -85,7 +85,6 @@ public:
         }
         //
         memset(meta_, 0, sizeof(meta_t));
-        meta_->size = sizeof(meta_t);
         meta_->version = 0x01;
         //
         return reinterpret_cast<char *>(meta_);
@@ -151,4 +150,6 @@ private:
     //
     int fd_{-1};
 };
+
+using  shm_t = fixed_shm;
 }  // namespace detail
