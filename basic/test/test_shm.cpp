@@ -9,13 +9,11 @@ TEST(fixed_shm, write_shm){
   shm.open();
   shm.map();
 
-  auto  p = shm.mem(shm.length());
+  auto  p = shm.mem(0);
   memcpy(p, "hello world", 12);
-  shm.peek(12);
   
-  EXPECT_EQ(shm.length(), 12 + sizeof(detail::fixed_shm::meta_t));
   
-  auto s = shm.mem(sizeof(detail::fixed_shm::meta_t));
+  auto s = shm.mem(0);
   
   ASSERT_STREQ(s, "hello world");
   

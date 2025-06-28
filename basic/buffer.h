@@ -47,12 +47,22 @@ public:
         return *this;
     }
 
-    bool append(const void *data, size_type data) {
-        // TODO
+    bool append(const void *data, size_type len) {
+        //
+        if (len > cap_ - size_) {
+            return false;
+        }
+        //
+        memcpy(data_ + size_, data, len);
+       size_ += len;
         return true;
     }
 
     size_type resize(size_type len) {
+        if(len  > cap_ - size_) {
+            return cap_;
+        }
+        //
         return cap_;
     }
 
@@ -85,7 +95,6 @@ public:
         static_assert(std::is_trivially_copyable_v<T>, "don't support the sizeof(T) obj");
         return append(data, sizeof(data));
     }
-   
 
 private:
     size_type cap_{0};

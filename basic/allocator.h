@@ -54,7 +54,6 @@ public:
 
 private:
     std::vector<void *> buffers_;
-
     std::queue<void *> mem_pool_;
 };
 }  // namespace basic

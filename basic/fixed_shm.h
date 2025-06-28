@@ -23,13 +23,6 @@ namespace detail {
 
 class fixed_shm {
 public:
-    struct meta_t {
-        uint64_t size;     //  data length
-        uint32_t magic;    //  magic  number
-        uint16_t version;  // protocol version
-        uint16_t flag;     // 1: swap file flag,
-    };
-
     fixed_shm(const char *file_path, uint64_t size) : size_(size) {
         if (file_path != nullptr) {
             strcpy(file_, file_path);
@@ -45,7 +38,7 @@ public:
 
     bool open() {
         bool do_fill = false;
-        if (access(file_, F_OK) == 0) {
+        if (access(file_, F_OK) == 0) {  // file exist
             do_fill = true;
         }
         //
@@ -64,10 +57,7 @@ public:
     }
 
     char *mem(uint64_t offset) {
-        if (nullptr == meta_) {
-            return nullptr;
-        }
-        return reinterpret_cast<char *>(meta_ + 1) + offset;
+        return data_ + offset;
     }
 
     void close() {
@@ -79,77 +69,35 @@ public:
 
     char *map() {
         // 将文件映射至进程的地址空间
-        if ((meta_ = (meta_t *)mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0)) == (void *)-1) {
+        if ((data_ = (char *)mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0)) == (void *)-1) {
             perror("shm mmap fail");
             return nullptr;
         }
         //
-        memset(meta_, 0, sizeof(meta_t));
-        meta_->version = 0x01;
-        //
-        return reinterpret_cast<char *>(meta_);
+        return data_;
     }
 
     void unmap() {
-        if (meta_ != nullptr) {
-            if ((munmap((void *)meta_, size_)) == -1) {
+        if (data_ != nullptr) {
+            if ((munmap((void *)data_, size_)) == -1) {
                 perror("shm munmap fail");
                 return;
             }
         }
-        meta_ = nullptr;
+        data_ = nullptr;
     }
 
-    uint64_t capacity() {
+    uint64_t capacity() const {
         return size_;
     }
 
-    uint64_t length() {
-        if (nullptr == meta_)
-            return 0;
-        //
-        MemoryFence::fence();
-        return meta_->size;
-    }
-
-    uint64_t size() {
-        return length();
-    }
-
-    uint64_t peek(uint64_t len) {
-        if (nullptr == meta_) {
-            return 0;
-        }
-        //
-        MemoryFence::fence();
-        meta_->size += len;
-        return meta_->size;
-    }
-
-    void set_flag(int flag = 1) {
-        if (nullptr == meta_) {
-            return;
-        }
-        //
-        MemoryFence::fence();
-        meta_->flag = flag;
-    }
-
-    int get_flag() { 
-      if(nullptr == meta_) {
-        return -1;
-      }
-      //
-      MemoryFence::fence();
-      return meta_->flag;
-    }
 private:
     char file_[256];
     uint64_t size_;  // 映射文件大小
-    meta_t *meta_{nullptr};
+    char *data_{nullptr};
     //
     int fd_{-1};
 };
 
-using  shm_t = fixed_shm;
+using shm_t = fixed_shm;
 }  // namespace detail
