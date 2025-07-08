@@ -37,6 +37,10 @@ public:
     fixed_shm &operator=(const fixed_shm &) = delete;
 
     bool open() {
+        if (UNLIKELY(fd_ != -1)) {
+            return false;
+        }
+        //
         bool do_fill = false;
         if (access(file_, F_OK) == 0) {  // file exist
             do_fill = true;
