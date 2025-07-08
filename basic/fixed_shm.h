@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "memory_fence.h"
+#include "optimization.h"
 #include <error.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -89,6 +89,38 @@ public:
 
     uint64_t capacity() const {
         return size_;
+    }
+
+    //
+    int writeto(uint64_t offset, const char *data, size_t size) {
+        if (UNLIKELY(data_ == nullptr)) {
+            return -1;
+        }
+        //
+        if (UNLIKELY(size_ - offset < size)) {
+            return -1;
+        }
+        //
+        memmove(data_ + offset, data, size);
+        return static_cast<int>(size);
+    }
+    //
+    int readfrom(uint64_t offset, char *data, size_t size) {
+        if (UNLIKELY(data_ == nullptr)) {
+            return -1;
+        }
+        //
+        if (LIKELY(size_ - offset - size >= 0)) {
+            memcpy(data, data_ + offset, size);
+            return static_cast<int>(size);
+        }
+        //
+        if (LIKELY(size_ > offset && size_ - offset < size)) {
+            memcpy(data, data_ + offset, size_ - offset);
+            return static_cast<int>(size_ - offset);
+        }
+
+        return -1;
     }
 
 private:

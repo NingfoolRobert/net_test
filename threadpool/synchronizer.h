@@ -79,6 +79,12 @@ public:
         return it->second->get();
     }
 
+    //
+    int64_t fetch_id() {
+        return ++id_;
+    }
+
 private:
     std::unordered_map<int64_t, std::shared_ptr<Synchronizer<T>>> sync_list_;
+    std::atomic_int64_t id_{0};
 };
