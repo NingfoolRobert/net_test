@@ -12,14 +12,14 @@ namespace basic {
 
 class Object {
 public:
-    Object() {
-        ref_ = 1;
+    Object() : ref_(1) {
     }
 
     ~Object() = default;
 
     Object(const Object &other) = delete;
     Object(Object &&other) = delete;
+    Object &operator=(const Object &other) = delete;
     //
     void add_ref() {
         ref_++;
@@ -30,6 +30,7 @@ public:
             delete this;
         }
     }
+
 private:
     std::atomic<int> ref_;
 };
