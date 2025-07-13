@@ -53,11 +53,12 @@ private:
         usleep(1 * 1000 * 1000);  // 延时1秒
         clock_gettime(CLOCK_MONOTONIC, &end);
         uint64_t tsc_end = now_cycle();
-        return (tsc_end - tsc_start) / (end.tv_sec - start.tv_sec);
+        auto time_span = (end.tv_sec - start.tv_sec) * 1000000000ULL + end.tv_nsec - start.tv_nsec;
+        return static_cast<double>(tsc_end - tsc_start) / time_span;
     }
 
 private:
-    uint64_t frequence_{0};
+    double frequence_{0};
     uint64_t cycle_base_{0};
     uint64_t timepoint_base_{0};
 };
