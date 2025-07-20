@@ -28,7 +28,7 @@ public:
 
     uint64_t now() {
         auto cycle_span = now_cycle() - cycle_base_;
-        return timepoint_base_ + (cycle_span / frequence_);
+        return timepoint_base_ + (cycle_span * frequence_);
     }
 
 private:
@@ -46,7 +46,7 @@ private:
         timepoint_base_ = tp.tv_sec * 1000000000ULL + tp.tv_nsec;
     }
     //
-    uint64_t calibrate() {
+    double calibrate() {
         struct timespec start, end;
         clock_gettime(CLOCK_MONOTONIC, &start);
         uint64_t tsc_start = now_cycle();
