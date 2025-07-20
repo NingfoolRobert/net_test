@@ -28,7 +28,7 @@ public:
 
     uint64_t now() {
         auto cycle_span = now_cycle() - cycle_base_;
-        return timepoint_base_ + (cycle_span * frequence_);
+        return timepoint_base_ + (cycle_span / frequence_);
     }
 
 private:
