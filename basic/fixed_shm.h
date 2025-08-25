@@ -30,11 +30,19 @@ public:
     }
 
     ~fixed_shm() {
+        fsync(size_);
         close();
     }
 
     fixed_shm(const fixed_shm &rhs) = delete;
+
     fixed_shm &operator=(const fixed_shm &) = delete;
+
+    fixed_shm(fixed_shm &&rhs) noexcept : size_(rhs.size_), data_(rhs.data_), fd_(rhs.fd_) {
+        strcpy(file_, rhs.file_);
+        rhs.data_ = nullptr;
+        rhs.fd_ = -1;
+    }
 
     bool open() {
         if (UNLIKELY(fd_ != -1)) {
@@ -77,6 +85,13 @@ public:
             perror("shm mmap fail");
             return nullptr;
         }
+#ifdef USE_MDADVISE
+        // 提前预读数据
+        if (madvise(data_, size_, MADV_WILLNEED) == -1) {
+            perror("madvise fail");
+            return nullptr;
+        }
+#endif
         //
         return data_;
     }
@@ -125,6 +140,25 @@ public:
         }
 
         return -1;
+    }
+
+    void fsync(uint64_t offset) {
+        if (msync(data_, offset, MS_SYNC) == -1) {
+            perror("msync fail. ");
+        }
+    }
+
+private:
+    void touch_pages(void* addr,  uint64_t size) {
+        if (data_ == nullptr) {
+            return;
+        }
+        const size_t page_size = sysconf(_SC_PAGESIZE);
+        // 触摸所有页面
+        for (uint64_t i = 0; i < size_; i += page_size) {
+            volatile char c = data_[i];
+            (void)c;  // 防止编译器优化掉
+        }
     }
 
 private:

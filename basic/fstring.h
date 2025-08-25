@@ -25,7 +25,8 @@ public:
 
     fstring(const char *other) {
         if (other) {
-            strncpy(data_, other, N - 1);
+            // memmove(data_, other, N - 1);
+            strncpy(data_, other, N);
         }
         data_[N - 1] = 0;
     }
@@ -36,15 +37,16 @@ public:
     }
 
     fstring(const std::string_view &other) {
-        strncpy(data_, other.data(), N - 1);
+        memcpy(data_, other.data(), N - 1);
         data_[N - 1] = 0;
     }
 
     fstring(const char ch, size_t n) {
-        for (auto i = 0u; i < n && i < N; ++i) {
+        auto num = std::min(n, N);
+        for (auto i = 0u; i < num; ++i) {
             data_[i] = ch;
         }
-        data_[n == 0 ? N - 1 : n - 1] = 0;
+        data_[num < N ? N - 1 : num] = 0;
     }
 
     fstring(const fstring &rhs) {
@@ -57,9 +59,24 @@ public:
 
     fstring &operator=(const char *other) {
         if (other) {
-            strncpy(data_, other, N - 1);
+            memcpy(data_, other, N - 1);
         }
+        data_[N - 1] = 0;
         return *this;
+    }
+
+    fstring &operator=(const std::string &other) {
+        memcpy(data_, other.c_str(), N - 1);
+        data_[N - 1] = 0;
+    }
+
+    fstring &operator=(const fstring &other) {
+        memcpy(data_, other.data_, N);
+    }
+
+    template <size_t N2>
+    fstring &operator+(const fstring<N2> &rhs) {
+        return append(rhs.c_str(), rhs.length());
     }
 
     bool operator==(const char *other) {
@@ -138,12 +155,11 @@ public:
                 return i;
             }
         }
-        return N;
+        return N - 1;
     }
-    
+
     size_t size() {
-      auto len = length(); 
-      return len == N? N : len + 1;
+        return length();
     }
 
     char *data() {
@@ -159,11 +175,17 @@ public:
     }
 
     fstring &append(const void *data, size_t size) {
-        if (data && N) {
-            size_t len = length();
-            memcpy(data_ + len, data, size <= N - len ? size : N - len);
+        if (data == nullptr || size == 0) {
+            return *this;
         }
-
+        //
+        auto len = length();
+        if (size >= N - len) {
+            return *this;
+        }
+        //
+        memcpy(data_ + len, data, size);
+        data_[size + len] = 0;
         return *this;
     }
 
