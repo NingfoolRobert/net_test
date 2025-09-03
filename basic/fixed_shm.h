@@ -91,6 +91,8 @@ public:
             perror("madvise fail");
             return nullptr;
         }
+#else 
+        touch_pages(data_, size_);
 #endif
         //
         return data_;

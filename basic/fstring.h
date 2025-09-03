@@ -174,6 +174,12 @@ public:
         return data_;
     }
 
+    friend void swap(fstring& lft, fstring &rht) {
+        for (auto i = 0u; i < N; ++i) {
+            std::swap(lft.data_, rht.data_);
+        }
+    }
+
     fstring &append(const void *data, size_t size) {
         if (data == nullptr || size == 0) {
             return *this;
