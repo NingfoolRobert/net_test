@@ -150,12 +150,7 @@ public:
     }
     //
     size_t length() {
-        for (auto i = 0u; i < N; ++i) {
-            if (data_[i] == 0) {
-                return i;
-            }
-        }
-        return N - 1;
+        return strnlen(data_, N);
     }
 
     size_t size() {

@@ -30,6 +30,10 @@ public:
         auto cycle_span = now_cycle() - cycle_base_;
         return timepoint_base_ + (cycle_span / frequence_);
     }
+    //  one cycle duration : ns
+    double cycle_freq() {
+        return frequence_;
+    }
 
 private:
     RDTSC() {

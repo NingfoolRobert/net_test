@@ -31,7 +31,7 @@ public:
 
 public:
     template <typename Args...>
-    T *allocate(const Args &...args) {
+    T *allocate(const Args &&...args) {
         //
         if (mem_pool_.empty()) {
             return nullptr;

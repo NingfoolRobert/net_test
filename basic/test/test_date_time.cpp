@@ -1,11 +1,14 @@
 #include "../date_time.h"
 
+#include <gtest/gtest.h>
 
-
-int main() 
+TEST(DateTime, NowAndFormat) 
 {
-  printf("%ld\n", detail::now());
+  long now = detail::now();
+  printf("%ld\n", now);
   
-  printf("%s\n", detail::tick_to_timestamp(detail::now(), "%Y-%m-%d %H:%M:%S").c_str());
-  return 0;
+  std::string timestamp = detail::tick_to_timestamp(now, "%Y-%m-%d %H:%M:%S");
+  printf("%s\n", timestamp.c_str());
+  
+  EXPECT_FALSE(timestamp.empty());
 }

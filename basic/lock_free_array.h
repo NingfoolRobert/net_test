@@ -10,8 +10,8 @@
 #define _LOCK_FREE_ARRAY_H_ 1
 
 #include <atomic>
-#include <stdio.h>
 #include <immintrin.h>
+#include <stdio.h>
 
 #ifdef __GNUC__
 #include <pthread.h>
@@ -56,7 +56,8 @@ public:
         queue_[index(current_write_index)] = data;
 
         while (!CAS(&max_num_read_index, current_write_index, (current_write_index + 1))) {
-            sched_yield();
+            // sched_yield();
+            _mm_pause();
         }
 
         return true;
@@ -109,6 +110,10 @@ public:
 
     size_t size() {
         return ((write_index - read_index) + Size) & (Size - 1);
+    }
+
+    bool full() {
+        return (write_index + 1) % size() == read_index;
     }
 };
 
