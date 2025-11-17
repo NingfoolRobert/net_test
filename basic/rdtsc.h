@@ -15,7 +15,7 @@ namespace detail {
 
 class RDTSC {
 public:
-    static RDTSC &GetInstance() {
+    static RDTSC &instance() {
         static RDTSC tsc;
         return tsc;
     }
