@@ -127,6 +127,22 @@ public:
         return strncmp(data_, rhs.c_str(), N) > 0;
     }
 
+    fstring& operator+(const std::string &rhs) {
+        return append(rhs.c_str(), rhs.length());
+    }
+    
+    fstring& operator+(const char *rhs) {
+        return append(rhs, strlen(rhs));
+    }
+
+    fstring& operator+(const char ch) {
+        return append(&ch, 1);
+    }
+    
+    fstring& operator+=(const fstring &rhs) {
+        return append(rhs.c_str(), rhs.length());
+    }
+
     char &operator[](size_t idx) {
         if (idx >= N) {
             throw std::runtime_error("fstring::operator[] idx invalid(exceed capibility)");
@@ -165,11 +181,11 @@ public:
         return data_;
     }
 
-    const char *c_str() {
+    const char *c_str() const {
         return data_;
     }
 
-    friend void swap(fstring& lft, fstring &rht) {
+    friend void swap(fstring &lft, fstring &rht) {
         for (auto i = 0u; i < N; ++i) {
             std::swap(lft.data_, rht.data_);
         }
@@ -251,6 +267,18 @@ public:
         return !empty();
     }
 
+    operator std::string() const {
+        return std::string(data_);
+    }
+
+    operator std::string_view() const {
+        return std::string_view(data_);
+    }
+
+    std::string to_string() const {
+        return std::string(data_);
+    }
+    
 private:
     char data_[N];
 };

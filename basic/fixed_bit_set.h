@@ -10,23 +10,23 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace basic {
-template <size_t Size = 1024>
+namespace detail {
+template <size_t N>
 class FixedBitSet {
 public:
-    using Self = FixedBitSet<Size>;
+    using Self = FixedBitSet<N>;
     using Ptr = Self *;
 
     using pos_t = long long;
     const static pos_t npos = static_cast<pos_t>(-1);
     using SizeType = size_t;
-    const static size_t cap_ = (Size + 7) / 8;
+    const static size_t cap_ = (N + 7) / 8;
 
     //
     FixedBitSet() : bits_{0} {
     }
     bool test(size_t index) const {
-        if (index >= Size)
+        if (index >= N)
             return false;
         size_t byte_index = index / 8;
         size_t bit_index = index % 8;
@@ -34,7 +34,7 @@ public:
     }
     //
     bool test(size_t begin, size_t end) const {
-        if (begin >= Size || end > Size || begin >= end)
+        if (begin >= N || end > N || begin >= end)
             return false;
         // check all bits in range [begin, end)
         for (size_t i = begin; i < end; ++i) {
@@ -45,14 +45,14 @@ public:
     }
     //
     pos_t find_first_set(size_t offset = 0) const {
-        if (offset >= Size) {
+        if (offset >= N) {
             return npos;
         }
         //
         auto idx = offset / 8;
         for (auto i = offset % 8; i < 8; ++i) {
             auto pos = idx * 8 + i;
-            if (pos >= Size) {
+            if (pos >= N) {
                 return npos;
             }
             if (test(pos)) {
@@ -60,11 +60,11 @@ public:
             }
         }
         // Iterate through each byte starting from the byte containing the offset
-        for (auto idx = offset / 8; idx < (Size + 7) / 8; ++idx) {
+        for (auto idx = offset / 8; idx < (N + 7) / 8; ++idx) {
             if (bits_[idx] != 0) {
                 for (auto bit = 0; bit < 8; ++bit) {
                     auto pos = idx * 8 + bit;
-                    if (pos >= Size) {
+                    if (pos >= N) {
                         return npos;
                     }
                     //
@@ -79,21 +79,21 @@ public:
     }
     //
     pos_t find_last_set(size_t offset = 0) const {
-        if (offset >= Size) {
+        if (offset >= N) {
             return npos;
         }
         //
-        auto idx = (Size - offset) % 8;
-        if (bits_[(Size - offset) / 8] != 0) {
+        auto idx = (N - offset) % 8;
+        if (bits_[(N - offset) / 8] != 0) {
             for (auto bit = idx - 1; bit >= 0; --bit) {
-                auto pos = (Size - offset) / 8 * 8 + bit;
+                auto pos = (N - offset) / 8 * 8 + bit;
                 if (test(pos)) {
                     return pos;
                 }
             }
         }
         //
-        for (int i = (Size - offset) / 8; i >= 0; --i) {
+        for (int i = (N - offset) / 8; i >= 0; --i) {
             if (bits_[i] != 0) {
                 for (auto bit = 7; bit >= 0; --bit) {
                     auto pos = i * 8 + bit;
@@ -110,7 +110,7 @@ public:
 
     // Set the bit at the given index to 1
     void set(size_t index) {
-        if (index >= Size)
+        if (index >= N)
             return;
         size_t byte_index = index / 8;
         size_t bit_index = index % 8;
@@ -118,8 +118,9 @@ public:
     }
     // Reset the bit at the given index to 0
     void clear(size_t index) {
-        if (index >= Size)
+        if (index >= N) {
             return;
+        }
         size_t byte_index = index / 8;
         size_t bit_index = index % 8;
         bits_[byte_index] &= ~(1 << bit_index);
@@ -129,6 +130,6 @@ private:
     uint8_t bits_[cap_];
 };
 
-template<size_t N>
+template <size_t N>
 using fixed_bit_set_t = FixedBitSet<N>;
-}  // namespace basic
+}  // namespace detail

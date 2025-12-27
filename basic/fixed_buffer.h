@@ -73,10 +73,6 @@ public:
         return true;
     }
 
-    void add_data_len(size_t len) {
-        tail_ += len;
-    }
-
 private:
     size_t head_;
     size_t tail_;
@@ -84,4 +80,7 @@ private:
     char data_[N];
 };
 
+
+template <size_t N>
+using fixed_buffer_t = FixedBuffer<N>;
 }  // namespace detail
