@@ -126,7 +126,7 @@ private:
         char *data_;
         Chunk *next_;
 
-        FixedBitMap<BitSize> bitmap_;
+        FixedBitSet<BitSize> bitmap_;
     };
     // Disable copy semantics
     Chunk(const Chunk &) = delete;

@@ -12,9 +12,9 @@
 
 namespace basic {
 template <size_t Size = 1024>
-class FixedBitMap {
+class FixedBitSet {
 public:
-    using Self = FixedBitMap<Size>;
+    using Self = FixedBitSet<Size>;
     using Ptr = Self *;
 
     using pos_t = long long;
@@ -23,7 +23,7 @@ public:
     const static size_t cap_ = (Size + 7) / 8;
 
     //
-    FixedBitMap() : bits_{0} {
+    FixedBitSet() : bits_{0} {
     }
     bool test(size_t index) const {
         if (index >= Size)
@@ -128,4 +128,7 @@ public:
 private:
     uint8_t bits_[cap_];
 };
+
+template<size_t N>
+using fixed_bit_set_t = FixedBitSet<N>;
 }  // namespace basic

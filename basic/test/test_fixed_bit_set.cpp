@@ -1,10 +1,10 @@
-#include "../fixed_bit_map.h"
+#include "../fixed_bit_set.h"
 
 #include <gtest/gtest.h>
 
-TEST(FixedBitMap, Basic) {
+TEST(FixedBitSet, Basic) {
     constexpr size_t SIZE = 100;
-    basic::FixedBitMap<SIZE> fbm;
+    basic::FixedBitSet<SIZE> fbm;
 
     for (size_t i = 0; i < SIZE; ++i) {
         EXPECT_FALSE(fbm.test(i));
@@ -39,16 +39,16 @@ TEST(FixedBitMap, Basic) {
 
 TEST(FixedBitMapFind, TestFind) {
     constexpr size_t SIZE = 100;
-    basic::FixedBitMap<SIZE> fbm;
+    basic::FixedBitSet<SIZE> fbm;
 
-    EXPECT_EQ(fbm.find_first_set(), basic::FixedBitMap<SIZE>::npos);
-    EXPECT_EQ(fbm.find_last_set(), basic::FixedBitMap<SIZE>::npos);
+    EXPECT_EQ(fbm.find_first_set(), basic::FixedBitSet<SIZE>::npos);
+    EXPECT_EQ(fbm.find_last_set(), basic::FixedBitSet<SIZE>::npos);
 
     fbm.set(98);
     EXPECT_EQ(fbm.find_first_set(), 98);
     EXPECT_EQ(fbm.find_last_set(), 98);
     EXPECT_EQ(fbm.find_first_set(98), 98);
-    EXPECT_EQ(fbm.find_first_set(99), basic::FixedBitMap<SIZE>::npos);
+    EXPECT_EQ(fbm.find_first_set(99), basic::FixedBitSet<SIZE>::npos);
     // EXPECT_EQ(fbm.find_last_set(98), 98);
-    EXPECT_EQ(fbm.find_last_set(97), basic::FixedBitMap<SIZE>::npos);
+    EXPECT_EQ(fbm.find_last_set(97), basic::FixedBitSet<SIZE>::npos);
 }
