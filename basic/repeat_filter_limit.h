@@ -15,9 +15,9 @@ namespace basic {
  * This class helps in determining whether an operation should be repeated
  * based on the number of times it has been invoked.
  */
-class RepeatLimit {
+class RepeatFilterLimit {
 public:
-    RepeatLimit(size_t bar1, size_t threshold1, size_t bar2 = 50 * 1000, size_t threshold2 = 100 * 1000)
+    RepeatFilterLimit(size_t bar1, size_t threshold1, size_t bar2 = 50 * 1000, size_t threshold2 = 100 * 1000)
         : counter_(0), bar1_(bar1), bar2_(bar2), threshold1_(threshold1), threshold2_(threshold2) {
     }
     /**

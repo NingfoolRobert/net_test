@@ -159,6 +159,7 @@ public:
         }
         return reinterpret_cast<T *>(data());
     }
+    
 
 private:
     size_t capacity_;

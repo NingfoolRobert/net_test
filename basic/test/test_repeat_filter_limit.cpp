@@ -3,7 +3,7 @@
 
 
 TEST(test_repeat_limit, repeat_filter){
-    basic::RepeatLimit rl(5, 10);
+    basic::RepeatFilterLimit rl(5, 10);
     
     EXPECT_EQ(rl.counter(), 0);
     EXPECT_EQ(rl.repeat(), true);  // 1

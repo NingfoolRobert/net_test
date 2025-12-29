@@ -8,7 +8,7 @@
 #pragma once
 #include <atomic>
 
-namespace basic {
+namespace detail {
 
 class Object {
 public:
@@ -34,4 +34,5 @@ public:
 private:
     std::atomic<int> ref_;
 };
-}  // namespace basic
+using object_t = Object;
+}  // namespace detail
