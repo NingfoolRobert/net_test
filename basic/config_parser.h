@@ -6,11 +6,13 @@
  * @date 2025-12-27
  */
 #pragma once
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <sys/types.h>
 #include <type_traits>
 #include <unordered_map>
 #include <variant>
@@ -248,7 +250,7 @@ public:
         if (!is_array()) {
             return null_node;
         }
-        auto &arr = std::get<array_type>(data);
+        const auto &arr = std::get<array_type>(data);
         if (index >= arr.size()) {
             return null_node;
         }
@@ -261,101 +263,99 @@ public:
      */
     template <typename T>
     T get(const T default_value = T{}) const {
-        if (std::holds_alternative<value_type>(data)) {
-            const auto &val = std::get<value_type>(data);
-            if (std::holds_alternative<T>(val)) {
-                return std::get<T>(val);
-            }
-            else if (std::holds_alternative<std::string>(val)) {
-                // try to convert string to T
-                const auto &str_val = std::get<std::string>(val);
-                if constexpr (std::is_same_v<T, int>) {
-                    return std::stoi(str_val);
-                }
-                else if constexpr (std::is_same_v<T, double>) {
-                    return std::stod(str_val);
-                }
-                else if constexpr (std::is_same_v<T, float>) {
-                    return std::stof(str_val);
-                }
-                else if constexpr (std::is_same_v<T, bool>) {
-                    auto is_all_of_digit = [](const std::string &s) {
-                        return std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isdigit(c); });
-                    };
-                    //
-                    if (is_all_of_digit(str_val)) {
-                        return std::stoi(str_val) != 0;
-                    }
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return std::stoul(str_val, nullptr, 16) != 0;
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return std::stoul(str_val, nullptr, 2) != 0;
-                    }
-                    //
-                    return str_val == "true" || str_val == "True" || str_val == "TRUE" || str_val == "t" ||
-                           str_val == "T" || str_val == "yes" || str_val == "YES" || str_val == "Yes" ||
-                           str_val == "y" || str_val == "Y" || str_val == "ON" || str_val == "on" || str_val == "On";
-                }
-                else if constexpr (std::is_same_v<T, long>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return std::stol(str_val, nullptr, 16);
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return std::stol(str_val, nullptr, 2);
-                    }
-                    return std::stol(str_val);
-                }
-                else if constexpr (std::is_same_v<T, unsigned int>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return static_cast<unsigned int>(std::stoul(str_val, nullptr, 16));
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return static_cast<unsigned int>(std::stoul(str_val, nullptr, 2));
-                    }
-                    return static_cast<unsigned int>(std::stoul(str_val));
-                }
-                else if constexpr (std::is_same_v<T, unsigned long>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return std::stoul(str_val, nullptr, 16);
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return std::stoul(str_val, nullptr, 2);
-                    }
-                    return std::stoul(str_val);
-                }
-                else if constexpr (std::is_same_v<T, unsigned long long>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return std::stoull(str_val, nullptr, 16);
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return std::stoull(str_val, nullptr, 2);
-                    }
-                    return std::stoull(str_val);
-                }
-                else if constexpr (std::is_same_v<T, short>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return static_cast<short>(std::stol(str_val, nullptr, 16));
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return static_cast<short>(std::stol(str_val, nullptr, 2));
-                    }
-                    return static_cast<short>(std::stoi(str_val));
-                }
-                else if constexpr (std::is_same_v<T, unsigned short>) {
-                    if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
-                        return static_cast<unsigned short>(std::stoul(str_val, nullptr, 16));
-                    }
-                    else if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
-                        return static_cast<unsigned short>(std::stoul(str_val, nullptr, 2));
-                    }
-                    return static_cast<unsigned short>(std::stoul(str_val));
-                }
-                else if constexpr (std::is_same_v<T, char>) {
-                    return str_val.empty() ? '\0' : str_val[0];
-                }
-            }
+        if (!std::holds_alternative<value_type>(data)) {
+            return default_value;
         }
+        auto is_all_of_digit = [](const std::string &str) {
+            return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); });
+        };
+        //
+        const auto &val = std::get<value_type>(data);
+        if (std::holds_alternative<T>(val)) {
+            return std::get<T>(val);
+        }
+        //
+        if (!std::holds_alternative<std::string>(val)) {
+            return default_value;
+        }
+
+        // try to convert string to T
+        const auto &str_val = std::get<std::string>(val);
+        if constexpr (std::is_same_v<T, int>) {
+            return std::stoi(str_val);
+        }
+        if constexpr (std::is_same_v<T, double>) {
+            return std::stod(str_val);
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            return std::stof(str_val);
+        }
+        else if constexpr (std::is_same_v<T, bool>) {
+
+            //
+            if (is_all_of_digit(str_val)) {
+                return std::stoi(str_val) != 0;
+            }
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return std::stoul(str_val, nullptr, 16) != 0;
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return std::stoul(str_val, nullptr, 2) != 0;
+            }
+            //
+            return str_val == "true" || str_val == "True" || str_val == "TRUE" || str_val == "t" || str_val == "T" ||
+                   str_val == "yes" || str_val == "YES" || str_val == "Yes" || str_val == "y" || str_val == "Y" ||
+                   str_val == "ON" || str_val == "on" || str_val == "On";
+        }
+        else if constexpr (std::is_same_v<T, int64_t>) {
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return std::stol(str_val, nullptr, 16);
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return std::stol(str_val, nullptr, 2);
+            }
+            return std::stol(str_val);
+        }
+        else if constexpr (std::is_same_v<T, uint32_t>) {
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return static_cast<uint32_t>(std::stoul(str_val, nullptr, 16));
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return static_cast<uint32_t>(std::stoul(str_val, nullptr, 2));
+            }
+            return static_cast<uint32_t>(std::stoul(str_val));
+        }
+        else if constexpr (std::is_same_v<T, uint64_t>) {
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return std::stoul(str_val, nullptr, 16);
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return std::stoul(str_val, nullptr, 2);
+            }
+            return std::stoul(str_val);
+        }
+        else if constexpr (std::is_same_v<T, int16_t>) {
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return static_cast<int16_t>(std::stol(str_val, nullptr, 16));
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return static_cast<int16_t>(std::stol(str_val, nullptr, 2));
+            }
+            return static_cast<int16_t>(std::stoi(str_val));
+        }
+        else if constexpr (std::is_same_v<T, uint16_t>) {
+            if (str_val.find("0x") == 0 || str_val.find("0X") == 0) {
+                return static_cast<uint16_t>(std::stoul(str_val, nullptr, 16));
+            }
+            if (str_val.find("0b") == 0 || str_val.find("0B") == 0) {
+                return static_cast<uint16_t>(std::stoul(str_val, nullptr, 2));
+            }
+            return static_cast<uint16_t>(std::stoul(str_val));
+        }
+        else if constexpr (std::is_same_v<T, char>) {
+            return str_val.empty() ? '\0' : str_val[0];
+        }
+
         return default_value;
     }
     /**
@@ -461,7 +461,7 @@ public:
         return root_;
     }
 
-    const ConfigNode &root() const {
+    [[nodiscard]] const ConfigNode &root() const {
         return root_;
     }
     /**
@@ -477,7 +477,7 @@ public:
     }
     /// @brief Save the configuration to a string
     template <typename Parser>
-    std::string dump() const {
+    [[nodiscard]] std::string dump() const {
         Parser parser;
         return parser.dump(root_);
     }
@@ -607,7 +607,6 @@ private:
 
 class IniParser : public IConfigParser {
 public:
-    IniParser() = default;
     virtual ~IniParser() = default;
 
     IniParser(const IniParser &) = delete;
@@ -621,7 +620,6 @@ public:
 
 class ConfParser : public IConfigParser {
 public:
-    ConfParser() = default;
     virtual ~ConfParser() = default;
 
     // Explicitly delete copy and move operations

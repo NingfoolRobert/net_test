@@ -217,13 +217,20 @@ std::string IniParser::dump(const ConfigNode &root) {
     if (root.is_object()) {
         std::string result;
         for (const auto &[section, section_node] : std::get<ConfigNode::object_type>(root.data)) {
-            result += "[" + section + "]" + enter_line;
+            result += "[";
+            result += section + "]";
+            result += enter_line;
             for (const auto &[key, value] : std::get<ConfigNode::object_type>(section_node.data)) {
                 if (value.is_object() || value.is_array()) {
                     continue;
                 }
                 // Recursively dump nested objects and arrays
-                result.append(key).append(" ").append(key_value_delimiter).append(" ").append(util::add_quotes_if_needed(dump(value))).append(enter_line);
+                result.append(key)
+                    .append(" ")
+                    .append(key_value_delimiter)
+                    .append(" ")
+                    .append(util::add_quotes_if_needed(dump(value)))
+                    .append(enter_line);
             }
             result += enter_line;
         }
@@ -268,11 +275,13 @@ std::string ConfParser::dump(const ConfigNode &root) {
                 continue;
             }
             // Recursively dump nested objects and arrays
-            result += key + " " + key_value_delimiter + " " + dump(value) + enter_line;
+            result += key + " ";
+            result += key_value_delimiter + " ";
+            result += dump(value) + enter_line;
         }
         return result;
     }
-    else if (root.is_value()) {
+    if (root.is_value()) {
         return util::config_node_value_to_string(root, options());
     }
     //
