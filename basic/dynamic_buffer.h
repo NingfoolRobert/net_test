@@ -20,20 +20,12 @@ public:
         clear(true);
     }
 
-    DynamicBufferr(const DynamicBufferr &rhs) {
-        capacity_ = rhs.capacity_;
-        size_ = rhs.size_;
-        head_ = rhs.head_;
-        data_ = new char[capacity_];
+    DynamicBufferr(const DynamicBufferr &rhs) : capacity_(rhs.capacity_), size_(rhs.size_), head_(rhs.head_), data_(new char[capacity_]) {
         memcpy(data_, rhs.data_, size_);
     }
-    DynamicBufferr(DynamicBufferr &&rhs) noexcept {
-        capacity_ = rhs.capacity_;
+    DynamicBufferr(DynamicBufferr &&rhs) noexcept : capacity_(rhs.capacity_), size_(rhs.size_), head_(rhs.head_), data_(rhs.data_) {
         rhs.capacity_ = 0;
-        size_ = rhs.size_;
         rhs.size_ = 0;
-        head_ = rhs.head_;
-        data_ = rhs.data_;
         rhs.data_ = nullptr;
     }
     DynamicBufferr &operator=(const DynamicBufferr &rhs) {
@@ -46,11 +38,11 @@ public:
     }
 
 public:
-    size_t capacity() const {
+    [[nodiscard]] size_t capacity() const {
         return capacity_;
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return size_;
     }
 
@@ -58,7 +50,7 @@ public:
         head_ = head;
     }
 
-    size_t head_size() const {
+    [[nodiscard]] size_t head_size() const {
         return head_;
     }
 
@@ -66,7 +58,7 @@ public:
         expand_size_ = size;
     }
 
-    size_t expand_size() const {
+    [[nodiscard]] size_t expand_size() const {
         return expand_size_;
     }
 
@@ -97,7 +89,7 @@ public:
         }
         //
         char *new_data = new char[allocate_size];
-        if (data_) {
+        if (new_data != nullptr) {
             memcpy(new_data, data_, size_);
             delete[] data_;
         }
@@ -128,7 +120,7 @@ public:
         }
     }
 
-    const char operator[](size_t index) const {
+     char operator[](size_t index) const {
         return data_[head_ + index];
     }
 
@@ -136,11 +128,11 @@ public:
         return data_[head_ + index];
     }
     //
-    const char *c_str() const {
+    [[nodiscard]] const char *c_str() const {
         return buffer_ptr();
     }
     //
-    std::string to_string() const {
+    [[nodiscard]] std::string to_string() const {
         return std::string(data(), size());
     }
 
@@ -149,7 +141,7 @@ public:
         if (sizeof(T) > size()) {
             return nullptr;
         }
-        return reinterpret_cast<const T *>(data());
+        return static_cast<const T *>(data());
     }
     //
     template <typename T>
@@ -157,12 +149,12 @@ public:
         if (sizeof(T) > size()) {
             return nullptr;
         }
-        return reinterpret_cast<T *>(data());
+        return static_cast<T *>(data());
     }
     
 
 private:
-    size_t capacity_;
+    size_t capacity_{};
     size_t size_ = {0};
     size_t head_ = {0};
     char *data_{nullptr};
