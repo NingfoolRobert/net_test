@@ -30,7 +30,7 @@ public:
     }
 
 public:
-    template <typename Args...>
+    template <typename ...Args>
     T *allocate(const Args &&...args) {
         //
         if (mem_pool_.empty()) {
@@ -38,7 +38,7 @@ public:
         }
         //
         //)      auto ptr = obj_pool_.try_pop();
-        auto ptr = mem_pool_.front();
+        auto *ptr = mem_pool_.front();
         mem_pool_.pop();
         auto obj = new (ptr) T(args...);
         return obj;

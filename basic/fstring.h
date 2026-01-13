@@ -21,9 +21,9 @@ class fstring {
   fstring() {
     memset(data_, 0, N);
   }
-
+  ~fstring() = default;
   explicit fstring(const char *other) {
-    if (other) {
+    if (other != nullptr) {
       // memmove(data_, other, N - 1);
       strncpy(data_, other, N);
     }
@@ -61,6 +61,11 @@ class fstring {
     memset(rhs.data_, 0, N);
   }
 
+  fstring& operator=(fstring &&rhs)  noexcept {
+    memcpy(data_, rhs.data_, N);
+    memset(rhs.data_, 0, N);
+    return *this;
+  }
   fstring &operator=(const char *other) {
     if (other != nullptr) {
       memcpy(data_, other, N - 1);
@@ -288,7 +293,7 @@ class fstring {
   }
 
   private:
-  char data_[N];
+  char data_[N]{};
 };
 
 //

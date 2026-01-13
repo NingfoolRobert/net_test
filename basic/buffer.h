@@ -7,7 +7,6 @@
  */
 #ifndef _BUFFER_H_
 #define _BUFFER_H_
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <type_traits>
@@ -39,6 +38,21 @@ class buffer_t {
     data_ = reinterpret_cast<pointer>(malloc(cap_));
     memcpy(data_, rhs.data_, size_);
     return *this;
+  }
+
+  buffer_t &operator=(buffer_t &&rhs) noexcept {
+    size_ = rhs.size_;
+    cap_ = rhs.cap_;
+    data_ = rhs.data_;
+    rhs.cap_ = 0;
+    rhs.size_ = 0;
+    rhs.data_ = nullptr;
+    return *this;
+  }
+  ~buffer_t() {
+    if (data_ != nullptr) {
+      free(data_);
+    }
   }
 
   bool append(const void *data, size_type len) {

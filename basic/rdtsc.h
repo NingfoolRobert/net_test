@@ -21,14 +21,16 @@ public:
     }
     //
     static uint64_t now_cycle() {
-        unsigned int lo, hi;
+        unsigned int lo;
+        unsigned int hi;
         __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
         return (static_cast<uint64_t>(hi) << 32) | lo;
     }
 
-    uint64_t now() {
+    [[nodiscard]] uint64_t now() const {
         auto cycle_span = now_cycle() - cycle_base_;
-        return timepoint_base_ + (cycle_span / frequence_);
+        uint64_t ns_delta = static_cast<uint64_t>(static_cast<long double>(cycle_span) / frequence_);
+        return timepoint_base_ + ns_delta;
     }
     //  one cycle duration : ns
     double cycle_freq() {
@@ -45,7 +47,7 @@ private:
     void init() {
         cycle_base_ = now_cycle();
         frequence_ = calibrate();
-        struct timespec tp;
+        struct timespec tp{};
         clock_gettime(CLOCK_REALTIME, &tp);
         timepoint_base_ = tp.tv_sec * 1000000000ULL + tp.tv_nsec;
     }
