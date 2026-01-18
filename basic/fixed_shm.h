@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,153 +21,165 @@
 namespace detail {
 
 class fixed_shm {
-public:
-    fixed_shm(const char *file_path, uint64_t size) : size_(size) {
-        if (file_path != nullptr) {
-            strcpy(file_, file_path);
-        }
+  public:
+  fixed_shm(const char *file_path, uint64_t size) : size_(size) {
+    if (file_path != nullptr) {
+      strcpy(file_, file_path);
+    }
+  }
+
+  ~fixed_shm() {
+    fsync(size_);
+    close();
+  }
+
+  fixed_shm(const fixed_shm &rhs) = delete;
+
+  fixed_shm &operator=(const fixed_shm &) = delete;
+
+  fixed_shm(fixed_shm &&rhs) noexcept : size_(rhs.size_), data_(rhs.data_), fd_(rhs.fd_) {
+    strcpy(file_, rhs.file_);
+    rhs.data_ = nullptr;
+    rhs.fd_ = -1;
+  }
+  fixed_shm &operator=(fixed_shm &&rhs) noexcept {
+    if (this != &rhs) {
+      fsync(size_);
+      size_ = rhs.size_;
+      data_ = rhs.data_;
+      fd_ = rhs.fd_;
+      strcpy(file_, rhs.file_);
+      rhs.data_ = nullptr;
+      rhs.fd_ = -1;
+    }
+    return *this;
+  }
+
+  bool open() {
+    if (UNLIKELY(fd_ != -1)) {
+      return false;
+    }
+    //
+    bool do_fill = false;
+    if (access(file_, F_OK) == 0) {  // file exist
+      do_fill = true;
+    }
+    //
+    fd_ = ::open(file_, O_CREAT | O_RDWR, 0666);
+    if (fd_ < 0) {
+      perror("open file faile.");
+      return false;
     }
 
-    ~fixed_shm() {
-        fsync(size_);
-        close();
+    if (!do_fill && size_ > 0) {
+      lseek(fd_, size_ - 1, SEEK_SET);
+      ::write(fd_, "", 1);
     }
 
-    fixed_shm(const fixed_shm &rhs) = delete;
+    return true;
+  }
 
-    fixed_shm &operator=(const fixed_shm &) = delete;
+  char *mem(uint64_t offset) {
+    return data_ + offset;
+  }
 
-    fixed_shm(fixed_shm &&rhs) noexcept : size_(rhs.size_), data_(rhs.data_), fd_(rhs.fd_) {
-        strcpy(file_, rhs.file_);
-        rhs.data_ = nullptr;
-        rhs.fd_ = -1;
+  void close() {
+    unmap();
+    if (fd_ != -1) {
+      ::close(fd_);
     }
+  }
 
-    bool open() {
-        if (UNLIKELY(fd_ != -1)) {
-            return false;
-        }
-        //
-        bool do_fill = false;
-        if (access(file_, F_OK) == 0) {  // file exist
-            do_fill = true;
-        }
-        //
-        fd_ = ::open(file_, O_CREAT | O_RDWR, 0666);
-        if (fd_ < 0) {
-            perror("open file faile.");
-            return false;
-        }
-
-        if (!do_fill) {
-            lseek(fd_, size_ - 1, SEEK_SET);
-            ::write(fd_, "", 1);
-        }
-
-        return true;
+  char *map() {
+    // 将文件映射至进程的地址空间
+    if ((data_ = static_cast<char *>(mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0))) == (void *)-1) {
+      perror("shm mmap fail");
+      return nullptr;
     }
-
-    char *mem(uint64_t offset) {
-        return data_ + offset;
-    }
-
-    void close() {
-        unmap();
-        if (fd_ != -1) {
-            ::close(fd_);
-        }
-    }
-
-    char *map() {
-        // 将文件映射至进程的地址空间
-        if ((data_ = (char *)mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0)) == (void *)-1) {
-            perror("shm mmap fail");
-            return nullptr;
-        }
 #ifdef USE_MDADVISE
-        // 提前预读数据
-        if (madvise(data_, size_, MADV_WILLNEED) == -1) {
-            perror("madvise fail");
-            return nullptr;
-        }
-#else 
-        touch_pages(data_, size_);
+    // 提前预读数据
+    if (madvise(data_, size_, MADV_WILLNEED) == -1) {
+      perror("madvise fail");
+      return nullptr;
+    }
+#else
+    touch_pages(data_, size_);
 #endif
-        //
-        return data_;
-    }
-
-    void unmap() {
-        if (data_ != nullptr) {
-            if ((munmap((void *)data_, size_)) == -1) {
-                perror("shm munmap fail");
-                return;
-            }
-        }
-        data_ = nullptr;
-    }
-
-    uint64_t capacity() const {
-        return size_;
-    }
-
     //
-    int writeto(uint64_t offset, const char *data, size_t size) {
-        if (UNLIKELY(data_ == nullptr)) {
-            return -1;
-        }
-        //
-        if (UNLIKELY(size_ - offset < size)) {
-            return -1;
-        }
-        //
-        memmove(data_ + offset, data, size);
-        return static_cast<int>(size);
+    return data_;
+  }
+
+  void unmap() {
+    if (data_ != nullptr) {
+      if ((munmap((void *)data_, size_)) == -1) {
+        perror("shm munmap fail");
+        return;
+      }
+    }
+    data_ = nullptr;
+  }
+
+  uint64_t capacity() const {
+    return size_;
+  }
+
+  //
+  int writeto(uint64_t offset, const char *data, size_t size) {
+    if (UNLIKELY(data_ == nullptr)) {
+      return -1;
     }
     //
-    int readfrom(uint64_t offset, char *data, size_t size) {
-        if (UNLIKELY(data_ == nullptr)) {
-            return -1;
-        }
-        //
-        if (LIKELY(size_ - offset - size >= 0)) {
-            memcpy(data, data_ + offset, size);
-            return static_cast<int>(size);
-        }
-        //
-        if (LIKELY(size_ > offset && size_ - offset < size)) {
-            memcpy(data, data_ + offset, size_ - offset);
-            return static_cast<int>(size_ - offset);
-        }
-
-        return -1;
+    if (UNLIKELY(size_ - offset < size)) {
+      return -1;
     }
-
-    void fsync(uint64_t offset) {
-        if (msync(data_, offset, MS_SYNC) == -1) {
-            perror("msync fail. ");
-        }
-    }
-
-private:
-    void touch_pages(void* addr,  uint64_t size) {
-        if (data_ == nullptr) {
-            return;
-        }
-        const size_t page_size = sysconf(_SC_PAGESIZE);
-        // 触摸所有页面
-        for (uint64_t i = 0; i < size_; i += page_size) {
-            volatile char c = data_[i];
-            (void)c;  // 防止编译器优化掉
-        }
-    }
-
-private:
-    char file_[256];
-    uint64_t size_;  // 映射文件大小
-    char *data_{nullptr};
     //
-    int fd_{-1};
+    memmove(data_ + offset, data, size);
+    return static_cast<int>(size);
+  }
+  //
+  int readfrom(uint64_t offset, char *data, size_t size) {
+    if (UNLIKELY(data_ == nullptr)) {
+      return -1;
+    }
+    //
+    if (LIKELY(size_ - offset - size >= 0)) {
+      memcpy(data, data_ + offset, size);
+      return static_cast<int>(size);
+    }
+    //
+    if (LIKELY(size_ > offset && size_ - offset < size)) {
+      memcpy(data, data_ + offset, size_ - offset);
+      return static_cast<int>(size_ - offset);
+    }
+
+    return -1;
+  }
+
+  void fsync(uint64_t offset) {
+    if (data_ != nullptr && msync(data_, offset, MS_SYNC) == -1) {
+      perror("msync fail. ");
+    }
+  }
+
+  private:
+  void touch_pages(void *addr, uint64_t size) {
+    if (data_ == nullptr) {
+      return;
+    }
+    const size_t page_size = sysconf(_SC_PAGESIZE);
+    // 触摸所有页面
+    for (uint64_t i = 0; i < size_; i += page_size) {
+      volatile char c = data_[i];
+      (void)c;  // 防止编译器优化掉
+    }
+  }
+
+  private:
+  char file_[256]{};
+  uint64_t size_;  // 映射文件大小
+  char *data_{nullptr};
+  //
+  int fd_{-1};
 };
 
 using shm_t = fixed_shm;

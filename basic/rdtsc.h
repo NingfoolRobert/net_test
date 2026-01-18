@@ -21,19 +21,19 @@ public:
     }
     //
     static uint64_t now_cycle() {
-        unsigned int lo;
-        unsigned int hi;
+        unsigned int lo = 0;
+        unsigned int hi = 0;
         __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
         return (static_cast<uint64_t>(hi) << 32) | lo;
     }
 
     [[nodiscard]] uint64_t now() const {
         auto cycle_span = now_cycle() - cycle_base_;
-        uint64_t ns_delta = static_cast<uint64_t>(static_cast<long double>(cycle_span) / frequence_);
+        auto ns_delta = static_cast<uint64_t>(static_cast<long double>(cycle_span) / frequence_);
         return timepoint_base_ + ns_delta;
     }
     //  one cycle duration : ns
-    double cycle_freq() {
+    double cycle_freq() const {
         return frequence_;
     }
 
@@ -52,14 +52,15 @@ private:
         timepoint_base_ = tp.tv_sec * 1000000000ULL + tp.tv_nsec;
     }
     //
-    double calibrate() {
-        struct timespec start, end;
+    static double calibrate() {
+        struct timespec start{};
+        struct timespec end{};
         clock_gettime(CLOCK_MONOTONIC, &start);
         uint64_t tsc_start = now_cycle();
         usleep(1 * 1000 * 1000);  // 延时1秒
         clock_gettime(CLOCK_MONOTONIC, &end);
         uint64_t tsc_end = now_cycle();
-        auto time_span = (end.tv_sec - start.tv_sec) * 1000000000ULL + end.tv_nsec - start.tv_nsec;
+        auto time_span = ((end.tv_sec - start.tv_sec) * 1000000000ULL) + end.tv_nsec - start.tv_nsec;
         return static_cast<double>(tsc_end - tsc_start) / time_span;
     }
 
