@@ -6,7 +6,6 @@
  * @date 2025-01-12
  */
 #pragma once
-#include <cstdio>
 
 namespace detail {
 class MemoryFence {
@@ -14,25 +13,30 @@ public:
     MemoryFence() = default;
     ~MemoryFence() = default;
 
+    MemoryFence(const MemoryFence&) = delete;
+    MemoryFence& operator=(const MemoryFence&) = delete;
+    MemoryFence(MemoryFence&&) = delete;
+    MemoryFence& operator=(MemoryFence&&) = delete;
+
 public:
-    static void inline lfence() {
+    static inline void  lfence() {
         __asm__ __volatile__("lfence" ::: "memory");
     }
 
-    static void inline sfence() {
+    static void  sfence() {
         __asm__ __volatile__("sfence" ::: "memory");
     }
 
-    static void inline enter() {
+    static void  enter() {
         lfence();
     }
 
-    static void inline leave() {
+    static void  leave() {
         sfence();
         lfence();
     }
     
-    static void inline fence() {
+    static void  fence() {
       __asm__ __volatile__("" ::: "memory");
     }
 };

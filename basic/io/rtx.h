@@ -7,6 +7,7 @@
  */
 #pragma once
 
+#include <cstddef>
 namespace detail {
 namespace io {
 template <typename drived_t, typename opt_t>

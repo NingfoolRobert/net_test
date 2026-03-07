@@ -218,7 +218,7 @@ public:
         if (!is_object()) {
             return null_node;
         }
-        auto &obj = std::get<object_type>(data);
+        const auto &obj = std::get<object_type>(data);
         auto it = obj.find(key);
         if (it != obj.end()) {
             return it->second;

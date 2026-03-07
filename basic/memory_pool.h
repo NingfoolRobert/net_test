@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdlib>
 
 namespace basic {
 template <size_t ChunkSize = 1 << 21, size_t CacheLineSize = 64>

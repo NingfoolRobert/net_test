@@ -103,7 +103,7 @@ inline std::string unescape(const std::string &str) {
 inline std::string add_quotes_if_needed(const std::string &str) {
     bool needs_quotes = false;
     for (char c : str) {
-        if (std::isspace(static_cast<unsigned char>(c)) || || c == '"' || c == '\'' || c == '\\' || c == '\r' ||
+        if (std::isspace(static_cast<unsigned char>(c)) ||  c == '"' || c == '\'' || c == '\\' || c == '\r' ||
             c == '\n' || c == '\t' || c == '\t') {
             needs_quotes = true;
             break;
