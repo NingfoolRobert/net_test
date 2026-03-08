@@ -1,4 +1,6 @@
 #include "../config_parser.h"
+#include "gtest/gtest.h"
+#include <cstddef>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -26,11 +28,21 @@ key4 = true
     std::string conf_file_path = "./test_config.conf";
 };
 
-TEST_F(ConfigParserTest, IniParseAndDump) {
+TEST_F(ConfigParserTest, ConfParser) {
     using namespace detail;
 
     ConfigFile conf_file(conf_file_path.c_str());
     ConfigDocument doc;
+    doc.parse<ConfParser>(conf_file.data());
+    auto& root = doc.root();
+    EXPECT_EQ(root["key1"].is_string(), true);
+    EXPECT_EQ(root["key1"].get<std::string>(""), "value1");
+    EXPECT_EQ(root["key2"].is_string(), true);
+    EXPECT_EQ(root["key2"].get<std::string>(""), "value with spaces");
+    EXPECT_EQ(root["key3"].is_value(), true);
+    EXPECT_EQ(root["key3"].is_int(), true);
+    EXPECT_EQ(root["key3"].get<int>(0), 123);
+    
     // doc.parse<ConfParser>(conf_file.data());
     // EXPECT_EQ(doc.root().is_object(), true);
     // EXPECT_EQ(doc.root().as<ConfigNode::object_type>().size(), 4);

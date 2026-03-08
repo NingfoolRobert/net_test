@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(TARGET_NAME test_basic)
+set(TARGET_NAME test_config)
 
 file(GLOB_RECURSE SRC_FILES
   LIST_DIRECTORIES false
@@ -24,7 +24,7 @@ add_executable(${TARGET_NAME}
   # test_raii.cpp
   # test_fixed_bit_map.cpp
 )
-target_link_libraries(${TARGET_NAME} PRIVATE gtest gtest_main basic)
+target_link_libraries(${TARGET_NAME} PRIVATE gtest gtest_main config)
 
 
 add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
