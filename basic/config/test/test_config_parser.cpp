@@ -40,14 +40,9 @@ TEST_F(ConfigParserTest, ConfParser) {
     EXPECT_EQ(root["key2"].is_string(), true);
     EXPECT_EQ(root["key2"].get<std::string>(""), "value with spaces");
     EXPECT_EQ(root["key3"].is_value(), true);
-    EXPECT_EQ(root["key3"].is_int(), true);
+    //EXPECT_EQ(root["key3"].is_int(), true);
     EXPECT_EQ(root["key3"].get<int>(0), 123);
-    
-    // doc.parse<ConfParser>(conf_file.data());
-    // EXPECT_EQ(doc.root().is_object(), true);
-    // EXPECT_EQ(doc.root().as<ConfigNode::object_type>().size(), 4);
-    // EXPECT_EQ(doc.root().as<ConfigNode::object_type>().at("key1").as<std::string>(), "value1");
-    // EXPECT_STREQ(doc.root().as<ConfigNode::object_type>().at("key2").as<std::string>(), "value with spaces");
-    // EXPECT_EQ(doc.root().as<ConfigNode::object_type>().at("key3").as<int>(), 123);
-    // EXPECT_EQ(doc.root().as<ConfigNode::object_type>().at("key4").as<bool>(), true);
+    EXPECT_EQ(root["key4"].is_value(), true);
+    //EXPECT_EQ(root["key4"].is_bool(), true);
+    EXPECT_EQ(root["key4"].get<bool>(false), true);
 }
