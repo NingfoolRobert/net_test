@@ -6,6 +6,7 @@ project(net_api_test
 option(USE_SYS_FLOG  "adopt the format log mode: FLOG(hello world {}, 123) "  OFF)
 option(USE_SYS_LOG  "adopt the format log mode: FLOG(hello world {}, 123) "  ON)
 
+set(CMAKE_CXX_STANDARD 17)
 if(USE_SYS_FLOG)
   add_definitions(-DSYS_FLOG)
 endif()
