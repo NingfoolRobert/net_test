@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <sstream>
+#include <stdexcept>
+#include <vector>
 
 namespace detail {
 
@@ -159,9 +161,21 @@ static inline std::string config_node_value_to_string(const ConfigNode &node, co
     return std::to_string(std::get<float>(val));
   }
   if (std::holds_alternative<double>(val)) {
-    char tmp[64] = {0};
-    sprintf(tmp, "%.*lf", options.get_option<int>("fmt_double_precision", 6), std::get<double>(val));
-    return std::string(tmp);
+    const int precision = options.get_option<int>("fmt_double_precision", 6);
+    // Bound formatting work before asking snprintf to calculate the size.
+    if (precision < 0 || precision > 1024) {
+      throw std::invalid_argument("fmt_double_precision must be between 0 and 1024");
+    }
+    const double value = std::get<double>(val);
+    const int count = std::snprintf(nullptr, 0, "%.*lf", precision, value);
+    if (count < 0) {
+      throw std::runtime_error("Failed to format double configuration value");
+    }
+    std::vector<char> output(static_cast<std::size_t>(count) + 1);
+    if (std::snprintf(output.data(), output.size(), "%.*lf", precision, value) != count) {
+      throw std::runtime_error("Failed to format double configuration value");
+    }
+    return std::string(output.data(), static_cast<std::size_t>(count));
   }
   if (std::holds_alternative<bool>(val)) {
     std::string true_str = options.get_option<std::string>("fmt_boolean_true", "true");

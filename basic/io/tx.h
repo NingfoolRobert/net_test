@@ -6,40 +6,20 @@
  * @date 2025-02-24
  */
 #pragma once
-#include <stdio.h>
+#include "io.h"
 namespace detail {
 
 namespace io {
-template <typename drived_t, typename opt_t>
-class tx {
+template <typename Derived, typename Options>
+class tx : public io<Derived, Options> {
 public:
-    bool open() {
-        return impl()->open();
-    }
-
-    void close() {
-        return impl()->close();
-    }
-
-    int write(const void *data, int len) {
-        return impl()->write(data, len);
-    }
-
-    void set_opt(opt_t &opt) {
-        opt_ = opt;
-    }
-
-    opt_t &get_opt() {
-        return opt_;
-    }
-
-private:
-    drived_t *impl() {
-        return static_cast<drived_t *>(this);
+    int send(const void *data, std::size_t len) {
+        return this->call_transfer(data, len, [&] { return this->impl()->send_impl(data, len); });
     }
 
 protected:
-    opt_t opt_;
+    tx()  = default;
+    ~tx() = default;
 };
 }  // namespace io
 }  // namespace detail

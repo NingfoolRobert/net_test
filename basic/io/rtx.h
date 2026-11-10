@@ -7,45 +7,27 @@
  */
 #pragma once
 
-#include <cstddef>
+#include "io.h"
 namespace detail {
 namespace io {
-template <typename drived_t, typename opt_t>
-class rtx {
+template <typename Derived, typename Options>
+class rtx : public io<Derived, Options> {
 public:
-    ~rtx() {
-        close();
+    int recv(char *data, std::size_t len) {
+        return this->call_transfer(data, len, [&] { return this->impl()->recv_impl(data, len); });
     }
 
-    bool open() {
-        return subtype()->open();
+    int recv_from(char *data, std::size_t len, void *&opt) {
+        return this->call_transfer(data, len, [&] { return this->impl()->recv_from_impl(data, len, opt); });
     }
 
-    void close() {
-        subtype()->close();
-    }
-
-    int read(char *data, size_t len) {
-        return subtype()->read(data, len);
-    }
-
-    int write(const void *data, size_t len);
-
-    void set_opt(opt_t &opt) {
-        opt_ = opt;
-    }
-
-    opt_t &get_opt() {
-        return opt_;
-    }
-
-private:
-    drived_t *subtype() {
-        return static_cast<drived_t *>(this);
+    int send(const void *data, std::size_t len) {
+        return this->call_transfer(data, len, [&] { return this->impl()->send_impl(data, len); });
     }
 
 protected:
-    opt_t opt_;
+    rtx()  = default;
+    ~rtx() = default;
 };
 }  // namespace io
 }  // namespace detail

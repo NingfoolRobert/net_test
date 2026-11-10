@@ -28,3 +28,10 @@ target_link_libraries(${TARGET_NAME} core)
 set_target_properties(${TARGET_NAME} PROPERTIES 
 	COMPILE_FLAGS	"-pthread"
 	LINK_FLAGS		"-pthread")
+
+add_executable(test_ipc_lock test_ipc_lock.cpp)
+target_link_libraries(test_ipc_lock core)
+set_target_properties(test_ipc_lock PROPERTIES
+	COMPILE_FLAGS "-pthread"
+	LINK_FLAGS "-pthread")
+add_test(NAME test_ipc_lock COMMAND test_ipc_lock)

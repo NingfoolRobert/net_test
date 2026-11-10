@@ -7,13 +7,13 @@
  */
 #pragma once
 #include "io/tx.h"
-#include "net_common.h"
+#include "net_types.h"
 #include "net_util.h"
 #include <stdint.h>
 
 namespace net {
 struct tx_bsd_mcbc_cfg_t {
-    net::common::ip_pair pair;
+    net::ip_pair_t pair;
     int8_t join_multicast = 0;
     int8_t non_blocking = 1;
     int16_t loopback = 0;
@@ -23,14 +23,23 @@ struct tx_bsd_mcbc_cfg_t {
 //
 class tx_bsd_mcbc : public detail::io::tx<tx_bsd_mcbc, tx_bsd_mcbc_cfg_t> {
 public:
-    bool open();
+    tx_bsd_mcbc() = default;
+    ~tx_bsd_mcbc() { close(); }
+    tx_bsd_mcbc(const tx_bsd_mcbc &) = delete;
+    tx_bsd_mcbc &operator=(const tx_bsd_mcbc &) = delete;
 
-    void close();
+private:
+    friend class detail::io::io<tx_bsd_mcbc, tx_bsd_mcbc_cfg_t>;
+    friend class detail::io::tx<tx_bsd_mcbc, tx_bsd_mcbc_cfg_t>;
 
-    int write(const void *data, size_t len);
+    bool open_impl();
+
+    void close_impl();
+
+    int send_impl(const void *data, size_t len);
 
 private:
     int fd_{-1};
-    struct sockaddr_in sockaddr_;
+    struct sockaddr_in sockaddr_{};
 };
 }  // namespace net

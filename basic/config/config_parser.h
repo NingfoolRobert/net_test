@@ -10,6 +10,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <fstream>
 #include <string>
 #include <sys/types.h>
@@ -70,6 +73,7 @@ struct ConfigNode {
   }
   explicit ConfigNode(const std::string &v) : data(value_type(v)) {
   }
+  explicit ConfigNode(std::nullptr_t v) : data(value_type(v)) {}
   ConfigNode() = default;
   ~ConfigNode() = default;
   //
@@ -273,6 +277,21 @@ struct ConfigNode {
     const auto &val = std::get<value_type>(data);
     if (std::holds_alternative<T>(val)) {
       return std::get<T>(val);
+    }
+    if constexpr (std::is_arithmetic_v<T>) {
+      if (!std::holds_alternative<std::string>(val)) {
+        return std::visit([default_value](const auto &value) -> T {
+          using V = std::decay_t<decltype(value)>;
+          if constexpr (std::is_arithmetic_v<V>) {
+            const long double number = value;
+            if constexpr (std::is_same_v<T, bool>) return value != 0;
+            if (!std::isfinite(number) || number < std::numeric_limits<T>::lowest() ||
+                number > std::numeric_limits<T>::max()) return default_value;
+            return static_cast<T>(value);
+          }
+          return default_value;
+        }, val);
+      }
     }
     //
     if (!std::holds_alternative<std::string>(val)) {
@@ -532,12 +551,118 @@ class ConfigValidator {
 
   template <typename DomType>
   ValidationResult validate(const DomType &config, const DomType &schema) {
+    static_assert(std::is_same_v<DomType, ConfigNode>, "Validator requires ConfigNode");
     ValidationResult result{true, "OK", {}};
-
-    // 实现验证逻辑
-    // 检查必需字段、类型匹配、值范围等
-    // 如果发现错误，设置 result.valid = false 并添加错误信息到 result.errors
+    validate_node(config, schema, "$", 0, result);
+    result.valid = result.errors.empty();
+    if (!result.valid) result.message = "Configuration validation failed";
     return result;
+  }
+
+  private:
+  static bool number(const ConfigNode &node, long double &value) {
+    if (!node.is_value()) return false;
+    return std::visit([&](const auto &v) {
+      using T = std::decay_t<decltype(v)>;
+      if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_same_v<T, char>) {
+        value = v;
+        return std::isfinite(value);
+      }
+      return false;
+    }, std::get<ConfigNode::value_type>(node.data));
+  }
+  static bool matches_type(const ConfigNode &node, const std::string &type) {
+    if (type == "object") return node.is_object();
+    if (type == "array") return node.is_array();
+    if (type == "string") return node.is_string();
+    if (type == "boolean") return node.is_bool();
+    if (type == "null") return node.is_value() &&
+      std::holds_alternative<std::nullptr_t>(std::get<ConfigNode::value_type>(node.data));
+    long double value;
+    if (type == "number") return number(node, value);
+    if (type == "integer") return number(node, value) && std::trunc(value) == value;
+    return false;
+  }
+  static void validate_node(const ConfigNode &config, const ConfigNode &schema, const std::string &path,
+                            std::size_t depth, ValidationResult &result) {
+    auto error = [&](const std::string &message) { result.errors.push_back(path + ": " + message); };
+    if (depth > 128) { error("schema nesting exceeds 128 levels"); return; }
+    if (!schema.is_object()) { error("schema must be an object"); return; }
+    const auto &rules = std::get<ConfigNode::object_type>(schema.data);
+    auto rule = [&](const char *key) -> const ConfigNode * {
+      auto it = rules.find(key);
+      return it == rules.end() ? nullptr : &it->second;
+    };
+    // A deliberately bounded schema vocabulary. Unknown rules are errors,
+    // rather than silently accepting a constraint that was never checked.
+    for (const auto &[key, value] : rules) {
+      (void)value;
+      if (key != "type" && key != "required" && key != "properties" && key != "items" &&
+          key != "minimum" && key != "maximum" && key != "minItems" && key != "maxItems" &&
+          key != "additionalProperties") error("unsupported schema keyword: " + key);
+    }
+    if (const auto *type = rule("type")) {
+      if (!type->is_string()) { error("schema type must be a string"); return; }
+      auto name = type->get<std::string>();
+      if (name != "object" && name != "array" && name != "string" && name != "boolean" &&
+          name != "number" && name != "integer" && name != "null") {
+        error("unsupported schema type: " + name);
+        return;
+      }
+      if (!matches_type(config, name)) { error("expected " + name); return; }
+    }
+    if (const auto *required = rule("required")) {
+      if (!required->is_array()) error("schema required must be an array");
+      else for (const auto &key : std::get<ConfigNode::array_type>(required->data)) {
+        if (!key.is_string()) { error("required entries must be strings"); continue; }
+        const auto name = key.get<std::string>();
+        if (!config.is_object() || !std::get<ConfigNode::object_type>(config.data).count(name))
+          error("missing required field: " + name);
+      }
+    }
+    const auto *properties = rule("properties");
+    if (properties && !properties->is_object()) error("schema properties must be an object");
+    const auto *additional = rule("additionalProperties");
+    if (additional && !additional->is_bool()) error("additionalProperties must be boolean");
+    if (config.is_object()) {
+      for (const auto &[key, value] : std::get<ConfigNode::object_type>(config.data)) {
+        const ConfigNode *child_schema = nullptr;
+        if (properties && properties->is_object()) {
+          const auto &children = std::get<ConfigNode::object_type>(properties->data);
+          auto it = children.find(key);
+          if (it != children.end()) child_schema = &it->second;
+        }
+        if (child_schema) validate_node(value, *child_schema, path + "." + key, depth + 1, result);
+        else if (additional && additional->is_bool() && !additional->get<bool>())
+          error("unexpected field: " + key);
+      }
+    }
+    if (const auto *items = rule("items")) {
+      if (!items->is_object()) error("schema items must be an object");
+      else if (config.is_array()) {
+        const auto &array = std::get<ConfigNode::array_type>(config.data);
+        for (std::size_t i = 0; i < array.size(); ++i)
+          validate_node(array[i], *items, path + "[" + std::to_string(i) + "]", depth + 1, result);
+      }
+    }
+    for (const char *name : {"minimum", "maximum", "minItems", "maxItems"}) {
+      const auto *bound = rule(name);
+      if (!bound) continue;
+      long double limit;
+      if (!number(*bound, limit)) { error(std::string("schema ") + name + " must be numeric"); continue; }
+      const bool count = std::string(name).find("Items") != std::string::npos;
+      if (count && (limit < 0 || std::trunc(limit) != limit)) {
+        error(std::string("schema ") + name + " must be a nonnegative integer");
+        continue;
+      }
+      long double value;
+      if (count) {
+        if (!config.is_array()) continue;
+        value = config.array_size();
+      } else if (!number(config, value)) continue;
+      const bool minimum = std::string(name).rfind("min", 0) == 0;
+      if ((minimum && value < limit) || (!minimum && value > limit)) error(std::string("violates ") + name);
+    }
   }
 };
 
@@ -635,8 +760,8 @@ class XMLParser : public IConfigParser {
   public:
   XMLParser() = default;
   virtual ~XMLParser() = default;
-  bool parse(const std::string &data, config::ConfigNode &root) override;
-  std::string dump(const config::ConfigNode &root) override;
+  bool parse(const std::string &data, ConfigNode &root) override;
+  std::string dump(const ConfigNode &root) override;
 };
 #endif  // CONFIG_PARSER_ENABLE_XML
 
@@ -645,8 +770,8 @@ class TOMLParser : public IConfigParser {
   public:
   TOMLParser() = default;
   virtual ~TOMLParser() = default;
-  bool parse(const std::string &data, config::ConfigNode &root) override;
-  std::string dump(const config::ConfigNode &root) override;
+  bool parse(const std::string &data, ConfigNode &root) override;
+  std::string dump(const ConfigNode &root) override;
 };
 #endif  // CONFIG_PARSER_ENABLE_TOML
 
@@ -656,8 +781,8 @@ class JSONParser : public IConfigParser {
   JSONParser() = default;
   virtual ~JSONParser() = default;
 
-  bool parse(const std::string &data, config::ConfigNode &root) = 0;
-  std::string dump(const config::ConfigNode &root) = 0;
+  bool parse(const std::string &data, ConfigNode &root) override;
+  std::string dump(const ConfigNode &root) override;
 };
 #endif  // CONFIG_PARSER_ENABLE_JSON
 
@@ -666,8 +791,8 @@ class YAMLParser : public IConfigParser {
   public:
   YAMLParser() = default;
   virtual ~YAMLParser() = default;
-  bool parse(const std::string &data, config::ConfigNode &root) override;
-  std::string dump(const config::ConfigNode &root) override;
+  bool parse(const std::string &data, ConfigNode &root) override;
+  std::string dump(const ConfigNode &root) override;
 };
 #endif  // CONFIG_PARSER_ENABLE_YAML
 

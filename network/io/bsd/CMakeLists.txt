@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 
 set(TARGET_NAME bsd)
 
-add_library(${TARGET_NAME} STATIC  rx_bsd_mcbc.cpp  tx_bsd_mcbc.cpp)
+add_library(${TARGET_NAME} STATIC rx_bsd_mcbc.cpp tx_bsd_mcbc.cpp rtx_bsd_tcp.cpp)
 
 target_include_directories(${TARGET_NAME} 
   INTERFACE 
