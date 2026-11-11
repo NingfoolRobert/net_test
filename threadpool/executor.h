@@ -63,7 +63,7 @@ private:
     }
 
 private:
-    spinlock lck_;
+    SpinLock lck_;
     std::vector<task_context_t *> tasks_;
     std::vector<task_operator_t> task_ops_;
     size_t cap_;

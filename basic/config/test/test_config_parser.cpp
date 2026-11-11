@@ -1,6 +1,7 @@
 #include "../config_parser.h"
 #include "gtest/gtest.h"
 #include <cstddef>
+#include <cstdio>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -45,4 +46,22 @@ TEST_F(ConfigParserTest, ConfParser) {
     EXPECT_EQ(root["key4"].is_value(), true);
     //EXPECT_EQ(root["key4"].is_bool(), true);
     EXPECT_EQ(root["key4"].get<bool>(false), true);
+}
+
+TEST_F(ConfigParserTest, ReadsCurrentContentsFromEachFile) {
+    const std::string second_path = conf_file_path + ".second";
+    struct Cleanup {
+        const std::string& path;
+        ~Cleanup() { std::remove(path.c_str()); }
+    } cleanup{second_path};
+    detail::ConfigFile first(conf_file_path.c_str()), second(second_path.c_str());
+    first.dump("alpha");
+    second.dump("beta");
+    const auto first_read = first.data();
+    EXPECT_EQ(first_read, "alpha");
+    EXPECT_EQ(second.data(), "beta");
+    first.dump(std::string(4097, 'x'));
+    EXPECT_EQ(first.data(), std::string(4097, 'x'));
+    EXPECT_EQ(first_read, "alpha");
+    EXPECT_EQ(second.data(), "beta");
 }

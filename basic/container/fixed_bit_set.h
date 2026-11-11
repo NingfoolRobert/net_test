@@ -44,67 +44,47 @@ public:
         return true;
     }
     //
+    // Search from offset inclusive.
     pos_t find_first_set(size_t offset = 0) const {
         if (offset >= N) {
             return npos;
         }
-        //
-        auto idx = offset / 8;
-        for (auto i = offset % 8; i < 8; ++i) {
-            auto pos = idx * 8 + i;
-            if (pos >= N) {
-                return npos;
+        const auto first_byte = offset / 8;
+        for (size_t byte = first_byte; byte < cap_; ++byte) {
+            if (bits_[byte] == 0) {
+                continue;
             }
-            if (test(pos)) {
-                return pos;
-            }
-        }
-        // Iterate through each byte starting from the byte containing the offset
-        for (auto idx = offset / 8; idx < (N + 7) / 8; ++idx) {
-            if (bits_[idx] != 0) {
-                for (auto bit = 0; bit < 8; ++bit) {
-                    auto pos = idx * 8 + bit;
-                    if (pos >= N) {
-                        return npos;
-                    }
-                    //
-                    if (test(pos)) {
-                        return pos;
-                    }
-                }
-            }
-        }
-        //
-        return npos;
-    }
-    //
-    pos_t find_last_set(size_t offset = 0) const {
-        if (offset >= N) {
-            return npos;
-        }
-        //
-        auto idx = (N - offset) % 8;
-        if (bits_[(N - offset) / 8] != 0) {
-            for (auto bit = idx - 1; bit >= 0; --bit) {
-                auto pos = (N - offset) / 8 * 8 + bit;
+            const size_t first = byte == first_byte ? offset % 8 : 0;
+            for (size_t bit = first; bit < 8; ++bit) {
+                const auto pos = byte * 8 + bit;
                 if (test(pos)) {
                     return pos;
                 }
             }
         }
-        //
-        for (int i = (N - offset) / 8; i >= 0; --i) {
-            if (bits_[i] != 0) {
-                for (auto bit = 7; bit >= 0; --bit) {
-                    auto pos = i * 8 + bit;
-                    //
-                    if (test(pos)) {
-                        return pos;
-                    }
+        return npos;
+    }
+
+    // Skip offset bits from the end, then search backwards.
+    pos_t find_last_set(size_t offset = 0) const {
+        if (offset >= N) {
+            return npos;
+        }
+        const auto last = N - offset - 1;
+        const auto last_byte = last / 8;
+        for (size_t remaining = last_byte + 1; remaining != 0;) {
+            const auto byte = --remaining;
+            if (bits_[byte] == 0) {
+                continue;
+            }
+            const size_t count = byte == last_byte ? last % 8 + 1 : 8;
+            for (size_t bit = count; bit != 0;) {
+                const auto pos = byte * 8 + --bit;
+                if (test(pos)) {
+                    return pos;
                 }
             }
         }
-        //
         return npos;
     }
 

@@ -516,14 +516,17 @@ class ConfigFile {
   ConfigFile(ConfigFile &&other) noexcept = default;
   ConfigFile &operator=(ConfigFile &&other) noexcept = default;
 
-  [[nodiscard]] std::string &data() const {
+  [[nodiscard]] std::string data() const {
     std::ifstream file(file_path_, std::ios::in);
     if (!file.is_open()) {
       throw std::runtime_error("Failed to open file for reading: " + file_path_);
     }
-    //
-    static std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
+    file.exceptions(std::ios::badbit);
+    std::string content;
+    char buffer[4096];
+    while (file.read(buffer, sizeof(buffer)) || file.gcount() != 0) {
+      content.append(buffer, static_cast<std::size_t>(file.gcount()));
+    }
     return content;
   }
 

@@ -53,17 +53,17 @@ private:
 	
 	void	remove_all();
 private:
-	spinlock							_lck;
+	SpinLock							_lck;
 	std::set<net_io*>					_conns;
 #ifdef _NIO_EPOLL_ 
 	int									_ep;
 	std::unordered_map<int, net_io*>	_ep_conn;
 #endif 
 private:
-	spinlock							_lck_timer;
+	SpinLock							_lck_timer;
 	std::list<timer_info_t>				_timers;
 	//
-	spinlock							_lck_task;
+	SpinLock							_lck_task;
 	std::list<std::function<void()> >	_tasks;
 
 private:

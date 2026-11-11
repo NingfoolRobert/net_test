@@ -6,6 +6,7 @@
  * @date 2025-01-18
  */
 #pragma once
+#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,7 +43,7 @@ public:
     }
 
     char *peek(size_t off) {
-        if (head_ + off > tail_) {
+        if (off > tail_ - head_) {
             return nullptr;
         }
         head_ += off;
@@ -50,8 +51,9 @@ public:
     }
 
     void shrink_to_fit() {
-        memove(data_, data(), length());
-        tail_ -= head_;
+        const auto unread = length();
+        std::memmove(data_, data_ + head_, unread);
+        tail_ = unread;
         head_ = 0;
     }
 

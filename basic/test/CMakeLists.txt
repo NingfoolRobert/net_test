@@ -1,31 +1,21 @@
-cmake_minimum_required(VERSION 3.12)
+# Cross-module regressions stay here; unit tests live with their modules.
+file(GLOB SRC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+add_executable(test_basic ${SRC_FILES})
+target_link_libraries(test_basic PRIVATE gtest_main basic)
+add_test(NAME test_basic COMMAND test_basic)
 
-set(TARGET_NAME test_basic)
+foreach(module base buffer container concurrency ipc time logging)
+  file(GLOB MODULE_TESTS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../${module}/test/*.cpp")
+  # SwissTable keeps its existing independently buildable test target.
+  list(FILTER MODULE_TESTS EXCLUDE REGEX "/test_swiss_table\\.cpp$")
+  add_executable(test_basic_${module} ${MODULE_TESTS})
+  target_link_libraries(test_basic_${module} PRIVATE gtest_main basic::${module})
+  add_test(NAME test_basic_${module} COMMAND test_basic_${module})
+endforeach()
 
-file(GLOB_RECURSE SRC_FILES
-  LIST_DIRECTORIES false
-  CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.c*
-)
-message(STATUS "${SRC_FILES}")
-#add_executable(test_logging test_log.cpp)
-
-#
-# list(REMOVE_ITEM ${SRC_FILES}
-#   "test_log.cpp"
-# )
-#file(REMOVE ${SRC_FILES} "test_logging.cpp")
-add_executable(${TARGET_NAME}
-  ${SRC_FILES}
-  # test_fstring.cpp
-  # test_bheap.cpp
-  # test_staging_buffer.cpp
-  # test_shm.cpp
-  # test_fbuffer.cpp
-  # test_raii.cpp
-  # test_fixed_bit_map.cpp
-)
-target_link_libraries(${TARGET_NAME} PRIVATE gtest gtest_main basic)
-
-
-add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
+# The time wheel remains testable without building the optional executor.
+add_executable(test_basic_time_wheel ../execution/test/test_time_wheel.cpp)
+target_link_libraries(test_basic_time_wheel PRIVATE gtest_main basic::time Threads::Threads)
+add_test(NAME test_basic_time_wheel COMMAND test_basic_time_wheel)
 

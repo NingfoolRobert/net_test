@@ -25,8 +25,8 @@ class bheap {
   bheap &operator=(const bheap &) = delete;
   //
   ~bheap() {
-    while (!empty()) {
-      pop();
+    for (auto *node : heap_) {
+      delete node;
     }
   }
   //
@@ -55,7 +55,7 @@ class bheap {
     heap_.pop_back();
 
     if (idx < heap_.size()) {
-      if (comp_(heap_[idx]->val, heap_[size() - 1]->val)) {
+      if (idx > 0 && comp_(heap_[(idx - 1) / 2]->val, heap_[idx]->val)) {
         sift_up(idx);
       }
       else {
@@ -125,7 +125,6 @@ class bheap {
       //
       std::swap(heap_[largest], heap_[idx]);
       std::swap(heap_[largest]->idx, heap_[idx]->idx);
-      sift_down(largest);
       idx = largest;
     }
   }

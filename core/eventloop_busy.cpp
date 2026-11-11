@@ -20,7 +20,7 @@ int  eventloop::loop(int  timeout)
 		FD_SET(_wake_fd, &rd_fds);
 #endif 
 		{
-			std::unique_lock<spinlock> _(_lck);
+			std::unique_lock<SpinLock> _(_lck);
 			for (auto it = _conns.begin(); it != _conns.end(); ++it)
 			{
 				auto pConn = *it;

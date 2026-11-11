@@ -90,7 +90,7 @@ int eventloop::loop(int timeout)
 		max_fd = std::max(_wake_fd, max_fd);
 #endif 
 		{
-			std::unique_lock<spinlock> _(_lck);
+			std::unique_lock<SpinLock> _(_lck);
 			for (auto it = _conns.begin(); it != _conns.end(); ++it)
 			{
 				auto pConn = *it;
@@ -141,7 +141,7 @@ void eventloop::add_net(net_io* conn)
 	if(!_running || nullptr == conn) 
 		return ;
 	{
-		std::unique_lock<spinlock> _(_lck);
+		std::unique_lock<SpinLock> _(_lck);
 		conn->_loop = this;
 		_conns.insert(conn);
 	}
@@ -155,7 +155,7 @@ void eventloop::process_timer()
 	//
 	std::vector<timer_info_t> vecTmp;
 	{
-		std::unique_lock<spinlock> _(_lck_timer);
+		std::unique_lock<SpinLock> _(_lck_timer);
 		auto it = _timers.begin();
 		while (it != _timers.end())
 		{
@@ -186,7 +186,7 @@ void eventloop::process_task()
 {
 	std::list<std::function<void()> > tsks;
 	{
-		std::unique_lock<spinlock> _(_lck_task);
+		std::unique_lock<SpinLock> _(_lck_task);
 		tsks.swap(_tasks);
 	}
 	//
@@ -200,7 +200,7 @@ void eventloop::remove_net(net_io* conn)
 	if(NULL == conn) 
 		return ;
 	{
-		std::unique_lock<spinlock> _(_lck);
+		std::unique_lock<SpinLock> _(_lck);
 		auto it = _conns.find(conn);
 		if (it != _conns.end())
 		{
@@ -217,7 +217,7 @@ void eventloop::remove_all()
 {
 	//
 	{
-		std::unique_lock<spinlock> _(_lck);
+		std::unique_lock<SpinLock> _(_lck);
 		for(auto it = _conns.begin();  it != _conns.end(); ++it)
 		{
 			auto pConn = *it;
@@ -252,14 +252,14 @@ void eventloop::remove_all()
 
 void eventloop::add_timer(timer_info_t&  cb)
 {
-	std::unique_lock<spinlock> _(_lck_timer);
+	std::unique_lock<SpinLock> _(_lck_timer);
 	cb.expire = detail::time::now() + cb.gap;
 	_timers.push_back(cb);
 }
 
 void eventloop::remove_timer(unsigned short timer_id)
 {
-	std::unique_lock<spinlock> _(_lck_timer);
+	std::unique_lock<SpinLock> _(_lck_timer);
 	auto it = _timers.begin();
 	while (it != _timers.end())
 	{
@@ -344,7 +344,7 @@ void eventloop::add_task(std::function<void()>& task)
 		return;
 	//
 	{
-		std::unique_lock<spinlock> _(_lck_task);
+		std::unique_lock<SpinLock> _(_lck_task);
 		_tasks.push_back(task);
 	}
 	//

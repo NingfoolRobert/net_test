@@ -11,7 +11,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
 
 namespace detail {
 
@@ -34,12 +34,7 @@ public:
     }
 
     size_t length() const {
-        if (tail_ >= head_) {
-            return tail_ - head_;
-        }
-        else {
-            return (N + 1) - head_ + tail_;
-        }
+        return tail_ - head_;
     }
 
     size_t size() const {
@@ -59,7 +54,7 @@ public:
      * @return A pointer to the new head position after moving the offset. Returns nullptr if
      */
     char *peak(size_t off) {
-        if (head_ + off > tail_) {
+        if (off > tail_ - head_) {
             return nullptr;
         }
         head_ += off;
@@ -69,8 +64,9 @@ public:
      * @brief Shrink the buffer to fit the current data by moving the data to the beginning of the buffer.
      */
     void shrink_to_fit() {
-        memmove(data_, data(), length());
-        tail_ -= head_;
+        const auto unread = length();
+        std::memmove(data_, data_ + head_, unread);
+        tail_ = unread;
         head_ = 0;
     }
 

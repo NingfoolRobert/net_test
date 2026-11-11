@@ -1,10 +1,10 @@
-#include "../auto_ptr.h"
-#include "../buffer.h"
-#include "../fixed_memory_pool.h"
-#include "../fixed_vector.h"
-#include "../memory_pool.h"
-#include "../mutable_buffer.h"
-#include "../object_pool.h"
+#include "../base/auto_ptr.h"
+#include "../buffer/buffer.h"
+#include "../memory/fixed_memory_pool.h"
+#include "../container/fixed_vector.h"
+#include "../memory/memory_pool.h"
+#include "../buffer/mutable_buffer.h"
+#include "../memory/object_pool.h"
 #include <gtest/gtest.h>
 #include <array>
 #include <cstdint>

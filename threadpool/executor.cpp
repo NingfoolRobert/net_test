@@ -30,7 +30,7 @@ bool Executor::add_task(task_context_t *&cookie, task_t &&task, bool async /* = 
     task_context->id = syncer_.fetch_id();
     cookie = task_context;
     {
-        std::unique_lock<spinlock> _(lck_);
+        std::unique_lock<SpinLock> _(lck_);
         task_ops_.push_back({ADD, task_context});
     }
 
@@ -49,7 +49,7 @@ void Executor::rmv_task(task_context_t *context) {
     }
 
     {
-        std::unique_lock<spinlock> _(lck_);
+        std::unique_lock<SpinLock> _(lck_);
         task_ops_.push_back({RMV, context});
     }
     //
@@ -60,7 +60,7 @@ void Executor::process_task() {
 
     std::vector<task_operator_t> task_ops;
     {
-        std::unique_lock<spinlock> _(lck_);
+        std::unique_lock<SpinLock> _(lck_);
         task_ops.swap(task_ops_);
     }
 
@@ -88,7 +88,7 @@ void Executor::process_task() {
 }
 
 void Executor::process_add(task_context_t *context) {
-    std::unique_lock<spinlock> _(lck_);
+    std::unique_lock<SpinLock> _(lck_);
     if (task_size_ < cap_) {
         tasks_[task_size_] = context;
     }
@@ -100,7 +100,7 @@ void Executor::process_add(task_context_t *context) {
 }
 
 void Executor::process_rmv(task_context_t *context) {
-    std::unique_lock<spinlock> _(lck_);
+    std::unique_lock<SpinLock> _(lck_);
     if (nullptr == context) {
         return;
     }
@@ -118,7 +118,7 @@ void Executor::process_rmv(task_context_t *context) {
 }
 //
 void Executor::process_clr(task_context_t *context) {
-    std::unique_lock<spinlock> _(lck_);
+    std::unique_lock<SpinLock> _(lck_);
     for (auto i = 0u; i < task_size_; ++i) {
         auto id = tasks_[i]->id;
         delete tasks_[i];
@@ -135,7 +135,7 @@ void Executor::stop() {
     task_context->id = syncer_.fetch_id();
     task_context->exec = this;
     {
-        std::unique_lock<spinlock> _(lck_);
+        std::unique_lock<SpinLock> _(lck_);
         task_ops_.push_back({CLR, task_context});
     }
     running_ = false;

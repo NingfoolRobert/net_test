@@ -1,5 +1,5 @@
-#include "format_util.h"
-#include "../thirdparty/tomlplusplus/toml.hpp"
+#include "detail/format_util.h"
+#include <toml.hpp>
 #include <sstream>
 
 namespace detail {
