@@ -6,7 +6,7 @@
  * @date 2024-12-22
  */
 #pragma once
-#include "../basic/concurrency/spinlock.h"
+#include "../basic/concurrency/spin_lock.h"
 #include "synchronizer.h"
 #include <atomic>
 #include <cstdint>

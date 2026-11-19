@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1140" width="1200" height="1140">
+<style>text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #111827; } .sub {font-size:14px; fill:#6b7280;} .title {font-size:18px; font-weight:600;}</style>
+<defs>
+<marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2563eb"/></marker>
+<marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#9333ea"/></marker>
+</defs>
+<rect width="1200" height="1140" fill="#ffffff"/>
+<text x="80" y="56" font-size="28" font-weight="600">TCP 业务流处理流程</text>
+<text x="80" y="88" class="sub">pcap 接入 → 单向流重组 → 业务消费 → 状态通知；所有回调同步执行</text>
+<path d="M 310 192 L 310 240" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 312 L 310 360" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 432 L 310 480" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 552 L 310 600" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 672 L 310 720" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 792 L 310 840" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 310 912 L 310 960" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)"/>
+<path d="M 540 756 L 720 756" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#arrow-purple)"/>
+<path d="M 540 876 L 720 876" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#arrow-purple)"/>
+<rect x="80" y="120" width="460" height="72" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="148" text-anchor="middle" class="title">1  初始化</text>
+<text x="310" y="173" text-anchor="middle" class="sub">确定每方向最大缓存；分配数据环和位图</text>
+<polygon points="96,240 540,240 524,312 80,312" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="268" text-anchor="middle" class="title">2  读取报文</text>
+<text x="310" y="293" text-anchor="middle" class="sub">pcap 文件 / 实时数据源</text>
+<rect x="80" y="360" width="460" height="72" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="388" text-anchor="middle" class="title">3  解析与分流</text>
+<text x="310" y="413" text-anchor="middle" class="sub">IP 重组、TCP 校验、连接实例与方向识别</text>
+<rect x="80" y="480" width="460" height="72" rx="8" fill="#eff6ff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="508" text-anchor="middle" class="title">4  TCP 负载重组</text>
+<text x="310" y="533" text-anchor="middle" class="sub">序号定位；去重、重叠裁剪、乱序缓存</text>
+<rect x="80" y="600" width="460" height="72" rx="8" fill="#eff6ff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="628" text-anchor="middle" class="title">5  业务消费 on_data</text>
+<text x="310" y="653" text-anchor="middle" class="sub">提供连续字节；返回剩余量并保留未消费后缀</text>
+<rect x="80" y="720" width="460" height="72" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="748" text-anchor="middle" class="title">6  缺口进度 on_gap</text>
+<text x="310" y="773" text-anchor="middle" class="sub">报告缺口范围、缺口后连续量和累计缓存量</text>
+<rect x="80" y="840" width="460" height="72" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="868" text-anchor="middle" class="title">7  生命周期通知</text>
+<text x="310" y="893" text-anchor="middle" class="sub">FIN / RST / 关闭确认 / 超时 / 抓包结束</text>
+<rect x="80" y="960" width="460" height="72" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="310" y="988" text-anchor="middle" class="title">8  执行上层决策</text>
+<text x="310" y="1013" text-anchor="middle" class="sub">insert 返回后：继续等待、跳过缺口或结束该流</text>
+<rect x="720" y="120" width="400" height="192" rx="8" fill="#faf5ff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="744" y="148" class="title">模块与业务约定</text>
+<text x="744" y="173" class="sub">每个连接方向拥有独立重组实例</text>
+<text x="744" y="199" class="sub">初始化后不扩容，接收路径不动态分配</text>
+<text x="744" y="225" class="sub">lambda 返回未消费后缀的字节数</text>
+<text x="744" y="251" class="sub">跨环尾最多提供两段只读内存</text>
+<text x="744" y="277" class="sub">重复包不重复输出业务字节</text>
+<rect x="720" y="720" width="400" height="72" rx="8" fill="#faf5ff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="744" y="748" class="title">缺口通知只报告状态</text>
+<text x="744" y="773" class="sub">上层记录或标记待跳过；回调内不重入</text>
+<rect x="720" y="840" width="400" height="72" rx="8" fill="#faf5ff" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="744" y="868" class="title">结束信号立即通知</text>
+<text x="744" y="893" class="sub">携带未消费量、缺口及历史跳过状态</text>
+<text x="708" y="744" text-anchor="end" class="sub">有变化</text>
+<text x="708" y="864" text-anchor="end" class="sub">有事件</text>
+<path d="M 80 1072 L 120 1072" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+<text x="132" y="1077" class="sub">单包处理顺序</text>
+<path d="M 310 1072 L 350 1072" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+<text x="362" y="1077" class="sub">同步事件通知</text>
+<text x="80" y="1112" class="sub">跳过缺口须先重置业务解析状态；FIN 只结束一个方向；超时与 EOF 不代表真实连接已断开。</text>
+</svg>
