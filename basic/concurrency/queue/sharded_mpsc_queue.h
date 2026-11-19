@@ -9,7 +9,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -47,14 +49,14 @@ public:
         ProducerToken() noexcept = default;
 
         bool valid() const noexcept {
-            return queue_ != nullptr;
+            return queue_id_ != 0;
         }
 
     private:
-        ProducerToken(ShardedMpscQueue *queue, std::size_t shard) noexcept
-            : queue_(queue), shard_(shard) {}
+        ProducerToken(std::uint64_t queue_id, std::size_t shard) noexcept
+            : queue_id_(queue_id), shard_(shard) {}
 
-        ShardedMpscQueue *queue_ = nullptr;
+        std::uint64_t queue_id_ = 0;
         std::size_t shard_ = 0;
     };
 
@@ -76,13 +78,13 @@ public:
             Shard &shard = shards_[index];
 
             if (shard.registered && shard.owner == id) {
-                return ProducerToken{this, index};
+                return ProducerToken{queue_id_, index};
             }
             if (!shard.registered) {
                 shard.owner = id;
                 shard.owner_hash = hash;
                 shard.registered = true;
-                return ProducerToken{this, index};
+                return ProducerToken{queue_id_, index};
             }
         }
 
@@ -179,6 +181,22 @@ public:
     }
 
 private:
+    // Tokens are local to this template specialization. Their IDs must also
+    // distinguish successive queues constructed in the same storage.
+    static std::uint64_t allocate_queue_id() {
+        static std::atomic<std::uint64_t> last_id{0};
+        auto id = last_id.load(std::memory_order_relaxed);
+        for (;;) {
+            if (id == std::numeric_limits<std::uint64_t>::max()) {
+                throw std::overflow_error("sharded queue ID space exhausted");
+            }
+            if (last_id.compare_exchange_weak(id, id + 1,
+                                              std::memory_order_relaxed)) {
+                return id + 1;
+            }
+        }
+    }
+
     static constexpr std::uint64_t bit_for(std::size_t index) noexcept {
         return std::uint64_t{1} << index;
     }
@@ -226,14 +244,14 @@ private:
     }
 
     ProducerToken &local_token() noexcept {
-        if (tls_token_.queue_ != this) {
+        if (tls_token_.queue_id_ != queue_id_) {
             tls_token_ = register_producer();
         }
         return tls_token_;
     }
 
     Shard *shard_for(ProducerToken &token) noexcept {
-        if (token.queue_ != this || token.shard_ >= ShardCount) {
+        if (token.queue_id_ != queue_id_ || token.shard_ >= ShardCount) {
             return nullptr;
         }
         return &shards_[token.shard_];
@@ -243,6 +261,7 @@ private:
     SpinLock registration_lock_;
     alignas(64) std::atomic<std::uint64_t> active_bitmap_{0};
     std::size_t consumer_cursor_ = 0;
+    const std::uint64_t queue_id_ = allocate_queue_id();
 
     inline static thread_local ProducerToken tls_token_{};
 };

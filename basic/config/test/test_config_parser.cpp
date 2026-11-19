@@ -5,6 +5,49 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
+TEST(ConfigNodeTest, EmptyDistinguishesMissingValuesFromScalarValues) {
+    using detail::ConfigNode;
+    const struct {
+        const char* name;
+        ConfigNode node;
+        bool empty;
+    } cases[] = {
+        {"default", ConfigNode{}, true},
+        {"null", ConfigNode(nullptr), true},
+        {"empty string", ConfigNode(""), true},
+        {"string", ConfigNode("value"), false},
+        {"zero", ConfigNode(0), false},
+        {"positive integer", ConfigNode(42), false},
+        {"floating zero", ConfigNode(0.0), false},
+        {"false", ConfigNode(false), false},
+        {"NUL character", ConfigNode('\0'), false},
+    };
+    for (const auto& entry : cases) {
+        EXPECT_EQ(entry.node.empty(), entry.empty) << entry.name;
+    }
+}
+
+TEST(ConfigNodeTest, EmptyReflectsContainerSizeAndReset) {
+    using detail::ConfigNode;
+    ConfigNode node;
+    const ConfigNode& view = node;
+    node.data = ConfigNode::object_type{};
+    EXPECT_TRUE(view["missing"].empty());
+    EXPECT_TRUE(node.empty());
+    node["key"] = ConfigNode(nullptr);
+    EXPECT_FALSE(node.empty());
+    node.clear();
+    EXPECT_TRUE(node.empty());
+
+    node.data = ConfigNode::array_type{};
+    EXPECT_TRUE(view[3].empty());
+    EXPECT_TRUE(node.empty());
+    node[0] = ConfigNode("");
+    EXPECT_FALSE(node.empty());
+    node.reset();
+    EXPECT_TRUE(node.empty());
+}
+
 class ConfigParserTest : public ::testing::Test {
 protected:
     void SetUp() override {

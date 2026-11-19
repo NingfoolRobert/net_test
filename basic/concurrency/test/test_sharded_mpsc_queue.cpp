@@ -2,7 +2,10 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <atomic>
+#include <future>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -102,4 +105,38 @@ TEST(ShardedMpscQueue, UsesThreadLocalProducerToken) {
     int value = 0;
     ASSERT_TRUE(queue.try_pop(value));
     EXPECT_EQ(value, 42);
+}
+
+TEST(ShardedMpscQueue, RefreshesImplicitRegistrationAfterInPlaceReconstruction) {
+    using Queue = ShardedMpscQueue<int, 2, 8>;
+    std::optional<Queue> queue(std::in_place);
+    ASSERT_TRUE(queue->try_push(1));
+    queue.emplace();
+
+    std::promise<void> release;
+    auto done = release.get_future().share();
+    std::array<std::promise<bool>, 2> registered;
+    std::vector<std::thread> producers;
+    for (auto &ready : registered) {
+        producers.emplace_back([&queue, &ready, done] {
+            ready.set_value(queue->register_producer().valid());
+            done.wait();
+        });
+    }
+    for (auto &ready : registered) {
+        EXPECT_TRUE(ready.get_future().get());
+    }
+    EXPECT_FALSE(queue->try_push(2));
+    EXPECT_FALSE(queue->try_emplace(3));
+    int value = 0;
+    EXPECT_FALSE(queue->try_pop(value));
+    release.set_value();
+    for (auto &producer : producers) {
+        producer.join();
+    }
+
+    queue.emplace();
+    EXPECT_TRUE(queue->try_emplace(4));
+    ASSERT_TRUE(queue->try_pop(value));
+    EXPECT_EQ(value, 4);
 }

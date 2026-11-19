@@ -2,6 +2,11 @@
 
 The public entry point is `basic/config/config_parser.h`.
 
+`ConfigNode::empty()` returns true for a default or reset node, null, an empty
+string, or an object or array with no entries. Numbers (including zero),
+booleans (including false), and character values count as present. An object or
+array with an entry counts as nonempty even when that entry holds null.
+
 Extended parsers return false on malformed input and leave the output root unchanged.
 Successful parses replace the root. Serialization rejects values a format cannot
 represent rather than silently dropping them. Extended format conversion limits

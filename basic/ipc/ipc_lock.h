@@ -4,6 +4,10 @@
  */
 #pragma once
 
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -27,7 +31,9 @@
  * can occur when multiple processes use the same lock name.
  *
  * The class models the BasicLockable and Lockable requirements, so it can be
- * used with std::lock_guard or std::unique_lock.
+ * used with std::lock_guard or std::unique_lock. Each process opens its own
+ * instance. Threads within a process may share one instance. Move or destroy
+ * only when no other thread is using it.
  */
 class ipc_lock {
 public:
@@ -38,7 +44,7 @@ public:
 #else
         , fd_(-1)
 #endif
-        , locked_(false) {
+    {
         if (path.empty()) {
             throw std::invalid_argument("ipc_lock path must not be empty");
         }
@@ -65,7 +71,7 @@ public:
     explicit ipc_lock(const char* path) : ipc_lock(std::string(path ? path : "")) {}
 
     ~ipc_lock() {
-        if (locked_) {
+        if (owns_lock()) {
 #ifdef _WIN32
             OVERLAPPED overlapped = {};
             ::UnlockFileEx(handle_, 0, MAXDWORD, MAXDWORD, &overlapped);
@@ -94,18 +100,20 @@ public:
 #else
         , fd_(other.fd_)
 #endif
-        , locked_(other.locked_) {
+        , local_(std::move(other.local_)) {
 #ifdef _WIN32
         other.handle_ = INVALID_HANDLE_VALUE;
 #else
         other.fd_ = -1;
 #endif
-        other.locked_ = false;
     }
 
     ipc_lock& operator=(ipc_lock&&) = delete;
 
     void lock() {
+        auto& state = local_state();
+        std::unique_lock<std::mutex> guard(state.mutex);
+        state.available.wait(guard, [&state] { return !state.locked.load(); });
 #ifdef _WIN32
         OVERLAPPED overlapped = {};
         if (!::LockFileEx(handle_, LOCKFILE_EXCLUSIVE_LOCK, 0,
@@ -120,15 +128,20 @@ public:
             throw_errno("flock");
         }
 #endif
-        locked_ = true;
+        state.locked.store(true);
     }
 
     bool try_lock() {
+        auto& state = local_state();
+        std::unique_lock<std::mutex> guard(state.mutex, std::try_to_lock);
+        if (!guard.owns_lock() || state.locked.load()) {
+            return false;
+        }
 #ifdef _WIN32
         OVERLAPPED overlapped = {};
         if (::LockFileEx(handle_, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
                          0, MAXDWORD, MAXDWORD, &overlapped)) {
-            locked_ = true;
+            state.locked.store(true);
             return true;
         }
         const DWORD error = ::GetLastError();
@@ -139,7 +152,7 @@ public:
                                 "LockFileEx");
 #else
         if (::flock(fd_, LOCK_EX | LOCK_NB) == 0) {
-            locked_ = true;
+            state.locked.store(true);
             return true;
         }
         if (errno == EWOULDBLOCK || errno == EAGAIN) {
@@ -151,7 +164,11 @@ public:
     }
 
     void unlock() {
-        if (!locked_) {
+        if (!local_) {
+            return;
+        }
+        std::lock_guard<std::mutex> guard(local_->mutex);
+        if (!local_->locked.load()) {
             return;
         }
 #ifdef _WIN32
@@ -164,13 +181,31 @@ public:
             throw_errno("flock");
         }
 #endif
-        locked_ = false;
+        local_->locked.store(false);
+        local_->available.notify_all();
     }
 
-    bool owns_lock() const noexcept { return locked_; }
+    // Snapshot of this instance, including ownership by another thread.
+    bool owns_lock() const noexcept { return local_ && local_->locked.load(); }
     const std::string& path() const noexcept { return path_; }
 
 private:
+    // A file lock on one open descriptor does not serialize its local users.
+    // Keep the wait state with the native handle across noexcept moves.
+    struct LocalState {
+        std::mutex mutex;
+        std::condition_variable available;
+        std::atomic<bool> locked{false};
+    };
+
+    LocalState& local_state() {
+        if (!local_) {
+            throw std::system_error(std::make_error_code(std::errc::bad_file_descriptor),
+                                    "ipc_lock has been moved from");
+        }
+        return *local_;
+    }
+
 #ifndef _WIN32
     static void throw_errno(const char* operation) {
         const int error = errno;
@@ -189,5 +224,5 @@ private:
 #else
     int fd_;
 #endif
-    bool locked_;
+    std::unique_ptr<LocalState> local_ = std::make_unique<LocalState>();
 };

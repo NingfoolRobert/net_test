@@ -1,23 +1,22 @@
 #include "../logging.h"
 
-// #include "../assert_macro.h"
-#include "../../time/date_time.h"
-#include "../../base/optimization.h"
 #include <gtest/gtest.h>
+#include <string>
 
-TEST(LoggingTest, loggingTest) {
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <thread>
+#include <unistd.h>
 
-    // NLOG_DEBUG("%s", "hello world");
-    // NLOG_WARN("%s", "hello world");
-
-    // NLOG_WARN("test one");
-
-    // bool ret = true;
-    // assert_true(ret, 0);
-
-    // const char *ptr = "hello";
-    // assert_nullptr(ptr, 0);
-
-    // auto now = detail::now();
-    // printf("%llu\n", now);
+TEST(LoggingTest, InfoIncludesCallingThreadId) {
+    long tid = 0;
+    testing::internal::CaptureStdout();
+    std::thread worker([&tid] {
+        tid = ::syscall(SYS_gettid);
+        NLOG_INFO("worker %d", 42);
+    });
+    worker.join();
+    const auto output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find(" " + std::to_string(tid) + " [INFO] worker 42\n"), std::string::npos);
 }
+#endif

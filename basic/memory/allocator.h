@@ -6,45 +6,45 @@
  * @date 2025-06-12
  */
 #pragma once
-#include <queue>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstddef>
+#include <memory>
+#include <new>
 #include <vector>
 
 namespace basic {
-template <typename T, size_t N = 2048>
+template <typename T, std::size_t N = 2048>
 class Allocator {
 public:
-    Allocator() {
-        auto buffer = malloc(sizeof(T) * N);
-        for (auto i = 0u; i < N; ++i) {
-            mem_pool_.push(reinterpret_cast<char *>(buffer) + i * sizeof(T));
+    Allocator() : free_slots_(N), storage_(std::allocator<T>{}.allocate(N)) {
+        for (std::size_t i = 0; i < N; ++i) {
+            free_slots_[i] = storage_ + i;
         }
-        buffers_.push_back(buffer);
     }
     // Copying the free list would create two owners of the same storage.
     Allocator(const Allocator &) = delete;
     Allocator &operator=(const Allocator &) = delete;
     ~Allocator() {
-        for (auto i = 0u; i < buffers_.size(); ++i) {
-            free(buffers_[i]);
-        }
-        buffers_.clear();
+        std::allocator<T>{}.deallocate(storage_, N);
     }
 
 public:
     template <typename ...Args>
     T *allocate(const Args &&...args) {
-        //
-        if (mem_pool_.empty()) {
+        if (free_count_ == 0) {
             return nullptr;
         }
-        //
-        //)      auto ptr = obj_pool_.try_pop();
-        auto *ptr = mem_pool_.front();
-        mem_pool_.pop();
-        auto obj = new (ptr) T(args...);
-        return obj;
+        T *slot = free_slots_[head_];
+        head_ = (head_ + 1) % free_slots_.size();
+        --free_count_;
+        try {
+            return ::new (static_cast<void *>(slot)) T(args...);
+        } catch (...) {
+            // Restore the reservation at the front, even if T reentered this pool.
+            head_ = head_ == 0 ? free_slots_.size() - 1 : head_ - 1;
+            free_slots_[head_] = slot;
+            ++free_count_;
+            throw;
+        }
     }
 
     void deallocate(T *p) {
@@ -52,11 +52,14 @@ public:
             return;
         }
         p->~T();
-        mem_pool_.push(p);
+        free_slots_[(head_ + free_count_) % free_slots_.size()] = p;
+        ++free_count_;
     }
 
 private:
-    std::vector<void *> buffers_;
-    std::queue<void *> mem_pool_;
+    std::vector<T *> free_slots_;
+    T *storage_;
+    std::size_t head_ = 0;
+    std::size_t free_count_ = N;
 };
 }  // namespace basic

@@ -13,6 +13,8 @@ foreach(module base buffer container concurrency ipc time logging)
   target_link_libraries(test_basic_${module} PRIVATE gtest_main basic::${module})
   add_test(NAME test_basic_${module} COMMAND test_basic_${module})
 endforeach()
+target_compile_definitions(test_basic_logging PRIVATE SYS_LOG)
+target_link_libraries(test_basic_logging PRIVATE Threads::Threads)
 
 # The time wheel remains testable without building the optional executor.
 add_executable(test_basic_time_wheel ../execution/test/test_time_wheel.cpp)

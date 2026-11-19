@@ -1,6 +1,12 @@
 #include "../staging_buffer.h"
 
 #include <gtest/gtest.h>
+#include <type_traits>
+
+static_assert(!std::is_copy_constructible_v<detail::StagingBuffer<128>>);
+static_assert(!std::is_copy_assignable_v<detail::StagingBuffer<128>>);
+static_assert(!std::is_move_constructible_v<detail::StagingBuffer<128>>);
+static_assert(!std::is_move_assignable_v<detail::StagingBuffer<128>>);
 
 TEST(staging_buffer,  allocate_test) {
   detail::StagingBuffer<128>  buffer;

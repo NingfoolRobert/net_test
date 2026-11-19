@@ -114,7 +114,11 @@ struct ConfigNode {
       return std::get<array_type>(data).empty();
     }
     if (is_value()) {
-      return std::get<value_type>(data).index() != std::variant_npos;
+      const auto &value = std::get<value_type>(data);
+      if (const auto *text = std::get_if<std::string>(&value)) {
+        return text->empty();
+      }
+      return value.valueless_by_exception() || std::holds_alternative<std::nullptr_t>(value);
     }
     return true;
   }

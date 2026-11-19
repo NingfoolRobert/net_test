@@ -56,4 +56,6 @@ private:
     std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
 };
 
+using spinlock_t = SpinLock;
+
 #endif

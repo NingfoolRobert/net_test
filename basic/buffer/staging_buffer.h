@@ -24,6 +24,13 @@ public:
     }
     //
     ~StagingBuffer() = default;
+
+    // The cursors and pointers returned by allocate() refer to this object's storage.
+    StagingBuffer(const StagingBuffer&) = delete;
+    StagingBuffer& operator=(const StagingBuffer&) = delete;
+    StagingBuffer(StagingBuffer&&) = delete;
+    StagingBuffer& operator=(StagingBuffer&&) = delete;
+
     /**
      * @brief
      *
@@ -73,7 +80,6 @@ public:
         auto ptr = producer_pos_;
         min_free_space_ -= size;
         producer_pos_ += size;
-        ++num_allocates_;
         return ptr;
     }
 
@@ -111,7 +117,5 @@ private:
     char *consumer_pos_;
     char *end_of_record_;
     size_t min_free_space_;
-
-    size_t num_allocates_;
 };
 }  // namespace detail

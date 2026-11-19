@@ -9,8 +9,10 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <functional>
 #include <iterator>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -33,6 +35,66 @@ TEST(LegacyOwnership, AllocatorStillReusesReturnedStorage) {
   ASSERT_EQ(second, first);
   EXPECT_EQ(*second, 7);
   allocator.deallocate(second);
+}
+
+TEST(LegacyOwnership, AllocatorRestoresSlotAfterConstructorThrows) {
+  struct Item {
+    Item(bool fail, int* destroyed) : destroyed(destroyed) {
+      if (fail) throw std::runtime_error("construction failed");
+    }
+    ~Item() { ++*destroyed; }
+    int* destroyed;
+  };
+  int destroyed = 0;
+  basic::Allocator<Item, 1> allocator;
+  EXPECT_THROW(allocator.allocate(true, &destroyed), std::runtime_error);
+  auto* first = allocator.allocate(false, &destroyed);
+  ASSERT_NE(first, nullptr);
+  EXPECT_EQ(allocator.allocate(false, &destroyed), nullptr);
+  EXPECT_EQ(destroyed, 0);
+  allocator.deallocate(first);
+  EXPECT_EQ(destroyed, 1);
+  auto* second = allocator.allocate(false, &destroyed);
+  ASSERT_EQ(second, first);
+  allocator.deallocate(second);
+  EXPECT_EQ(destroyed, 2);
+}
+
+TEST(LegacyOwnership, AllocatorReusesSlotsInReturnOrder) {
+  basic::Allocator<int, 3> allocator;
+  auto* first = allocator.allocate(1);
+  auto* second = allocator.allocate(2);
+  auto* third = allocator.allocate(3);
+  ASSERT_NE(first, nullptr);
+  ASSERT_NE(second, nullptr);
+  ASSERT_NE(third, nullptr);
+  allocator.deallocate(second);
+  allocator.deallocate(first);
+  ASSERT_EQ(allocator.allocate(4), second);
+  ASSERT_EQ(allocator.allocate(5), first);
+  allocator.deallocate(third);
+  allocator.deallocate(second);
+  allocator.deallocate(first);
+}
+
+TEST(LegacyOwnership, AllocatorRollsBackOnlyTheFailedReservation) {
+  struct Item {
+    Item() = default;
+    explicit Item(const std::function<void()>& init) { init(); }
+  };
+  basic::Allocator<Item, 2> allocator;
+  Item* nested = nullptr;
+  EXPECT_THROW(allocator.allocate([&] {
+    nested = allocator.allocate();
+    throw std::runtime_error("outer construction failed");
+  }), std::runtime_error);
+  ASSERT_NE(nested, nullptr);
+  auto* retry = allocator.allocate();
+  ASSERT_NE(retry, nullptr);
+  ASSERT_NE(retry, nested);
+  EXPECT_EQ(allocator.allocate(), nullptr);
+  allocator.deallocate(nested);
+  allocator.deallocate(retry);
 }
 
 TEST(FstringAssignment, ShortCStringAndEmptyInput) {

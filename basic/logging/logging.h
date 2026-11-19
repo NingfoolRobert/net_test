@@ -18,9 +18,11 @@ static const char *log_type_str[] = {"", "TRACE", "DEBUG", "NOTICE", "INFO", "WA
 #include <time.h>
 #include <unistd.h>
 
-pid_t gettid() {
-    return syscall(SYS_gettid);
+namespace basic::logging_detail {
+inline unsigned int current_thread_id() noexcept {
+    return static_cast<unsigned int>(::syscall(SYS_gettid));
 }
+}  // namespace basic::logging_detail
 
 #define SYS_LOG_PRINT(log_level, fmt, ...)                                                                             \
     do {                                                                                                               \
@@ -36,7 +38,7 @@ pid_t gettid() {
                tmNow.tm_min,                                                                                           \
                tmNow.tm_sec,                                                                                           \
                tv.tv_usec,                                                                                             \
-               gettid(),                                                                                               \
+               ::basic::logging_detail::current_thread_id(),                                                           \
                log_type_str[log_level],                                                                                \
                ##__VA_ARGS__);                                                                                         \
         printf("\n");                                                                                                  \
@@ -56,7 +58,7 @@ pid_t gettid() {
                tmNow.tm_min,                                                                                           \
                tmNow.tm_sec,                                                                                           \
                tv.tv_usec,                                                                                             \
-               gettid(),                                                                                               \
+               ::basic::logging_detail::current_thread_id(),                                                           \
                log_type_str[log_level],                                                                                \
                __FILE__,                                                                                               \
                __LINE__,                                                                                               \
