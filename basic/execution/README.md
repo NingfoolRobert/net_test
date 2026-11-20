@@ -82,7 +82,10 @@ int main() {
 
 `basic::TimeWheel` supports one-shot and repeating timers, cancellation, and
 restart. Slot counts and tick duration must be positive. Repeat intervals must
-be positive. Delays round up to ticks; timing resolution is the base tick.
+be positive. The first firing is scheduled at the first tick at or after the
+registration time plus the requested delay, measured with the steady clock.
+Timers registered before startup count from the next start. A zero delay selects
+the next tick. Repeating timers then advance by their interval rounded up to ticks.
 
 Callbacks execute serially on the worker, outside the wheel mutex. They may add
 or cancel timers, or request `stop()`. A slow callback delays later callbacks;
