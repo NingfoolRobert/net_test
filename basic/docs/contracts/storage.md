@@ -25,7 +25,10 @@
   with the original requested size. The pool owns all of its blocks and is thread-safe.
 - `basic::ObjectPool<T>` constructs objects with forwarded arguments and destroys
   them on release. It reuses storage, including over-aligned storage, and destroys
-  outstanding objects at pool destruction. It requires external synchronization
+  outstanding objects at pool destruction. A constructor may acquire or release
+  other objects in the same pool. If it throws, the pool returns its reserved
+  slot to the free list and preserves completed nested operations.
+  It requires external synchronization
   when shared across threads. `capacity()`, `available()`, and `in_use()` report counts.
 - Pool deallocation rejects foreign or already returned pointers and nulls the
   pointer on success. Aliases must not be used after return; an old alias cannot

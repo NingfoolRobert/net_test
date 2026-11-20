@@ -41,10 +41,16 @@ public:
             free_.push_back(raw);
         }
         Slot *slot = free_.back();
-        T *object = new (slot->storage) T(std::forward<Args>(args)...);
-        slot->live = true;
+        // Reserve before invoking a constructor that may reenter this pool.
         free_.pop_back();
-        return object;
+        try {
+            T *object = ::new (slot->storage) T(std::forward<Args>(args)...);
+            slot->live = true;
+            return object;
+        } catch (...) {
+            free_.push_back(slot);
+            throw;
+        }
     }
     void release(T *&ptr) {
         if (!ptr) return;

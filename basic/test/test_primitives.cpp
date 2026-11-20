@@ -276,6 +276,13 @@ struct DeleteInt {
     void operator()(int *ptr) const { ++*calls; delete ptr; }
 };
 struct CountCall { int *calls; void operator()() const { ++*calls; } };
+struct ReentrantObject {
+    explicit ReentrantObject(int &destroyed) : destroyed(destroyed) {}
+    template <typename Action>
+    ReentrantObject(int &destroyed, Action action) : destroyed(destroyed) { action(); }
+    ~ReentrantObject() { ++destroyed; }
+    int &destroyed;
+};
 }
 TEST(BasicObjectPool, ReconstructsAndDestroysObjectsAndRejectsDuplicateReturns) {
     int live = 0;
@@ -300,6 +307,37 @@ TEST(BasicObjectPool, ReconstructsAndDestroysObjectsAndRejectsDuplicateReturns) 
     }
     EXPECT_EQ(live, 0);
 }
+TEST(BasicObjectPool, ConstructorCanReturnAnotherObjectToThePool) {
+    int destroyed = 0;
+    basic::ObjectPool<ReentrantObject> pool;
+    auto *first = pool.acquire(destroyed);
+    auto *second = pool.acquire(destroyed, [&] { pool.release(first); });
+    auto *third = pool.acquire(destroyed);
+    ASSERT_NE(second, third);
+    pool.release(second);
+    pool.release(third);
+    EXPECT_EQ(destroyed, 3);
+    EXPECT_EQ(pool.available(), pool.capacity());
+}
+
+TEST(BasicObjectPool, ThrowingConstructorPreservesNestedAcquisition) {
+    int destroyed = 0;
+    basic::ObjectPool<ReentrantObject> pool;
+    ReentrantObject *nested = nullptr;
+    EXPECT_THROW(pool.acquire(destroyed, [&] {
+        nested = pool.acquire(destroyed);
+        throw std::runtime_error("outer construction failed");
+    }), std::runtime_error);
+    ASSERT_NE(nested, nullptr);
+    ASSERT_EQ(pool.available(), 1U);
+    EXPECT_EQ(pool.in_use(), 1U);
+    auto *retry = pool.acquire(destroyed);
+    ASSERT_NE(nested, retry);
+    pool.release(nested);
+    pool.release(retry);
+    EXPECT_EQ(destroyed, 2);
+}
+
 TEST(FixedVector, KeepsAddressesAcrossGrowthAndMovesUniqueObjects) {
     basic::FixedVector<std::unique_ptr<int>, 0, 2> values;
     auto *first = &values.emplace_back(std::make_unique<int>(42));
