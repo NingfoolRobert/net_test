@@ -539,9 +539,11 @@ class ConfigFile {
     if (!file.is_open()) {
       throw std::runtime_error("Failed to open file for writing: " + file_path_);
     }
-    //
     file << data;
     file.close();
+    if (!file) {
+      throw std::runtime_error("Failed to write file: " + file_path_);
+    }
   }
 
   private:

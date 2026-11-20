@@ -108,3 +108,12 @@ TEST_F(ConfigParserTest, ReadsCurrentContentsFromEachFile) {
     EXPECT_EQ(first_read, "alpha");
     EXPECT_EQ(second.data(), "beta");
 }
+
+#ifdef __linux__
+TEST(ConfigFileTest, DumpReportsOutputErrors) {
+    ASSERT_TRUE(std::fstream("/dev/full", std::ios::in | std::ios::out).is_open());
+    detail::ConfigFile file("/dev/full");
+    EXPECT_THROW(file.dump("x"), std::runtime_error);
+    EXPECT_THROW(file.dump(std::string(65536, 'x')), std::runtime_error);
+}
+#endif

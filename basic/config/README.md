@@ -12,7 +12,8 @@ Successful parses replace the root. Serialization rejects values a format cannot
 represent rather than silently dropping them. Extended format conversion limits
 nesting to 128 levels. INI and CONF retain their original flat/string semantics.
 `ConfigFile::data()` reads the current contents of that file on each call and
-returns an owned string.
+returns an owned string. `ConfigFile::dump()` throws `std::runtime_error` if
+opening, writing, or closing the output file fails.
 Their double serialization preserves fixed-point formatting with a default
 precision of 6 and allocates enough storage for the formatted result.
 `fmt_double_precision` accepts 0 through 1024; other values throw
